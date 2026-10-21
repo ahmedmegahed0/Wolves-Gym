@@ -42,6 +42,7 @@ export const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'packages'
 
   // Live gym occupancy
   const [occupancyData, setOccupancyData] = useState({
@@ -255,6 +256,18 @@ export const CustomerDashboard = () => {
               <Key className="w-4 h-4" />
             </button>
 
+            <button
+              onClick={() => setActiveTab(activeTab === 'packages' ? 'overview' : 'packages')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'packages'
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                  : 'bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>باقات واشتراكات</span>
+            </button>
+
             <div className="flex items-center gap-2 bg-zinc-900/80 border border-amber-500/20 rounded-xl px-2.5 py-1.5 text-xs">
               <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-[11px]">
                 {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
@@ -397,8 +410,49 @@ export const CustomerDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Quick Overview Grid: Digital Pass + Current Session + Gym Occupancy */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Top Navigation Tabs for Customer: Profile & Pass vs Packages */}
+            <div className="flex items-center gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 max-w-md">
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === 'overview'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>ملفي الرياضي والكارت</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('packages')}
+                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === 'packages'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                }`}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>باقات وعضويات التدريب</span>
+              </button>
+            </div>
+
+            {activeTab === 'packages' ? (
+              <motion.div
+                key="customer-packages-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="pt-2"
+              >
+                <PackagesPricingGrid isEmbedded={true} />
+              </motion.div>
+            ) : (
+              <>
+                {/* Quick Overview Grid: Digital Pass + Current Session + Gym Occupancy */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               
               {/* 1. Digital Member Pass (بطاقة الوحش الرقمية) */}
               <motion.div
@@ -696,13 +750,15 @@ export const CustomerDashboard = () => {
                 </div>
               )}
 
-              {/* Packages & Membership Plans Section */}
-              <div className="pt-6 border-t border-amber-500/20">
-                <PackagesPricingGrid isEmbedded={true} />
-              </div>
-            </motion.div>
-          </>
-        )}
+                {/* Packages & Membership Plans Section */}
+                <div className="pt-6 border-t border-amber-500/20">
+                  <PackagesPricingGrid isEmbedded={true} />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </>
+      )}
       </main>
 
       {/* Change Password Modal */}
