@@ -250,28 +250,70 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
 
       {/* Pricing Cards Grid */}
       {loading && packages.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center text-center">
-          <div className="relative mb-4">
-            <div className="w-12 h-12 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
-            <Crown className="w-5 h-5 text-amber-400 absolute inset-0 m-auto" />
-          </div>
-          <p className="text-zinc-400 text-sm font-bold">جاري تحميل باقات واشتراكات الذئاب...</p>
+        /* Golden Skeleton Shimmer */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-zinc-900/40 border border-zinc-800/80 rounded-3xl p-6 sm:p-7 space-y-5 animate-pulse"
+            >
+              <div className="flex justify-between items-center">
+                <div className="h-4 w-28 bg-zinc-800 rounded" />
+                <div className="h-5 w-16 bg-zinc-800 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-6 w-44 bg-zinc-800 rounded" />
+                <div className="h-3.5 w-24 bg-zinc-800/60 rounded" />
+              </div>
+              <div className="h-10 w-32 bg-zinc-800 rounded-lg" />
+              <div className="space-y-2.5 pt-2 border-t border-zinc-800/60">
+                <div className="h-3.5 w-full bg-zinc-800/40 rounded" />
+                <div className="h-3.5 w-5/6 bg-zinc-800/40 rounded" />
+                <div className="h-3.5 w-4/6 bg-zinc-800/40 rounded" />
+              </div>
+              <div className="h-11 bg-zinc-800 rounded-2xl pt-2" />
+            </div>
+          ))}
         </div>
       ) : filteredPackages.length === 0 ? (
-        <div className="py-16 text-center bg-zinc-950/60 rounded-3xl border border-dashed border-zinc-800 p-8">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-3">
-            <HelpCircle className="w-6 h-6" />
+        packages.length === 0 ? (
+          /* Empty State: No packages seeded yet */
+          <div className="py-16 sm:py-20 text-center bg-zinc-950/70 rounded-3xl border border-amber-500/20 p-6 sm:p-8 wolf-glass max-w-xl mx-auto shadow-2xl">
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-4 shadow-gold-glow">
+              <Crown className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-black text-white mb-2">لا توجد باقات متاحة حالياً</h3>
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto mb-6 leading-relaxed">
+              سيتم إضافة باقات واشتراكات صالة WOLVES الرياضية قريباً من قبل إدارة الجيم. يمكنك الاستفسار مباشرة من موظفي الاستقبال.
+            </p>
+            {onOpenAdminManagement && (
+              <button
+                type="button"
+                onClick={onOpenAdminManagement}
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 transition-all cursor-pointer inline-flex items-center gap-2"
+              >
+                <Crown className="w-4 h-4" />
+                <span>لوحة إدارة الباقات</span>
+              </button>
+            )}
           </div>
-          <h3 className="text-base font-bold text-white mb-1">لا توجد باقات تطابق البحث</h3>
-          <p className="text-xs text-zinc-400 mb-4">جرّب تغيير كلمات البحث أو الفلاتر المختارة.</p>
-          <button
-            type="button"
-            onClick={() => { setSearch(''); setDurationFilter('all'); }}
-            className="px-4 py-2 rounded-xl bg-zinc-900 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-zinc-800 transition-colors"
-          >
-            إعادة تعيين الفلاتر
-          </button>
-        </div>
+        ) : (
+          /* Empty State: Filter / Search Miss */
+          <div className="py-16 text-center bg-zinc-950/60 rounded-3xl border border-dashed border-zinc-800 p-8">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-3">
+              <HelpCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-1">لا توجد باقات تطابق البحث</h3>
+            <p className="text-xs text-zinc-400 mb-4">جرّب تغيير كلمات البحث أو الفلاتر المختارة.</p>
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setDurationFilter('all'); }}
+              className="px-4 py-2 rounded-xl bg-zinc-900 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              إعادة تعيين الفلاتر
+            </button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filteredPackages.map((pkg) => (

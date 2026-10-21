@@ -132,14 +132,14 @@ export const TrainerCard = ({ trainer, onSelect = null }) => {
           <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-2.5 text-center">
             <span className="text-[10px] text-zinc-500 block">سنوات الخبرة</span>
             <span className="font-mono font-black text-amber-400 text-sm">
-              {trainer.yearsOfExperience ? `${trainer.yearsOfExperience} سنوات` : '3+ سنوات'}
+              {trainer.yearsOfExperience ? `${trainer.yearsOfExperience} سنوات` : '--'}
             </span>
           </div>
 
           <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-2.5 text-center">
             <span className="text-[10px] text-zinc-500 block">المتدربين</span>
             <span className="font-mono font-black text-zinc-200 text-sm">
-              {trainer.clientsCount ? `+${trainer.clientsCount} وحش` : '+50 وحش'}
+              {trainer.clientsCount ? `+${trainer.clientsCount} وحش` : '--'}
             </span>
           </div>
         </div>

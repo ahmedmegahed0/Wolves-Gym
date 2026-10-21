@@ -13,6 +13,12 @@ export const STORAGE_KEYS = {
   MAX_CAPACITY: 'gym_max_capacity',
 };
 
+// Purge legacy mock data caches from localStorage
+try {
+  localStorage.removeItem('gym_mock_customers');
+  localStorage.removeItem('gym_packages_cache');
+} catch {}
+
 // Token Helper Methods
 export const getAccessToken = () => {
   return (
@@ -630,37 +636,6 @@ export const authService = {
 
       return response.data;
     } catch (err) {
-      // Check if remote backend server is down (HTTP 500 / Network Error)
-      const isServerDown = !err.response || err.response.status >= 500 || err.code === 'ERR_NETWORK';
-      if (isServerDown) {
-        // Match against project accounts for seamless offline operation
-        const matched = KNOWN_ACCOUNTS.find(
-          (acc) => acc.Email.toLowerCase() === payload.email && acc.Password === payload.password
-        );
-        if (matched) {
-          const mockToken = `mock-token-${matched.Role.toLowerCase()}-${Date.now()}`;
-          const userInfo = {
-            name: matched.Name,
-            email: matched.Email,
-            role: matched.Role,
-            phoneNumber: matched.PhoneNumber,
-            address: matched.Address,
-            userType: matched.UserType,
-          };
-          setAuthTokens({
-            accessToken: mockToken,
-            refreshToken: `mock-refresh-${Date.now()}`,
-            userInfo,
-          });
-          return {
-            accessToken: mockToken,
-            token: mockToken,
-            user: userInfo,
-            name: matched.Name,
-            isMockAuth: true,
-          };
-        }
-      }
       throw err;
     }
   },
@@ -807,131 +782,6 @@ export const authService = {
   },
 };
 
-// Mock customers data for offline resilience / server downtime
-const DEFAULT_MOCK_CUSTOMERS = [
-  {
-    id: 1,
-    name: 'أحمد مجاهد (كابتن الوحوش)',
-    phoneNumber: '01012345678',
-    code: 'WOLF-001',
-    approvalStatus: 0, // 0 = Pending
-    isActive: false,
-    height: 182,
-    weight: 85,
-    age: 26,
-    musclePercentage: 44.5,
-    fatPercentage: 13.2,
-    injuries: 'إصابة قديمة خفيفة في الكتف الأيمن',
-    chronicDiseases: 'لا يوجد',
-    notes: 'تمرين كمال أجسام وبناء كتلة عضلية نقية',
-    createdAt: '2026-10-21T10:30:00Z'
-  },
-  {
-    id: 2,
-    name: 'محمود الصاوي',
-    phoneNumber: '01123456789',
-    code: 'WOLF-002',
-    approvalStatus: 1, // 1 = Approved
-    isActive: true,
-    height: 175,
-    weight: 78,
-    age: 24,
-    musclePercentage: 42.0,
-    fatPercentage: 15.5,
-    injuries: 'لا يوجد',
-    chronicDiseases: 'لا يوجد',
-    notes: 'ملتزم في المواعيد وبرنامج القوة البدنية',
-    createdAt: '2026-10-20T14:15:00Z'
-  },
-  {
-    id: 3,
-    name: 'كريم عبد العزيز',
-    phoneNumber: '01234567890',
-    code: 'WOLF-003',
-    approvalStatus: 0, // 0 = Pending
-    isActive: false,
-    height: 188,
-    weight: 96,
-    age: 29,
-    musclePercentage: 47.0,
-    fatPercentage: 18.0,
-    injuries: 'خشونة ركبة بسيطة',
-    chronicDiseases: 'ضغط دم خفيف',
-    notes: 'يحتاج تركيز على تمارين الكارديو والإحماء الجيد',
-    createdAt: '2026-10-21T12:00:00Z'
-  },
-  {
-    id: 4,
-    name: 'عمر الشريف',
-    phoneNumber: '01098765432',
-    code: 'WOLF-004',
-    approvalStatus: 1, // 1 = Approved
-    isActive: true,
-    height: 170,
-    weight: 68,
-    age: 21,
-    musclePercentage: 39.5,
-    fatPercentage: 11.8,
-    injuries: 'لا يوجد',
-    chronicDiseases: 'لا يوجد',
-    notes: 'تنشيف ولياقة بدنية عالية وسرعة استشفاء',
-    createdAt: '2026-10-19T09:40:00Z'
-  },
-  {
-    id: 5,
-    name: 'ياسر ممدوح',
-    phoneNumber: '01555554321',
-    code: 'WOLF-005',
-    approvalStatus: 2, // 2 = Rejected
-    isActive: false,
-    height: 165,
-    weight: 90,
-    age: 35,
-    musclePercentage: 33.0,
-    fatPercentage: 29.5,
-    injuries: 'انزلاق غضروفي قطني',
-    chronicDiseases: 'سكر وضغط',
-    notes: 'تم رفض الاشتراك لحين إحضار تقرير طبي يسمح بممارسة الأوزان',
-    createdAt: '2026-10-18T18:20:00Z'
-  },
-  {
-    id: 6,
-    name: 'طارق حسام',
-    phoneNumber: '01044443322',
-    code: 'WOLF-006',
-    approvalStatus: 0, // 0 = Pending
-    isActive: false,
-    height: 180,
-    weight: 82,
-    age: 27,
-    musclePercentage: 41.8,
-    fatPercentage: 16.0,
-    injuries: 'لا يوجد',
-    chronicDiseases: 'حساسية صدر خفيفة',
-    notes: 'مشترك جديد عبر الموقع - طلب اشتراك باقة 3 شهور VIP',
-    createdAt: '2026-10-21T15:10:00Z'
-  }
-];
-
-const getMockCustomers = () => {
-  try {
-    const saved = localStorage.getItem('gym_mock_customers');
-    if (saved) return JSON.parse(saved);
-  } catch (e) {
-    console.warn('Error reading mock customers from storage:', e);
-  }
-  localStorage.setItem('gym_mock_customers', JSON.stringify(DEFAULT_MOCK_CUSTOMERS));
-  return DEFAULT_MOCK_CUSTOMERS;
-};
-
-const saveMockCustomers = (list) => {
-  try {
-    localStorage.setItem('gym_mock_customers', JSON.stringify(list));
-  } catch (e) {
-    console.warn('Error saving mock customers to storage:', e);
-  }
-};
-
 // Customer Service Methods (GET, PATCH, PUT, ME)
 export const customerService = {
   /**
@@ -990,46 +840,7 @@ export const customerService = {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
         throw err;
       }
-      console.warn('Backend customers API error, using resilient local storage:', err.message);
-
-      // Fallback to local mock data if server is down (e.g. ASP.NET 500 error)
-      let list = getMockCustomers();
-
-      // Filter by approvalStatus if specified
-      if (approvalStatus !== undefined && approvalStatus !== null && approvalStatus !== '') {
-        list = list.filter((c) => Number(c.approvalStatus) === Number(approvalStatus));
-      }
-
-      // Filter by search query
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        list = list.filter((c) => 
-          (c.name && c.name.toLowerCase().includes(q)) ||
-          (c.phoneNumber && c.phoneNumber.includes(q)) ||
-          (c.code && c.code.toLowerCase().includes(q))
-        );
-      }
-
-      // Sort
-      if (sortBy) {
-        if (sortBy === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
-        else if (sortBy === 'code') list.sort((a, b) => a.code.localeCompare(b.code));
-        else if (sortBy === 'createdAt') list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        else if (sortBy === 'weight') list.sort((a, b) => b.weight - a.weight);
-      }
-
-      const totalCount = list.length;
-      const startIndex = (pageNumber - 1) * pageSize;
-      const paginatedItems = list.slice(startIndex, startIndex + pageSize);
-
-      return {
-        items: paginatedItems,
-        totalCount,
-        pageNumber,
-        pageSize,
-        totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
-        isMock: true,
-      };
+      throw err;
     }
   },
 
@@ -1039,25 +850,8 @@ export const customerService = {
    */
   async updateApprovalStatus(id, status) {
     const payload = { status: Number(status) };
-    try {
-      const response = await apiClient.patch(`/api/customers/${id}/approval-status`, payload);
-      return response.data || { success: true };
-    } catch (err) {
-      console.warn('PATCH approval status API error, updating local mock:', err.message);
-      const list = getMockCustomers();
-      const updated = list.map((c) => {
-        if (String(c.id) === String(id)) {
-          return {
-            ...c,
-            approvalStatus: Number(status),
-            isActive: Number(status) === 1,
-          };
-        }
-        return c;
-      });
-      saveMockCustomers(updated);
-      return { success: true, isMock: true };
-    }
+    const response = await apiClient.patch(`/api/customers/${id}/approval-status`, payload);
+    return response.data || { success: true };
   },
 
   /**
@@ -1083,33 +877,16 @@ export const customerService = {
       payload.code = String(data.code).trim().toUpperCase();
     }
 
+    // Backend uses PATCH /api/customers/{id} with PUT fallback
     try {
-      // Backend uses PATCH /api/customers/{id}
-      let response;
-      try {
-        response = await apiClient.patch(`/api/customers/${id}`, payload);
-      } catch (patchErr) {
-        if (patchErr.response?.status === 405) {
-          response = await apiClient.put(`/api/customers/${id}`, payload);
-        } else {
-          throw patchErr;
-        }
-      }
+      const response = await apiClient.patch(`/api/customers/${id}`, payload);
       return response.data || { success: true };
-    } catch (err) {
-      console.warn('Customer update API error, updating local storage:', err.message);
-      const list = getMockCustomers();
-      const updated = list.map((c) => {
-        if (String(c.id || c.customerId) === String(id)) {
-          return {
-            ...c,
-            ...payload,
-          };
-        }
-        return c;
-      });
-      saveMockCustomers(updated);
-      return { success: true, isMock: true };
+    } catch (patchErr) {
+      if (patchErr.response?.status === 405) {
+        const putRes = await apiClient.put(`/api/customers/${id}`, payload);
+        return putRes.data || { success: true };
+      }
+      throw patchErr;
     }
   },
 
@@ -1117,32 +894,8 @@ export const customerService = {
    * GET /api/customers/me
    */
   async getCustomerMe() {
-    try {
-      const response = await apiClient.get('/api/customers/me');
-      return response.data;
-    } catch (err) {
-      console.warn('GET /api/customers/me error, returning logged-in fallback:', err.message);
-      const user = getUserInfo();
-      const list = getMockCustomers();
-      const matched = list.find((c) => c.phoneNumber === user?.phoneNumber || c.name === user?.name);
-      if (matched) return matched;
-      return {
-        id: 99,
-        name: user?.name || 'Customer User',
-        phoneNumber: user?.phoneNumber || '01234567892',
-        code: 'WOLF-MEMBER',
-        approvalStatus: 1,
-        isActive: true,
-        height: 178,
-        weight: 79,
-        age: 26,
-        musclePercentage: 44.5,
-        fatPercentage: 14.2,
-        injuries: 'لا يوجد',
-        chronicDiseases: 'لا يوجد',
-        notes: 'عضو نشط ومعتمد - ملتزم ببرنامج القوة والضخامة العضلية',
-      };
-    }
+    const response = await apiClient.get('/api/customers/me');
+    return response.data;
   },
 };
 
@@ -1250,69 +1003,10 @@ export const lockerService = {
 // PACKAGES & MEMBERSHIP PLANS SERVICE (باقات واشتراكات كتيبة الذئاب)
 // ============================================================================
 
-const PACKAGES_STORAGE_KEY = 'gym_packages_cache';
-
-const DEFAULT_PACKAGES = [
-  {
-    id: 1,
-    name: 'اشتراك الذئب البرونزي (شهر)',
-    price: 650,
-    duration: 30,
-    description: 'دخول غير محدود لصالة الأجهزة والحديد\nاستخدام اللوكرات وغرفة تبديل الملابس\nجلسة تقييم بدني مجانية (InBody)\nمتابعة مستوى اللياقة والوزن أسبوعياً',
-    isActive: true,
-    createdAt: '2026-10-01T00:00:00Z',
-  },
-  {
-    id: 2,
-    name: 'اشتراك الذئب الفضي (3 شهور)',
-    price: 1750,
-    duration: 90,
-    description: 'دخول شامل لجميع الصالات وأجهزة الكارديو والحديد\n3 جلسات InBody مجانية ومتابعة دورية مع الكابتن\nخطة تدريبية مخصصة ومحدثة شهرياً\nإمكانية تجميد الاشتراك لمدة 14 يوماً مجاناً\nخصم 15% على مكملات البار الرياضي',
-    isActive: true,
-    isPopular: true,
-    createdAt: '2026-10-01T00:00:00Z',
-  },
-  {
-    id: 3,
-    name: 'اشتراك الذئب الذهبي (6 شهور)',
-    price: 3200,
-    duration: 180,
-    description: 'دخول VIP لجميع مرافق الجيم والساونا والبخار\nلوكر خاص مخصص طوال فترة الاشتراك\nجلسات قياس ومتابعة نظام غذائي احترافي\nإمكانية تجميد الاشتراك حتى 30 يوماً\nدعوة مجانية لصديق (Free Pass) شهرياً',
-    isActive: true,
-    createdAt: '2026-10-01T00:00:00Z',
-  },
-  {
-    id: 4,
-    name: 'اشتراك ألفا الذئاب السنوي (VIP)',
-    price: 5800,
-    duration: 365,
-    description: 'العضوية الملكية الكاملة لصالة WOLVES\nلوكر ذكي ثابت + حقيبة رياضية خاصة بالصالة\nاستخدام غير محدود للساونا والجاكوزي والبخار\nخطة تدريب وتغذية متكاملة مع كابتن خاص\nإمكانية تجميد حتى 60 يوماً + 5 دعوات للأصدقاء',
-    isActive: true,
-    createdAt: '2026-10-01T00:00:00Z',
-  },
-];
-
-const getCachedPackages = () => {
-  try {
-    const raw = localStorage.getItem(PACKAGES_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
-  return DEFAULT_PACKAGES;
-};
-
-const saveCachedPackages = (pkgs) => {
-  try {
-    localStorage.setItem(PACKAGES_STORAGE_KEY, JSON.stringify(pkgs));
-  } catch {}
-};
-
 export const packageService = {
   /**
    * GET /api/Packages (Public / Customer Plans)
-   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
   async getPackages({ pageNumber = 1, pageSize = 12, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
@@ -1326,8 +1020,7 @@ export const packageService = {
       const payload = response.data;
 
       // Handle standard paginated response { data: [...], totalCount: ... }
-      if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
-        saveCachedPackages(payload.data);
+      if (payload && Array.isArray(payload.data)) {
         return {
           data: payload.data,
           totalCount: payload.totalCount ?? payload.data.length,
@@ -1336,8 +1029,7 @@ export const packageService = {
           pageSize: payload.pageSize ?? pageSize,
         };
       }
-      if (Array.isArray(payload) && payload.length > 0) {
-        saveCachedPackages(payload);
+      if (Array.isArray(payload)) {
         return {
           data: payload,
           totalCount: payload.length,
@@ -1346,44 +1038,23 @@ export const packageService = {
           pageSize,
         };
       }
-      // If server returns empty list, fallback to cached or default packages
-      const cached = getCachedPackages();
-      let filtered = cached.filter((p) => p.isActive !== false);
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
-      }
+
       return {
-        data: filtered,
-        totalCount: filtered.length,
+        data: [],
+        totalCount: 0,
         currentPage: pageNumber,
-        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        totalPages: 0,
         pageSize,
-        isFallback: true,
       };
     } catch (err) {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
-      console.warn('GET /api/Packages API error, returning cached fallback:', err.message);
-      const cached = getCachedPackages();
-      let filtered = cached.filter((p) => p.isActive !== false);
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
-      }
-      return {
-        data: filtered,
-        totalCount: filtered.length,
-        currentPage: pageNumber,
-        totalPages: Math.ceil(filtered.length / pageSize) || 1,
-        pageSize,
-        isFallback: true,
-      };
+      throw err;
     }
   },
 
   /**
    * GET /api/Packages/management (Admin / Manager Table)
-   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
   async getManagementPackages({ pageNumber = 1, pageSize = 10, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
@@ -1396,8 +1067,7 @@ export const packageService = {
       const response = await apiClient.get(`/api/Packages/management?${query.toString()}`, { signal });
       const payload = response.data;
 
-      if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
-        saveCachedPackages(payload.data);
+      if (payload && Array.isArray(payload.data)) {
         return {
           data: payload.data,
           totalCount: payload.totalCount ?? payload.data.length,
@@ -1406,8 +1076,7 @@ export const packageService = {
           pageSize: payload.pageSize ?? pageSize,
         };
       }
-      if (Array.isArray(payload) && payload.length > 0) {
-        saveCachedPackages(payload);
+      if (Array.isArray(payload)) {
         return {
           data: payload,
           totalCount: payload.length,
@@ -1416,38 +1085,17 @@ export const packageService = {
           pageSize,
         };
       }
-      // If server returns empty list, fallback to cached
-      const cached = getCachedPackages();
-      let filtered = [...cached];
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
-      }
+
       return {
-        data: filtered,
-        totalCount: filtered.length,
+        data: [],
+        totalCount: 0,
         currentPage: pageNumber,
-        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        totalPages: 0,
         pageSize,
-        isFallback: true,
       };
     } catch (err) {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
-      console.warn('GET /api/Packages/management error, returning cached fallback:', err.message);
-      const cached = getCachedPackages();
-      let filtered = [...cached];
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
-      }
-      return {
-        data: filtered,
-        totalCount: filtered.length,
-        currentPage: pageNumber,
-        totalPages: Math.ceil(filtered.length / pageSize) || 1,
-        pageSize,
-        isFallback: true,
-      };
+      throw err;
     }
   },
 
@@ -1455,28 +1103,16 @@ export const packageService = {
    * GET /api/Packages/{id}
    */
   async getPackageById(id) {
-    try {
-      const response = await apiClient.get(`/api/Packages/${id}`);
-      return response.data;
-    } catch (err) {
-      console.warn(`GET /api/Packages/${id} error:`, err.message);
-      const cached = getCachedPackages();
-      return cached.find((p) => String(p.id) === String(id));
-    }
+    const response = await apiClient.get(`/api/Packages/${id}`);
+    return response.data;
   },
 
   /**
    * GET /api/Packages/management/{id}
    */
   async getManagementPackageById(id) {
-    try {
-      const response = await apiClient.get(`/api/Packages/management/${id}`);
-      return response.data;
-    } catch (err) {
-      console.warn(`GET /api/Packages/management/${id} error:`, err.message);
-      const cached = getCachedPackages();
-      return cached.find((p) => String(p.id) === String(id));
-    }
+    const response = await apiClient.get(`/api/Packages/management/${id}`);
+    return response.data;
   },
 
   /**
@@ -1492,24 +1128,8 @@ export const packageService = {
       isActive: Boolean(isActive),
     };
 
-    try {
-      const response = await apiClient.post('/api/Packages', payload);
-      const created = response.data || { id: Date.now(), ...payload };
-      // Update local cache
-      const cached = getCachedPackages();
-      saveCachedPackages([created, ...cached]);
-      return created;
-    } catch (err) {
-      console.warn('POST /api/Packages API error, saving to local cache:', err.message);
-      const cached = getCachedPackages();
-      const mockCreated = {
-        id: Date.now(),
-        ...payload,
-        createdAt: new Date().toISOString(),
-      };
-      saveCachedPackages([mockCreated, ...cached]);
-      return mockCreated;
-    }
+    const response = await apiClient.post('/api/Packages', payload);
+    return response.data;
   },
 
   /**
@@ -1526,28 +1146,14 @@ export const packageService = {
     };
 
     try {
-      let response;
-      try {
-        response = await apiClient.patch(`/api/Packages/${id}`, payload);
-      } catch (patchErr) {
-        if (patchErr.response?.status === 405) {
-          response = await apiClient.put(`/api/Packages/${id}`, payload);
-        } else {
-          throw patchErr;
-        }
+      const response = await apiClient.patch(`/api/Packages/${id}`, payload);
+      return response.data;
+    } catch (patchErr) {
+      if (patchErr.response?.status === 405) {
+        const putRes = await apiClient.put(`/api/Packages/${id}`, payload);
+        return putRes.data;
       }
-      const updated = response?.data || { id, ...payload };
-      // Update local cache
-      const cached = getCachedPackages();
-      const nextList = cached.map((p) => (String(p.id) === String(id) ? { ...p, ...payload } : p));
-      saveCachedPackages(nextList);
-      return updated;
-    } catch (err) {
-      console.warn(`Update package API error for ID ${id}, updating local cache:`, err.message);
-      const cached = getCachedPackages();
-      const nextList = cached.map((p) => (String(p.id) === String(id) ? { ...p, ...payload, updatedAt: new Date().toISOString() } : p));
-      saveCachedPackages(nextList);
-      return { id, ...payload, isMock: true };
+      throw patchErr;
     }
   },
 
@@ -1670,32 +1276,6 @@ export const subscriptionService = {
         errorMsg = 'ليس لديك صلاحية لتسجيل اشتراك، يرجى تسجيل الدخول مجدداً.';
       }
 
-      // If network error OR 404 (e.g. mock package/customer ID not seeded in remote database yet), activate locally
-      if (!err.response || status === 404) {
-        console.warn('Backend returned 404 or network unreachable, activating subscription locally:', err.message);
-        const durationDays = Number(packageItem?.duration) || 30;
-        const offlineRecord = {
-          id: `SUB-${Date.now()}`,
-          customerId: payload.customerId,
-          customerName: customer?.name || `عضو #${payload.customerId}`,
-          customerPhone: customer?.phoneNumber || '',
-          customerCode: customer?.code || `ID-${payload.customerId}`,
-          packageId: payload.packageId,
-          packageName: packageItem?.name || `باقة #${payload.packageId}`,
-          packagePrice: Number(packageItem?.price) || 0,
-          packageDuration: durationDays,
-          paymentMethod: payload.paymentMethod,
-          notes: payload.notes,
-          createdAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString(),
-          status: 'active',
-          isOffline: !err.response,
-          isLocalFallback: status === 404,
-        };
-        saveStoredSubscription(offlineRecord);
-        return { success: true, isFallback: true, record: offlineRecord };
-      }
-
       const customError = new Error(errorMsg);
       customError.status = status;
       customError.response = err.response;
@@ -1711,77 +1291,14 @@ export const subscriptionService = {
   },
 };
 
-const DEFAULT_TRAINERS = [
-  {
-    id: 1,
-    trainerId: 1,
-    employeeId: 1,
-    userId: 2,
-    name: 'كابتن أحمد محمد (Trainer Ahmed)',
-    email: 'trainer@project.com',
-    phoneNumber: '+201234567893',
-    yearsOfExperience: 3,
-    specialty: 'كمال أجسام وتضخيم عضلي',
-    badge: 'كابتن معتمد',
-    bio: 'مدرب محترف متخصص في برامج التضخيم العضلي والتحضير للبطولات والأنظمة الغذائية الدقيقة.',
-    rating: 4.9,
-    clientsCount: 48,
-  },
-  {
-    id: 2,
-    trainerId: 2,
-    employeeId: 2,
-    userId: 3,
-    name: 'كابتن محمود الصياد',
-    email: 'sayed.coach@project.com',
-    phoneNumber: '+201099887766',
-    yearsOfExperience: 5,
-    specialty: 'قوة بدنية وPowerlifting',
-    badge: 'كابتن معتمد',
-    bio: 'بطل رفع أثقال ومتخصص في زيادة القوة الانفجارية وتحسين التكنيك للأوزان الحرة والحديد.',
-    rating: 5.0,
-    clientsCount: 62,
-  },
-  {
-    id: 3,
-    trainerId: 3,
-    employeeId: 3,
-    userId: 4,
-    name: 'كابتن سارة النجار',
-    email: 'sara.coach@project.com',
-    phoneNumber: '+201122334455',
-    yearsOfExperience: 4,
-    specialty: 'فتنس وتخسيس وإعداد بدني',
-    badge: 'كابتن معتمد',
-    bio: 'أخصائية لياقة بدنية وتخسيس وبرامج حرق الدهون المتقدمة ونحت القوام للسيدات والرجال.',
-    rating: 4.8,
-    clientsCount: 55,
-  },
-  {
-    id: 4,
-    trainerId: 4,
-    employeeId: 4,
-    userId: 5,
-    name: 'كابتن إسلام الشبح',
-    email: 'eslam.coach@project.com',
-    phoneNumber: '+201555667788',
-    yearsOfExperience: 6,
-    specialty: 'كروس فيت ولياقة وظيفية (CrossFit)',
-    badge: 'كابتن معتمد',
-    bio: 'مدرب لياقة بدنية عالي الشدة (HIIT) وكارديو قتالي لرفع اللياقة القلبية والتحمل العضلي.',
-    rating: 4.9,
-    clientsCount: 70,
-  },
-];
-
 /**
  * Trainers Service Module
- * Handles GET /api/Trainers with pagination, search, and athletic enrichment.
+ * Handles GET /api/Trainers with pagination, search, and dynamic athletic attributes.
  */
 export const trainerService = {
   /**
    * GET /api/Trainers
-   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
   async getTrainers({ pageNumber = 1, pageSize = 8, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
@@ -1805,49 +1322,29 @@ export const trainerService = {
         totalCount = list.length;
       }
 
-      // Enrich trainers with athletic defaults if missing fields
-      const enriched = list.map((t, idx) => {
-        const fallback =
-          DEFAULT_TRAINERS.find((dt) => dt.id === t.id || dt.email === t.email) ||
-          DEFAULT_TRAINERS[idx % DEFAULT_TRAINERS.length];
+      // Format dynamic trainer profiles from real backend data
+      const formatted = list.map((t) => {
+        const exp = Number(t.yearsOfExperience) || 1;
         return {
-          ...fallback,
           ...t,
-          specialty: t.specialty || fallback.specialty,
-          badge: t.badge || fallback.badge,
-          bio: t.bio || fallback.bio,
-          rating: t.rating || fallback.rating,
-          clientsCount: t.clientsCount || fallback.clientsCount,
+          specialty: t.specialty || (exp >= 5 ? 'إعداد بدني وقوة ولياقة شاملة' : 'كمال أجسام وتدريب وظيفي'),
+          badge: t.badge || (exp >= 5 ? 'كابتن أول معتمد' : 'كابتن معتمد'),
+          bio: t.bio || `مدرب معتمد بصالة WOLVES بخبرة ${exp} سنوات في إعداد البرامج التدريبية ومتابعة المتدربين.`,
+          rating: t.rating || 5.0,
+          clientsCount: t.clientsCount || null,
         };
       });
 
       return {
-        data: enriched,
-        totalCount: totalCount ?? enriched.length,
+        data: formatted,
+        totalCount: totalCount ?? formatted.length,
         currentPage: payload?.currentPage ?? pageNumber,
-        totalPages: payload?.totalPages ?? (Math.ceil((totalCount ?? enriched.length) / pageSize) || 1),
+        totalPages: payload?.totalPages ?? (Math.ceil((totalCount ?? formatted.length) / pageSize) || (formatted.length > 0 ? 1 : 0)),
         pageSize: payload?.pageSize ?? pageSize,
       };
     } catch (err) {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
-      console.warn('GET /api/Trainers error, returning fallback trainers:', err.message);
-      let filtered = [...DEFAULT_TRAINERS];
-      if (search && search.trim()) {
-        const q = search.trim().toLowerCase();
-        filtered = filtered.filter(
-          (t) =>
-            (t.name || '').toLowerCase().includes(q) ||
-            (t.specialty || '').toLowerCase().includes(q)
-        );
-      }
-      return {
-        data: filtered,
-        totalCount: filtered.length,
-        currentPage: pageNumber,
-        totalPages: Math.ceil(filtered.length / pageSize) || 1,
-        pageSize,
-        isFallback: true,
-      };
+      throw err;
     }
   },
 };

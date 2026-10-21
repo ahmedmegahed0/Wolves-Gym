@@ -58,24 +58,17 @@ export const LockerModal = ({
       try {
         const data = await lockerService.getLockers();
         if (isMounted) {
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setLockers(data);
           } else {
-            // Fallback generation only if gym has zero lockers registered
-            const fallback = Array.from({ length: 36 }, (_, i) => {
-              const id = i + 1;
-              return {
-                id,
-                number: id,
-                isActive: true,
-                isAvailable: true,
-              };
-            });
-            setLockers(fallback);
+            setLockers([]);
           }
         }
       } catch (err) {
-        console.warn('LockerModal fetch error, keeping existing lockers:', err);
+        console.warn('LockerModal fetch error:', err);
+        if (isMounted) {
+          setError(err.friendlyMessage || 'تعذر تحميل اللوكرات من السيرفر');
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -270,7 +263,16 @@ export const LockerModal = ({
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center text-zinc-400 space-y-2">
                 <AlertCircle className="w-8 h-8 text-zinc-500" />
-                <p className="text-xs font-bold">لا توجد لوكرات مطابقة للبحث أو الفلتر المحدد</p>
+                <p className="text-xs font-bold text-white">
+                  {activeLockers.length === 0
+                    ? 'لا توجد لوكرات مسجلة في النظام بعد'
+                    : 'لا توجد لوكرات مطابقة للبحث أو الفلتر المحدد'}
+                </p>
+                {activeLockers.length === 0 && (
+                  <p className="text-[11px] text-zinc-500 max-w-xs">
+                    يمكنك إضافة دواليب جديدة من لوحة تحكم وإدارة اللوكرات.
+                  </p>
+                )}
               </div>
             )}
           </div>

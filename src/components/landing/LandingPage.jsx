@@ -14,6 +14,8 @@ import {
   Mail,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  CheckCircle2,
   Star,
   Zap,
   Heart,
@@ -24,8 +26,9 @@ import {
   Target,
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
+import logoEmblem from '../../assets/logo-emblem.png';
 import gymBg from '../../assets/gym-bg.jpg';
-import { packageService, trainerService } from '../../services/apiClient';
+import { packageService, trainerService, attendanceService } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
 /* ═══════════════════════════════════════════
@@ -230,127 +233,296 @@ const Navbar = ({ onNavigate }) => {
 
 
 /* ═══════════════════════════════════════════
-   2. HERO SECTION – Cinematic Minimal
+   2. HERO SECTION – Cinematic 2-Column Luxury
    ═══════════════════════════════════════════ */
 const HeroSection = () => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+
+  const [occupancy, setOccupancy] = useState(0);
+  const [trainersCount, setTrainersCount] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.allSettled([
+      attendanceService.getCurrentOccupancy(),
+      trainerService.getTrainers({ pageNumber: 1, pageSize: 1 })
+    ]).then(([occRes, trainRes]) => {
+      if (!isMounted) return;
+      if (occRes.status === 'fulfilled' && occRes.value) {
+        const count = typeof occRes.value.count === 'number' 
+          ? occRes.value.count 
+          : (typeof occRes.value.currentOccupancy === 'number' ? occRes.value.currentOccupancy : 0);
+        setOccupancy(count);
+      }
+      if (trainRes.status === 'fulfilled' && trainRes.value && typeof trainRes.value.totalCount === 'number') {
+        setTrainersCount(trainRes.value.totalCount);
+      }
+    }).catch(() => {});
+
+    return () => { isMounted = false; };
+  }, []);
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const stats = [
-    { value: '+15', label: 'كابتن معتمد', icon: Users },
-    { value: '99%', label: 'رضاء الوحوش', icon: Heart },
-    { value: '+50', label: 'جهاز دولي', icon: Dumbbell },
-  ];
-
   return (
-    <section ref={ref} id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <motion.div style={{ y: bgY }} className="absolute inset-0 -top-20">
-        <img src={gymBg} alt="" className="w-full h-[120%] object-cover filter brightness-[0.18] grayscale-[30%] contrast-125" />
+    <section ref={ref} id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28 pb-12 sm:pb-16">
+      {/* Background with parallax */}
+      <motion.div style={{ y: bgY }} className="absolute inset-0 -top-20 pointer-events-none">
+        <img src={gymBg} alt="" className="w-full h-[120%] object-cover filter brightness-[0.16] grayscale-[25%] contrast-125" />
       </motion.div>
 
-      {/* Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/50 via-transparent to-[#080808]" />
-      {/* Gold radial spotlight - responsive without horizontal overflow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[90vw] max-w-[650px] h-[90vw] max-h-[650px] bg-amber-500/[0.04] rounded-full blur-3xl pointer-events-none" />
+      {/* Atmospheric Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/70 via-transparent to-[#080808] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[90vw] max-w-[700px] h-[90vw] max-h-[700px] bg-amber-500/[0.05] rounded-full blur-3xl pointer-events-none" />
 
-      {/* Content */}
+      {/* Hero Container */}
       <motion.div
         style={{ opacity }}
         dir="rtl"
-        className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pt-24 sm:pt-32 pb-16"
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
       >
-        {/* Subtle pre-title */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.7 }}
-          className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold mb-6 sm:mb-8"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>كتيبة الذئاب الرياضية</span>
-        </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          
+          {/* Right Column: Hero Content */}
+          <div className="lg:col-span-7 text-right">
+            {/* Elite Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-black mb-5 shadow-[0_0_20px_rgba(245,158,11,0.15)]"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>BE THE WOLF • النادي الرياضي الأقوى</span>
+            </motion.div>
 
-        {/* Main Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.8 }}
-          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight text-white mb-4 sm:mb-6"
-        >
-          أيقظ{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-l from-amber-400 via-yellow-300 to-amber-500">
-            الوحش
-          </span>{' '}
-          الذي بداخلك
-        </motion.h1>
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.6 }}
+              className="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.12] mb-4 tracking-tight"
+            >
+              أيقظ{' '}
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-l from-amber-400 via-yellow-300 to-amber-500 drop-shadow-[0_0_35px_rgba(245,158,11,0.4)]">
+                الوحش
+              </span>{' '}
+              الذي بداخلك
+            </motion.h1>
 
-        {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, duration: 0.7 }}
-          className="text-sm sm:text-base md:text-lg text-zinc-400 font-semibold max-w-xl mx-auto mb-8 sm:mb-10 px-2"
-        >
-          القوة، الانضباط، والجسد المثالي يبدأ هنا في WOLVES GYM
-        </motion.p>
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.5 }}
+              className="text-base sm:text-xl text-zinc-300 font-bold mb-6 tracking-wide"
+            >
+              حيث تُصنع القوة، ويبدأ التحول الحقيقي.
+            </motion.p>
 
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.7 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto sm:max-w-none"
-        >
-          <button
-            onClick={() => scrollTo('packages')}
-            className="w-full sm:w-auto px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-l from-amber-500 via-yellow-400 to-amber-600 text-black text-sm sm:text-base font-black shadow-[0_0_30px_rgba(245,158,11,0.35)] hover:shadow-[0_0_50px_rgba(245,158,11,0.55)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            <Crown className="w-5 h-5" />
-            <span>اشترك الآن</span>
-          </button>
-          <button
-            onClick={() => scrollTo('highlights')}
-            className="w-full sm:w-auto px-8 py-3.5 sm:py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-sm sm:text-base font-bold border border-white/10 hover:border-amber-500/30 backdrop-blur transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
-          >
-            <Zap className="w-4 h-4 text-amber-400" />
-            <span>استكشف التجربة</span>
-          </button>
-        </motion.div>
-
-        {/* Floating Stats Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="mt-12 sm:mt-20 flex items-center justify-center gap-2.5 sm:gap-6 flex-wrap"
-        >
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <div key={i} className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400/80 flex-shrink-0" />
-                <div className="text-right">
-                  <div className="text-base sm:text-xl font-black text-white font-mono">{stat.value}</div>
-                  <div className="text-[10px] sm:text-xs text-zinc-500 font-bold">{stat.label}</div>
-                </div>
+            {/* Live Energy Wave Equalizer Indicator */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
+              className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-2xl bg-[#141417]/85 border border-white/[0.08] text-xs font-bold text-zinc-300 mb-6 backdrop-blur-md shadow-lg"
+            >
+              <div className="flex items-center gap-0.5 h-3.5">
+                {[40, 100, 60, 90, 50].map((h, i) => (
+                  <motion.span
+                    key={i}
+                    animate={{ height: ['4px', `${h}%`, '4px'] }}
+                    transition={{ repeat: Infinity, duration: 0.7 + i * 0.12, ease: 'easeInOut' }}
+                    className="w-1 bg-amber-400 rounded-full"
+                  />
+                ))}
               </div>
-            );
-          })}
+              <span>
+                الصالة تعمل بكامل طاقتها •{' '}
+                <strong className="text-white font-mono">
+                  {occupancy > 0 ? `${occupancy} وحش` : 'مجهزة بالكامل'}
+                </strong>{' '}
+                في التمرين
+              </span>
+            </motion.div>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.5 }}
+              className="flex flex-col sm:flex-row items-center gap-3.5 mb-8"
+            >
+              <button
+                type="button"
+                onClick={() => scrollTo('packages')}
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-l from-amber-500 via-yellow-400 to-amber-600 text-black text-sm font-black shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:shadow-[0_0_45px_rgba(245,158,11,0.6)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Crown className="w-4 h-4" />
+                <span>اشترك الآن</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo('highlights')}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white text-sm font-bold border border-white/[0.1] hover:border-amber-500/40 backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>استكشف النادي</span>
+              </button>
+            </motion.div>
+
+            {/* Quick Metrics Bar with interactive hover animation */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.6 }}
+              className="grid grid-cols-3 gap-3 max-w-md"
+            >
+              {[
+                { number: '+120', label: 'جهاز دولي', icon: Dumbbell, color: 'text-amber-400' },
+                { 
+                  number: trainersCount !== null ? (trainersCount > 0 ? `+${trainersCount}` : `${trainersCount}`) : 'نخبة', 
+                  label: 'كابتن معتمد', 
+                  icon: Award, 
+                  color: 'text-yellow-400' 
+                },
+                { number: '99.4%', label: 'تقييم الوحوش', icon: Star, color: 'text-amber-300' },
+              ].map((stat, i) => {
+                const Icon = stat.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    whileHover={{ y: -5, scale: 1.04 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                    className="relative p-3.5 rounded-2xl bg-[#111114]/90 border border-white/[0.06] hover:border-amber-500/40 transition-all text-center group cursor-default shadow-lg overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-b from-amber-500/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Icon className={`w-4 h-4 ${stat.color} mx-auto mb-1 group-hover:rotate-12 transition-transform duration-300`} />
+                    <div className="text-lg sm:text-xl font-black text-white font-mono">{stat.number}</div>
+                    <div className="text-[10px] sm:text-[11px] text-zinc-400 font-semibold mt-0.5">{stat.label}</div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </div>
+
+          {/* Left Column: Official Logo Emblem (With 3D floating effect and glowing rings) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.25, duration: 0.8 }}
+            className="lg:col-span-5 relative flex items-center justify-center mt-6 lg:mt-0"
+          >
+            {/* Glowing Ring Backdrops */}
+            <div className="absolute w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] rounded-full bg-gradient-to-tr from-amber-500/25 via-yellow-500/10 to-transparent blur-3xl animate-pulse pointer-events-none" />
+            <div className="absolute inset-0 border border-amber-500/20 rounded-3xl rotate-3 scale-95 pointer-events-none" />
+
+            {/* Main Floating Logo Card */}
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
+              className="relative w-full max-w-md rounded-3xl overflow-hidden border border-amber-500/35 bg-[#0d0d10]/95 shadow-[0_25px_65px_rgba(0,0,0,0.95)] p-4 group"
+            >
+              <div className="relative rounded-2xl overflow-hidden aspect-square bg-[#070709] border border-white/[0.05] flex items-center justify-center p-6">
+                {/* Radial golden glow behind the emblem */}
+                <div className="absolute inset-0 bg-radial-gradient from-amber-500/20 via-transparent to-transparent blur-2xl pointer-events-none" />
+
+                <motion.img
+                  src={logoEmblem}
+                  alt="BE THE WOLF Official Logo Emblem"
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full h-full object-contain filter drop-shadow-[0_0_40px_rgba(245,158,11,0.55)] cursor-pointer"
+                />
+              </div>
+
+              {/* Floating Badge 1: Top Left */}
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
+                className="absolute top-6 left-6 sm:top-7 sm:left-7 px-3.5 py-2 rounded-2xl bg-black/85 backdrop-blur-xl border border-amber-500/40 shadow-2xl flex items-center gap-2.5"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                  <Flame className="w-4 h-4 text-amber-400 fill-amber-400/20 animate-pulse" />
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-zinc-400 font-bold">معدل الحرق</div>
+                  <div className="text-xs font-black text-amber-400 font-mono">+850 ك/س</div>
+                </div>
+              </motion.div>
+
+              {/* Floating Badge 2: Bottom Right */}
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ repeat: Infinity, duration: 3.8, ease: 'easeInOut', delay: 0.4 }}
+                className="absolute bottom-6 right-6 sm:bottom-7 sm:right-7 px-3.5 py-2 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/[0.15] shadow-2xl flex items-center gap-2.5"
+              >
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-zinc-400 font-bold">نظام الدخول</div>
+                  <div className="text-xs font-black text-white">بصمة QR ذكية</div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
+        </div>
+
+        {/* Animated Scroll Down Indicator Cue */}
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+          onClick={() => scrollTo('highlights')}
+          className="flex flex-col items-center gap-1 cursor-pointer mt-10 sm:mt-12 group select-none"
+        >
+          <span className="text-[11px] font-black tracking-widest text-zinc-500 group-hover:text-amber-400 transition-colors uppercase">
+            استكشف تجربة النادي
+          </span>
+          <ChevronDown className="w-4 h-4 text-amber-400 group-hover:translate-y-1 transition-transform" />
         </motion.div>
       </motion.div>
-
-      {/* Bottom Fade */}
-      <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none" />
     </section>
+  );
+};
+
+
+/* ═══════════════════════════════════════════
+   3. LIVE ENERGY TICKER (Moving Marquee Strip)
+   ═══════════════════════════════════════════ */
+const EnergyTicker = () => {
+  const items = [
+    { text: 'انضم لأقوى مجتمع وحوش في مصر', icon: '🐺' },
+    { text: 'باقة الذئب الذهبي: تشمل ساونا وبخار مجاناً', icon: '⚡' },
+    { text: 'كباتن معتمدون دولياً وخبرة بطولات IFBB Pro', icon: '🏆' },
+    { text: 'قياسات InBody 770 دورية وتحليل نسبة الدهون', icon: '🔥' },
+    { text: 'دخول VIP ذكي على مدار 24 ساعة بدون انقطاع', icon: '👑' },
+    { text: 'بار بروتين ومشروبات طاقة صحية وصالة استرخاء', icon: '🥤' },
+  ];
+
+  return (
+    <div dir="rtl" className="relative py-3.5 bg-gradient-to-r from-amber-500/10 via-yellow-500/15 to-amber-500/10 border-y border-amber-500/25 overflow-hidden select-none">
+      <div className="flex gap-6 whitespace-nowrap animate-marquee">
+        {[...items, ...items, ...items].map((item, idx) => (
+          <div
+            key={idx}
+            className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#111115]/80 border border-amber-500/25 text-xs sm:text-sm font-black text-amber-300 hover:border-amber-400 transition-colors shadow-sm"
+          >
+            <span className="text-base">{item.icon}</span>
+            <span>{item.text}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 mr-1.5" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -519,15 +691,29 @@ const PackagesSection = () => {
 
         {/* Packages Grid: 1 col on mobile -> 2 cols on tablet -> 3 cols on desktop */}
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
-              <span className="text-xs text-zinc-500 font-bold">جاري تحميل الباقات...</span>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-3xl bg-[#0d0d0f] border border-zinc-800/80 p-6 sm:p-7 space-y-4 animate-pulse">
+                <div className="h-5 w-28 bg-zinc-800 rounded" />
+                <div className="h-4 w-20 bg-zinc-800/60 rounded" />
+                <div className="h-8 w-32 bg-zinc-800 rounded-lg" />
+                <div className="space-y-2 pt-2 border-t border-zinc-800/60">
+                  <div className="h-3.5 w-full bg-zinc-800/40 rounded" />
+                  <div className="h-3.5 w-4/5 bg-zinc-800/40 rounded" />
+                </div>
+                <div className="h-11 bg-zinc-800 rounded-2xl" />
+              </div>
+            ))}
           </div>
         ) : packages.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-zinc-500 text-sm font-bold">لا توجد باقات متاحة حالياً</p>
+          <div className="text-center py-14 px-4 bg-zinc-950/60 rounded-3xl border border-amber-500/20 max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 shadow-gold-glow">
+              <Crown className="w-7 h-7" />
+            </div>
+            <h3 className="text-base sm:text-lg font-black text-white mb-1">لا توجد باقات متاحة الآن</h3>
+            <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+              سيتم الإعلان عن خطط الاشتراك الجديدة لصالة WOLVES قريباً. تفضل بزيارة مكتب الاستقبال للاستفسارات الفورية.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
@@ -675,12 +861,25 @@ const TrainersShowcase = () => {
 
         {/* Carousel */}
         {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-12 h-12 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
+          <div className="flex gap-4 overflow-hidden px-1 py-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex-shrink-0 w-60 sm:w-64 rounded-3xl bg-[#111113]/80 border border-white/[0.04] p-5 sm:p-6 space-y-4 animate-pulse">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-zinc-800" />
+                <div className="h-4 w-32 bg-zinc-800 rounded mx-auto" />
+                <div className="h-3 w-24 bg-zinc-800/60 rounded mx-auto" />
+                <div className="h-8 bg-zinc-800 rounded-xl" />
+              </div>
+            ))}
           </div>
         ) : trainers.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-zinc-500 text-sm font-bold">سيتم عرض الكباتن قريباً</p>
+          <div className="text-center py-14 px-4 bg-zinc-950/60 rounded-3xl border border-amber-500/20 max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 shadow-gold-glow">
+              <Dumbbell className="w-7 h-7" />
+            </div>
+            <h3 className="text-base sm:text-lg font-black text-white mb-1">لا يوجد كباتن مسجلين حالياً</h3>
+            <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+              يتم تحديث قائمة مدربي كتيبة الذئاب. ترقبوا الإعلان عن الطاقم التدريبي الجديد.
+            </p>
           </div>
         ) : (
           <div className="relative">
@@ -870,6 +1069,7 @@ const LandingPage = () => {
     <div className="bg-[#080808] text-white font-cairo selection:bg-amber-500 selection:text-black overflow-x-hidden">
       <Navbar />
       <HeroSection />
+      <EnergyTicker />
       <HighlightsSection />
       <PackagesSection />
       <TrainersShowcase />

@@ -291,16 +291,39 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
 
             <tbody className="divide-y divide-zinc-800/60">
               {loading && packages.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-5 py-16 text-center text-zinc-400 font-bold">
-                    <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin mx-auto mb-2" />
-                    جاري تحميل جدول باقات الإدارة...
-                  </td>
-                </tr>
+                [1, 2, 3, 4, 5].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-5 py-4"><div className="h-4 w-10 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-32 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-16 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-20 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-40 bg-zinc-800/60 rounded" /></td>
+                    <td className="px-5 py-4 text-center"><div className="h-6 w-14 bg-zinc-800 rounded-full mx-auto" /></td>
+                    <td className="px-5 py-4 text-left"><div className="h-7 w-24 bg-zinc-800 rounded-xl mr-auto" /></td>
+                  </tr>
+                ))
               ) : packages.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-12 text-center text-zinc-500">
-                    لا توجد باقات حالياً. انقر على "+ إضافة باقة جديدة" لإنشاء أول باقة!
+                  <td colSpan="7" className="px-5 py-16 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3 shadow-gold-glow">
+                      <Crown className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-sm sm:text-base font-black text-white mb-1">
+                      {search ? 'لا توجد باقات تطابق البحث' : 'لا توجد باقات مسجلة في النظام بعد!'}
+                    </h3>
+                    <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-4">
+                      {search ? 'جرّب كتابة كلمات بحث أخرى أو مسح حقل البحث.' : 'ابدأ بإنشاء أول باقة اشتراك رياضية لصالة WOLVES لتظهر للأعضاء.'}
+                    </p>
+                    {!search && (
+                      <button
+                        type="button"
+                        onClick={handleOpenCreate}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>إضافة أول باقة</span>
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (

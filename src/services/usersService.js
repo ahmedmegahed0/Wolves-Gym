@@ -43,24 +43,8 @@ export const usersService = {
       if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
         throw err;
       }
-      console.warn('GET check-email-availability error, using resilient check:', err.message);
-      // Resilient fallback check against known accounts
-      const existingEmails = [
-        'trainer@project.com',
-        'reception@project.com',
-        'admin@wolves.com',
-        'manager@wolves.com',
-        'sayed.coach@project.com',
-        'sara.coach@project.com',
-        'eslam.coach@project.com',
-      ];
-      try {
-        const localUser = getUserInfo();
-        if (localUser?.email) existingEmails.push(localUser.email.toLowerCase());
-      } catch {}
-      const fallbackAvailable = !existingEmails.includes(cleanEmail);
-      emailAvailabilityCache.set(cleanEmail, fallbackAvailable);
-      return { isAvailable: fallbackAvailable };
+      console.warn('GET check-email-availability error:', err.message);
+      return { isAvailable: true };
     }
   },
 

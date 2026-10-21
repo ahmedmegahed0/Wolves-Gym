@@ -89,13 +89,13 @@ export const CustomerDashboard = () => {
         const raw = profileRes.value;
         const normalized = {
           ...raw,
-          name: raw.name || raw.Name || user?.name || 'وحش الجيم',
+          name: raw.name || raw.Name || user?.name || 'عضو الجيم',
           phoneNumber: raw.phoneNumber || raw.PhoneNumber || user?.phoneNumber || '',
-          code: raw.code || raw.Code || 'WOLF-MEMBER',
-          height: Number(raw.height || raw.Height || 180),
-          weight: Number(raw.weight || raw.Weight || 82),
-          musclePercentage: Number(raw.musclePercentage || raw.MusclePercentage || 45),
-          fatPercentage: Number(raw.fatPercentage || raw.FatPercentage || 14),
+          code: raw.code || raw.Code || user?.code || null,
+          height: (raw.height && Number(raw.height) > 0) ? Number(raw.height) : ((raw.Height && Number(raw.Height) > 0) ? Number(raw.Height) : null),
+          weight: (raw.weight && Number(raw.weight) > 0) ? Number(raw.weight) : ((raw.Weight && Number(raw.Weight) > 0) ? Number(raw.Weight) : null),
+          musclePercentage: (raw.musclePercentage && Number(raw.musclePercentage) > 0) ? Number(raw.musclePercentage) : ((raw.MusclePercentage && Number(raw.MusclePercentage) > 0) ? Number(raw.MusclePercentage) : null),
+          fatPercentage: (raw.fatPercentage && Number(raw.fatPercentage) > 0) ? Number(raw.fatPercentage) : ((raw.FatPercentage && Number(raw.FatPercentage) > 0) ? Number(raw.FatPercentage) : null),
           injuries: raw.injuries || raw.Injuries || '',
           chronicDiseases: raw.chronicDiseases || raw.ChronicDiseases || '',
           notes: raw.notes || raw.Notes || '',
@@ -110,21 +110,21 @@ export const CustomerDashboard = () => {
         try {
           const activeList = JSON.parse(localStorage.getItem('gym_active_members') || '[]');
           const memberCode = normalized.code;
-          const inside = activeList.find((m) => m.code === memberCode);
+          const inside = memberCode ? activeList.find((m) => m.code === memberCode) : null;
           setActiveSession(inside || null);
         } catch {
           setActiveSession(null);
         }
       } else {
-        // Fallback for member view
+        // Fallback with real user auth data without fake measurements
         setProfile({
-          name: user?.name || 'Customer User',
-          phoneNumber: user?.phoneNumber || '01234567892',
-          code: 'WOLF-MEMBER',
-          height: 180,
-          weight: 82,
-          musclePercentage: 45.0,
-          fatPercentage: 14.0,
+          name: user?.name || 'عضو الجيم',
+          phoneNumber: user?.phoneNumber || '',
+          code: user?.code || null,
+          height: null,
+          weight: null,
+          musclePercentage: null,
+          fatPercentage: null,
           approvalStatus: 1,
           isActive: true,
         });
@@ -357,7 +357,7 @@ export const CustomerDashboard = () => {
             >
               <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs text-zinc-400 font-mono">
                 <span>{profile?.name || user?.name || 'عضو الجيم'}</span>
-                <span className="text-amber-400 font-bold">{profile?.code || 'WOLF-MEMBER'}</span>
+                <span className="text-amber-400 font-bold">{profile?.code || user?.code || 'في انتظار الكود'}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1">
@@ -617,15 +617,17 @@ export const CustomerDashboard = () => {
                     <span className="text-[10px] text-zinc-400 block">كود الوحش للدخول والاستقبال:</span>
                     <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                       <span className="text-lg sm:text-2xl font-mono font-black text-amber-400 tracking-wider sm:tracking-widest truncate">
-                        {profile?.code || 'WOLF-MEMBER'}
+                        {profile?.code || user?.code || 'في انتظار تعيين الكود'}
                       </span>
-                      <button
-                        onClick={handleCopyCode}
-                        className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0"
-                        title="نسخ الكود"
-                      >
-                        {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      </button>
+                      {(profile?.code || user?.code) && (
+                        <button
+                          onClick={handleCopyCode}
+                          className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
+                          title="نسخ الكود"
+                        >
+                          {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      )}
                     </div>
 
                     {/* Barcode Lines Graphics - Flexible and Responsive */}
@@ -791,11 +793,16 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                {bmi && (
+                {bmi ? (
                   <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-2 self-start sm:self-auto">
                     <span className="text-xs text-zinc-400">مؤشر BMI:</span>
                     <span className="text-sm font-black font-mono text-amber-400">{bmi}</span>
                     <span className={`text-xs font-bold ${bmiStatus.color}`}>({bmiStatus.label})</span>
+                  </div>
+                ) : (
+                  <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto">
+                    <Info className="w-3.5 h-3.5" />
+                    <span>يرجى تسجيل القياسات لحساب BMI</span>
                   </div>
                 )}
               </div>
@@ -803,57 +810,85 @@ export const CustomerDashboard = () => {
               {/* 4 Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
                 {/* Weight */}
-                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
                     <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                     <span className="text-[11px] sm:text-xs">الوزن الحالي</span>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
-                      {profile?.weight || '--'}
-                    </span>
-                    <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">كجم</span>
-                  </div>
+                  {profile?.weight ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-white">
+                        {profile.weight}
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">كجم</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 w-fit">
+                      <span>--</span>
+                      <span className="text-[10px] text-zinc-400">يرجى تسجيل القياسات</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Height */}
-                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
                     <Ruler className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                     <span className="text-[11px] sm:text-xs">الطول</span>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
-                      {profile?.height || '--'}
-                    </span>
-                    <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">سم</span>
-                  </div>
+                  {profile?.height ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-white">
+                        {profile.height}
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">سم</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 w-fit">
+                      <span>--</span>
+                      <span className="text-[10px] text-zinc-400">يرجى تسجيل القياسات</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Muscle Percentage */}
-                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
                     <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
                     <span className="text-[11px] sm:text-xs">نسبة العضلات</span>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-                      {profile?.musclePercentage ? `${profile.musclePercentage}%` : '--'}
-                    </span>
-                  </div>
+                  {profile?.musclePercentage ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
+                        {profile.musclePercentage}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 w-fit">
+                      <span>--</span>
+                      <span className="text-[10px] text-zinc-400">يرجى تسجيل القياسات</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Fat Percentage */}
-                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
                     <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                     <span className="text-[11px] sm:text-xs">نسبة الدهون</span>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
-                      {profile?.fatPercentage ? `${profile.fatPercentage}%` : '--'}
-                    </span>
-                  </div>
+                  {profile?.fatPercentage ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-white">
+                        {profile.fatPercentage}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 w-fit">
+                      <span>--</span>
+                      <span className="text-[10px] text-zinc-400">يرجى تسجيل القياسات</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
