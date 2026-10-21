@@ -33,6 +33,7 @@ import { useToast } from '../../context/ToastContext';
 import { customerService, attendanceService, STORAGE_KEYS } from '../../services/apiClient';
 import ChangePasswordModal from '../auth/ChangePasswordModal';
 import PackagesPricingGrid from '../packages/PackagesPricingGrid';
+import TrainersSection from '../trainers/TrainersSection';
 
 export const CustomerDashboard = () => {
   const { user, logout, isChangePasswordModalOpen, setIsChangePasswordModalOpen } = useAuth();
@@ -411,7 +412,7 @@ export const CustomerDashboard = () => {
             </motion.div>
 
             {/* Top Navigation Tabs for Customer: Profile & Pass vs Packages */}
-            <div className="flex items-center gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 max-w-md">
+            <div className="flex flex-wrap items-center gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 max-w-xl">
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
@@ -437,6 +438,19 @@ export const CustomerDashboard = () => {
                 <Crown className="w-3.5 h-3.5" />
                 <span>باقات وعضويات التدريب</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('trainers')}
+                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === 'trainers'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                }`}
+              >
+                <Dumbbell className="w-3.5 h-3.5" />
+                <span>كتيبة الكباتن</span>
+              </button>
             </div>
 
             {activeTab === 'packages' ? (
@@ -448,6 +462,16 @@ export const CustomerDashboard = () => {
                 className="pt-2"
               >
                 <PackagesPricingGrid isEmbedded={true} />
+              </motion.div>
+            ) : activeTab === 'trainers' ? (
+              <motion.div
+                key="customer-trainers-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="pt-2"
+              >
+                <TrainersSection isEmbedded={true} />
               </motion.div>
             ) : (
               <>

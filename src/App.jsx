@@ -5,6 +5,7 @@ import AttendanceDashboard from './components/AttendanceDashboard';
 import CustomerDashboard from './components/customers/CustomerDashboard';
 import LockersDashboard from './components/lockers/LockersDashboard';
 import PackagesDashboard from './components/packages/PackagesDashboard';
+import TrainersSection from './components/trainers/TrainersSection';
 import PendingApprovalPage from './components/dashboard/PendingApprovalPage';
 import UnderConstructionDashboard from './components/dashboard/UnderConstructionDashboard';
 import AuthContainer from './components/auth/AuthContainer';
@@ -79,6 +80,17 @@ function App() {
                 }
               />
               <Route path="/packages" element={<Navigate to="/dashboard/packages" replace />} />
+
+              {/* Trainers Showcase: Public and Dashboard routes */}
+              <Route
+                path="/trainers"
+                element={
+                  <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
+                    <TrainersSection />
+                  </div>
+                }
+              />
+              <Route path="/dashboard/trainers" element={<Navigate to="/trainers" replace />} />
 
               {/* Requirement 2 & 3: Customer Portal */}
               <Route

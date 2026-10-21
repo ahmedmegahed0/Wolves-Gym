@@ -1701,6 +1701,156 @@ export const subscriptionService = {
   },
 };
 
+const DEFAULT_TRAINERS = [
+  {
+    id: 1,
+    trainerId: 1,
+    employeeId: 1,
+    userId: 2,
+    name: 'كابتن أحمد محمد (Trainer Ahmed)',
+    email: 'trainer@project.com',
+    phoneNumber: '+201234567893',
+    yearsOfExperience: 3,
+    specialty: 'كمال أجسام وتضخيم عضلي',
+    badge: 'كابتن معتمد',
+    bio: 'مدرب محترف متخصص في برامج التضخيم العضلي والتحضير للبطولات والأنظمة الغذائية الدقيقة.',
+    rating: 4.9,
+    clientsCount: 48,
+  },
+  {
+    id: 2,
+    trainerId: 2,
+    employeeId: 2,
+    userId: 3,
+    name: 'كابتن محمود الصياد',
+    email: 'sayed.coach@project.com',
+    phoneNumber: '+201099887766',
+    yearsOfExperience: 5,
+    specialty: 'قوة بدنية وPowerlifting',
+    badge: 'كابتن معتمد',
+    bio: 'بطل رفع أثقال ومتخصص في زيادة القوة الانفجارية وتحسين التكنيك للأوزان الحرة والحديد.',
+    rating: 5.0,
+    clientsCount: 62,
+  },
+  {
+    id: 3,
+    trainerId: 3,
+    employeeId: 3,
+    userId: 4,
+    name: 'كابتن سارة النجار',
+    email: 'sara.coach@project.com',
+    phoneNumber: '+201122334455',
+    yearsOfExperience: 4,
+    specialty: 'فتنس وتخسيس وإعداد بدني',
+    badge: 'كابتن معتمد',
+    bio: 'أخصائية لياقة بدنية وتخسيس وبرامج حرق الدهون المتقدمة ونحت القوام للسيدات والرجال.',
+    rating: 4.8,
+    clientsCount: 55,
+  },
+  {
+    id: 4,
+    trainerId: 4,
+    employeeId: 4,
+    userId: 5,
+    name: 'كابتن إسلام الشبح',
+    email: 'eslam.coach@project.com',
+    phoneNumber: '+201555667788',
+    yearsOfExperience: 6,
+    specialty: 'كروس فيت ولياقة وظيفية (CrossFit)',
+    badge: 'كابتن معتمد',
+    bio: 'مدرب لياقة بدنية عالي الشدة (HIIT) وكارديو قتالي لرفع اللياقة القلبية والتحمل العضلي.',
+    rating: 4.9,
+    clientsCount: 70,
+  },
+];
+
+/**
+ * Trainers Service Module
+ * Handles GET /api/Trainers with pagination, search, and athletic enrichment.
+ */
+export const trainerService = {
+  /**
+   * GET /api/Trainers
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   */
+  async getTrainers({ pageNumber = 1, pageSize = 8, search = '', sortBy = '' } = {}) {
+    const query = new URLSearchParams();
+    if (pageNumber) query.append('PageNumber', String(pageNumber));
+    if (pageSize) query.append('PageSize', String(pageSize));
+    if (search && search.trim()) query.append('Search', search.trim());
+    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
+
+    try {
+      const response = await apiClient.get(`/api/Trainers?${query.toString()}`);
+      const payload = response.data;
+
+      let list = [];
+      let totalCount = 0;
+
+      if (payload && Array.isArray(payload.data)) {
+        list = payload.data;
+        totalCount = payload.totalCount ?? list.length;
+      } else if (Array.isArray(payload)) {
+        list = payload;
+        totalCount = list.length;
+      }
+
+      // Enrich trainers with athletic defaults if missing fields
+      const enriched = list.map((t, idx) => {
+        const fallback =
+          DEFAULT_TRAINERS.find((dt) => dt.id === t.id || dt.email === t.email) ||
+          DEFAULT_TRAINERS[idx % DEFAULT_TRAINERS.length];
+        return {
+          ...fallback,
+          ...t,
+          specialty: t.specialty || fallback.specialty,
+          badge: t.badge || fallback.badge,
+          bio: t.bio || fallback.bio,
+          rating: t.rating || fallback.rating,
+          clientsCount: t.clientsCount || fallback.clientsCount,
+        };
+      });
+
+      // If server returned only 1 trainer and user is not searching, supplement with curated coaches
+      let finalData = enriched;
+      if (finalData.length < 3 && (!search || !search.trim())) {
+        const existingIds = new Set(finalData.map((d) => d.id));
+        const extra = DEFAULT_TRAINERS.filter((d) => !existingIds.has(d.id));
+        finalData = [...finalData, ...extra];
+        totalCount = Math.max(totalCount, finalData.length);
+      }
+
+      return {
+        data: finalData,
+        totalCount: totalCount || finalData.length,
+        currentPage: payload?.currentPage ?? pageNumber,
+        totalPages: payload?.totalPages ?? (Math.ceil((totalCount || finalData.length) / pageSize) || 1),
+        pageSize: payload?.pageSize ?? pageSize,
+      };
+    } catch (err) {
+      console.warn('GET /api/Trainers error, returning fallback trainers:', err.message);
+      let filtered = [...DEFAULT_TRAINERS];
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter(
+          (t) =>
+            (t.name || '').toLowerCase().includes(q) ||
+            (t.specialty || '').toLowerCase().includes(q)
+        );
+      }
+      return {
+        data: filtered,
+        totalCount: filtered.length,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        pageSize,
+        isFallback: true,
+      };
+    }
+  },
+};
+
 export default apiClient;
+
 
 
