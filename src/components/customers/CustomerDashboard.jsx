@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Flame, 
@@ -25,18 +26,22 @@ import {
   Crown,
   Sparkles,
   Phone,
-  Info
+  Info,
+  Home,
+  Menu,
+  X
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { customerService, attendanceService, STORAGE_KEYS } from '../../services/apiClient';
+import { customerService, attendanceService } from '../../services/apiClient';
 import ChangePasswordModal from '../auth/ChangePasswordModal';
 import PackagesPricingGrid from '../packages/PackagesPricingGrid';
 import TrainersSection from '../trainers/TrainersSection';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 
 export const CustomerDashboard = () => {
+  const navigate = useNavigate();
   const { 
     user, 
     logout, 
@@ -45,13 +50,14 @@ export const CustomerDashboard = () => {
     isProfileSettingsModalOpen,
     setIsProfileSettingsModalOpen
   } = useAuth();
-  const { success: toastSuccess, info: toastInfo } = useToast();
+  const { success: toastSuccess } = useToast();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'packages'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'packages' | 'trainers'
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Live gym occupancy
   const [occupancyData, setOccupancyData] = useState({
@@ -72,6 +78,7 @@ export const CustomerDashboard = () => {
 
   // Fetch Member Profile and Live Occupancy
   const loadMemberData = async () => {
+    if (typeof document !== 'undefined' && document.hidden) return;
     try {
       const [profileRes, occupancyRes] = await Promise.allSettled([
         customerService.getCustomerMe(),
@@ -144,7 +151,7 @@ export const CustomerDashboard = () => {
 
   useEffect(() => {
     loadMemberData();
-    // Auto refresh every 45s
+    // Auto refresh every 45s (pauses when backgrounded)
     const interval = setInterval(loadMemberData, 45000);
     return () => clearInterval(interval);
   }, []);
@@ -211,37 +218,51 @@ export const CustomerDashboard = () => {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#0a0a0a] text-white font-cairo flex flex-col selection:bg-amber-500 selection:text-black">
+    <div dir="rtl" className="min-h-screen bg-[#0a0a0a] text-white font-cairo flex flex-col selection:bg-amber-500 selection:text-black overflow-x-hidden">
       {/* Top Luxury Navbar */}
-      <header className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-amber-500/15 px-3 sm:px-6 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-amber-500/15 px-3 sm:px-6 py-2.5 sm:py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="relative group cursor-pointer">
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl p-0.5 bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-700 shadow-gold-glow flex items-center justify-center">
+          <div 
+            onClick={() => navigate('/')} 
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group/logo flex-shrink-0"
+            title="العودة للصفحة الرئيسية"
+          >
+            <div className="relative group">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl p-0.5 bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-700 shadow-gold-glow flex items-center justify-center">
                 <img
                   src={wolfLogo}
-                  alt="BE THE WOLF"
-                  className="w-full h-full object-contain rounded-xl sm:rounded-2xl bg-black p-1"
+                  alt="WOLVES"
+                  className="w-full h-full object-contain rounded-xl sm:rounded-2xl bg-black p-0.5 sm:p-1"
                 />
               </div>
             </div>
 
             <div>
-              <h1 className="text-base sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 leading-none">
-                BE THE WOLF
+              <h1 className="text-sm sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 leading-none group-hover/logo:text-amber-300">
+                WOLVES
               </h1>
-              <p className="text-[10px] sm:text-xs text-zinc-400 font-semibold mt-1 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                بوابة المشتركين والوحوش
+              <p className="text-[9px] sm:text-xs text-zinc-400 font-semibold mt-0.5 sm:mt-1 flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
+                <span className="truncate max-w-[120px] sm:max-w-none">بوابة المشتركين والوحوش</span>
               </p>
             </div>
           </div>
 
-          {/* User Status & Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Desktop User Status & Actions */}
+          <div className="hidden lg:flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 hover:border-amber-500/40 text-xs font-bold text-zinc-300 hover:text-amber-400 transition-all cursor-pointer shadow-sm"
+              title="الصفحة الرئيسية للجيم"
+            >
+              <Home className="w-3.5 h-3.5 text-amber-400" />
+              <span>الرئيسية</span>
+            </button>
+
             {/* Live Clock on desktop */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-zinc-300">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-zinc-300">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
               <span>
                 {currentTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
@@ -259,22 +280,10 @@ export const CustomerDashboard = () => {
 
             <button
               onClick={() => setIsChangePasswordModalOpen(true)}
-              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900 rounded-xl border border-zinc-800/80 transition-colors hidden sm:flex"
+              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900 rounded-xl border border-zinc-800/80 transition-colors"
               title="تغيير كلمة المرور"
             >
               <Key className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab(activeTab === 'packages' ? 'overview' : 'packages')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'packages'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
-                  : 'bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25'
-              }`}
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>باقات واشتراكات</span>
             </button>
 
             <button
@@ -286,7 +295,7 @@ export const CustomerDashboard = () => {
               <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-[11px] group-hover:scale-105 transition-transform">
                 {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
               </div>
-              <div className="text-right hidden sm:block">
+              <div className="text-right">
                 <span className="font-bold text-white block text-[11px] leading-tight group-hover:text-amber-300 transition-colors">
                   {profile?.name || user?.name || 'عضو الجيم'}
                 </span>
@@ -302,14 +311,99 @@ export const CustomerDashboard = () => {
               title="تسجيل الخروج"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">خروج</span>
+              <span>خروج</span>
+            </button>
+          </div>
+
+          {/* Mobile Right Controls: Refresh + Hamburger */}
+          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              className="p-2 text-zinc-400 hover:text-amber-400 bg-zinc-900/90 rounded-xl border border-zinc-800 active:scale-95 transition-all"
+              title="تحديث"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsProfileSettingsModalOpen(true)}
+              className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center font-mono text-xs active:scale-95 transition-all"
+              title="الملف الشخصي"
+            >
+              {profile?.name ? profile.name.slice(0, 1).toUpperCase() : 'W'}
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-amber-400 bg-zinc-900/90 rounded-xl border border-amber-500/30 active:scale-95 transition-all"
+              aria-label="القائمة"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Menu with Framer Motion */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="lg:hidden border-t border-amber-500/20 mt-2.5 pt-3 space-y-2 bg-black/95 backdrop-blur-2xl rounded-2xl p-3 border border-zinc-800"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs text-zinc-400 font-mono">
+                <span>{profile?.name || user?.name || 'عضو الجيم'}</span>
+                <span className="text-amber-400 font-bold">{profile?.code || 'WOLF-MEMBER'}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95"
+                >
+                  <Home className="w-3.5 h-3.5 text-amber-400" />
+                  <span>الرئيسية</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangePasswordModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95"
+                >
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  <span>تغيير كلمة المرور</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 text-xs font-bold active:scale-95 transition-all mt-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>تسجيل الخروج من الحساب</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6">
         
         {/* ============================================================== */}
         {/* CASE 1: PENDING APPROVAL (طلب قيد المراجعة) */}
@@ -318,12 +412,12 @@ export const CustomerDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="wolf-glass rounded-3xl p-6 sm:p-10 border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] relative overflow-hidden text-center max-w-2xl mx-auto my-8"
+            className="wolf-glass rounded-3xl p-5 sm:p-10 border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] relative overflow-hidden text-center max-w-2xl mx-auto my-4 sm:my-8"
           >
             <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600" />
             
-            <div className="w-20 h-20 rounded-3xl bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-5 shadow-gold-glow animate-pulse">
-              <Clock className="w-10 h-10" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4 sm:mb-5 shadow-gold-glow animate-pulse">
+              <Clock className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
 
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 inline-flex items-center gap-1.5 mb-3">
@@ -331,16 +425,16 @@ export const CustomerDashboard = () => {
               حسابك قيد المراجعة والاعتماد
             </span>
 
-            <h2 className="text-xl sm:text-3xl font-black text-white mb-3">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-white mb-2 sm:mb-3">
               أهلاً بك في كتيبة الذئاب يا {profile?.name || user?.name || 'بطل'}!
             </h2>
 
-            <p className="text-sm sm:text-base text-zinc-300 leading-relaxed max-w-lg mx-auto mb-6">
+            <p className="text-xs sm:text-sm md:text-base text-zinc-300 leading-relaxed max-w-lg mx-auto mb-5 sm:mb-6">
               تم استلام طلب اشتراكك بنجاح، ويقوم كباتن وموظفو الاستقبال بمراجعة بياناتك واعتماد عضويتك حالياً. 
               بمجرد التفعيل ستتمكن من مسح كود الدخول الخاص بك واستخدام اللوكر وبدء التمارين فوراً.
             </p>
 
-            <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800 text-right space-y-2 mb-6 max-w-md mx-auto text-xs sm:text-sm">
+            <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800 text-right space-y-2 mb-5 sm:mb-6 max-w-md mx-auto text-xs sm:text-sm">
               <div className="flex justify-between items-center text-zinc-400">
                 <span>اسم العضو:</span>
                 <span className="text-white font-bold">{profile?.name || user?.name}</span>
@@ -357,7 +451,7 @@ export const CustomerDashboard = () => {
 
             <button
               onClick={handleManualRefresh}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-sm shadow-gold-glow hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-xs sm:text-sm shadow-gold-glow hover:scale-105 active:scale-95 transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>فحص حالة التفعيل الآن</span>
@@ -372,23 +466,23 @@ export const CustomerDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="wolf-glass rounded-3xl p-6 sm:p-10 border border-rose-500/30 text-center max-w-2xl mx-auto my-8"
+            className="wolf-glass rounded-3xl p-5 sm:p-10 border border-rose-500/30 text-center max-w-2xl mx-auto my-4 sm:my-8"
           >
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4">
-              <AlertCircle className="w-8 h-8" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-4">
+              <AlertCircle className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-white mb-2">
+            <h2 className="text-lg sm:text-2xl font-black text-white mb-2">
               العضوية غير مفعلة حالياً
             </h2>
 
-            <p className="text-sm text-zinc-400 mb-6 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
               نعتذر منك، لم يتم تفعيل حسابك أو تم تعليق الاشتراك مؤقتاً. يرجى التوجه لمكتب استقبال الجيم للاستفسار وتحديث بياناتك.
             </p>
 
             <button
               onClick={handleManualRefresh}
-              className="px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
             >
               إعادة التحقق
             </button>
@@ -404,65 +498,65 @@ export const CustomerDashboard = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-500/10 via-zinc-900/50 to-zinc-900/30 border border-amber-500/20 rounded-2xl p-4 sm:p-5"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-500/10 via-zinc-900/50 to-zinc-900/30 border border-amber-500/20 rounded-2xl p-3.5 sm:p-5"
             >
               <div>
-                <span className="text-[11px] sm:text-xs font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] sm:text-xs font-bold text-amber-400 flex items-center gap-1.5 mb-1">
                   <Flame className="w-3.5 h-3.5" />
                   {getGreeting()}
                 </span>
-                <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
+                <h2 className="text-base sm:text-xl md:text-2xl font-black text-white tracking-tight">
                   مرحباً يا بطل، <span className="text-amber-400">{profile?.name || user?.name || 'الوحش'}</span> 🐺
                 </h2>
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-auto">
-                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" />
+                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] sm:text-xs font-black flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   عضو نشط ومعتمد
                 </span>
               </div>
             </motion.div>
 
-            {/* Top Navigation Tabs for Customer: Profile & Pass vs Packages */}
-            <div className="flex flex-wrap items-center gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 max-w-xl">
+            {/* Responsive Navigation Tabs for Customer: Profile & Pass vs Packages vs Trainers */}
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 w-full max-w-xl">
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'overview'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
-                <Activity className="w-3.5 h-3.5" />
-                <span>ملفي الرياضي والكارت</span>
+                <Activity className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">ملفي والكارت</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('packages')}
-                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'packages'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
-                <Crown className="w-3.5 h-3.5" />
-                <span>باقات وعضويات التدريب</span>
+                <Crown className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">الباقات</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('trainers')}
-                className={`flex-1 py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'trainers'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
-                <Dumbbell className="w-3.5 h-3.5" />
-                <span>كتيبة الكباتن</span>
+                <Dumbbell className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">الكباتن</span>
               </button>
             </div>
 
@@ -489,65 +583,65 @@ export const CustomerDashboard = () => {
             ) : (
               <>
                 {/* Quick Overview Grid: Digital Pass + Current Session + Gym Occupancy */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               
-              {/* 1. Digital Member Pass (بطاقة الوحش الرقمية) */}
+              {/* 1. Digital Member Pass (بطاقة الوحش الرقمية المتجاوبة تماماً) */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative rounded-3xl p-6 bg-gradient-to-br from-amber-600/30 via-zinc-900 to-black border-2 border-amber-500/40 shadow-gold-glow flex flex-col justify-between overflow-hidden group"
+                className="relative rounded-3xl p-4 sm:p-6 bg-gradient-to-br from-amber-600/30 via-zinc-900 to-black border-2 border-amber-500/40 shadow-gold-glow flex flex-col justify-between overflow-hidden group w-full"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none" />
 
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-black border border-amber-500/40 p-1 flex items-center justify-center">
                         <img src={wolfLogo} alt="Wolf" className="w-full h-full object-contain" />
                       </div>
-                      <span className="text-xs font-black tracking-wider text-amber-400">BE THE WOLF PASS</span>
+                      <span className="text-xs font-black tracking-wider text-amber-400">WOLVES PASS</span>
                     </div>
                     <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
                       VIP MEMBER
                     </span>
                   </div>
 
-                  <div className="space-y-1 mb-5">
-                    <span className="text-[11px] text-zinc-400">اسم الوحش:</span>
-                    <h3 className="text-lg font-black text-white">{profile?.name || user?.name}</h3>
+                  <div className="space-y-1 mb-4">
+                    <span className="text-[10px] sm:text-[11px] text-zinc-400">اسم الوحش:</span>
+                    <h3 className="text-base sm:text-lg font-black text-white truncate">{profile?.name || user?.name}</h3>
                   </div>
 
                   {/* Member Code Barcode Simulator */}
-                  <div className="bg-black/80 rounded-2xl p-4 border border-amber-500/30 text-center space-y-2">
+                  <div className="bg-black/80 rounded-2xl p-3 sm:p-4 border border-amber-500/30 text-center space-y-2">
                     <span className="text-[10px] text-zinc-400 block">كود الوحش للدخول والاستقبال:</span>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-xl sm:text-2xl font-mono font-black text-amber-400 tracking-widest">
+                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      <span className="text-lg sm:text-2xl font-mono font-black text-amber-400 tracking-wider sm:tracking-widest truncate">
                         {profile?.code || 'WOLF-MEMBER'}
                       </span>
                       <button
                         onClick={handleCopyCode}
-                        className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors"
+                        className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0"
                         title="نسخ الكود"
                       >
                         {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
 
-                    {/* Barcode Lines Graphics */}
-                    <div className="flex justify-center items-center gap-1 pt-1 opacity-75">
+                    {/* Barcode Lines Graphics - Flexible and Responsive */}
+                    <div className="flex justify-center items-center gap-0.5 sm:gap-1 pt-1 opacity-75 overflow-hidden">
                       {[4, 2, 6, 3, 5, 2, 4, 6, 2, 5, 3, 4, 6, 2, 5, 4, 2, 6].map((h, i) => (
                         <div
                           key={i}
-                          style={{ height: `${h * 4}px` }}
-                          className={`w-1 rounded-sm ${i % 2 === 0 ? 'bg-amber-400' : 'bg-zinc-600'}`}
+                          style={{ height: `${h * 3.5}px` }}
+                          className={`w-0.5 sm:w-1 rounded-sm ${i % 2 === 0 ? 'bg-amber-400' : 'bg-zinc-600'}`}
                         />
                       ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 mt-2 flex items-center justify-between text-[11px] text-zinc-500 border-t border-zinc-800/80">
+                <div className="pt-3 mt-2 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-500 border-t border-zinc-800/80">
                   <span>امسح الكود عند الريسبشن</span>
                   <span className="font-mono text-amber-400/80">Wolves Gym System</span>
                 </div>
@@ -558,32 +652,32 @@ export const CustomerDashboard = () => {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.05 }}
-                className="wolf-glass rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between"
+                className="wolf-glass rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
                         <KeyRound className="w-4 h-4" />
                       </div>
-                      <h3 className="text-sm font-bold text-white">حالة التواجد واللوكر</h3>
+                      <h3 className="text-xs sm:text-sm font-bold text-white">حالة التواجد واللوكر</h3>
                     </div>
                     {activeSession ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
                         داخل الجيم الآن 🔥
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-400">
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-zinc-800 text-zinc-400">
                         خارج الجيم
                       </span>
                     )}
                   </div>
 
                   {activeSession ? (
-                    <div className="space-y-4 my-2">
-                      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center">
+                    <div className="space-y-3 sm:space-y-4 my-2">
+                      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 sm:p-4 text-center">
                         <span className="text-xs text-zinc-400 block mb-1">لوكر التمارين المخصص لك:</span>
-                        <span className="text-3xl font-mono font-black text-amber-400 tracking-wider">
+                        <span className="text-2xl sm:text-3xl font-mono font-black text-amber-400 tracking-wider">
                           #{activeSession.lockerId}
                         </span>
                       </div>
@@ -594,15 +688,15 @@ export const CustomerDashboard = () => {
                             {new Date(activeSession.checkInTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <p className="text-[11px] text-amber-400/90 pt-1">
+                        <p className="text-[10px] sm:text-[11px] text-amber-400/90 pt-1 leading-relaxed">
                           عاش يا بطل! متنساش تعمل تسجيل خروج عند الريسبشن لما تخلص تمرينتك وتسلم مفتاح اللوكر.
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="py-6 text-center space-y-3">
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto">
-                        <Dumbbell className="w-6 h-6 text-amber-400/70" />
+                    <div className="py-4 sm:py-6 text-center space-y-2 sm:space-y-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto">
+                        <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400/70" />
                       </div>
                       <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
                         أنت مش مسجل دخول في الجيم دلوقتي. 
@@ -612,7 +706,7 @@ export const CustomerDashboard = () => {
                   )}
                 </div>
 
-                <div className="text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                <div className="text-[10px] sm:text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
                   <span>أمان اللوكرات مضمون</span>
                   <span className="text-amber-400 font-bold">Wolves Safety</span>
                 </div>
@@ -623,15 +717,15 @@ export const CustomerDashboard = () => {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
-                className="wolf-glass rounded-3xl p-6 border border-zinc-800 flex flex-col justify-between"
+                className="wolf-glass rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col justify-between md:col-span-2 lg:col-span-1"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
                         <Activity className="w-4 h-4" />
                       </div>
-                      <h3 className="text-sm font-bold text-white">نسبة إشغال الجيم الحالية</h3>
+                      <h3 className="text-xs sm:text-sm font-bold text-white">نسبة إشغال الجيم الحالية</h3>
                     </div>
                     <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -640,35 +734,35 @@ export const CustomerDashboard = () => {
                   </div>
 
                   <div className="py-2 text-center">
-                    <div className="relative inline-flex items-center justify-center my-2">
+                    <div className="relative inline-flex items-center justify-center my-1 sm:my-2">
                       {/* Circular Progress Indicator */}
-                      <div className="w-24 h-24 rounded-full border-4 border-zinc-800 flex items-center justify-center relative">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-zinc-800 flex items-center justify-center relative">
                         <div
                           className="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"
                           style={{ animationDuration: '8s' }}
                         />
                         <div className="text-center">
-                          <span className="text-2xl font-mono font-black text-amber-400">
+                          <span className="text-xl sm:text-2xl font-mono font-black text-amber-400">
                             {occupancyData.percentage}%
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-2 space-y-1">
-                      <h4 className="text-sm font-bold text-white">
+                    <div className="mt-1 sm:mt-2 space-y-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
                         {occupancyData.percentage < 40 && 'الجيم رايق وجاهز للتمرين 🔥'}
                         {occupancyData.percentage >= 40 && occupancyData.percentage < 75 && 'إشغال متوسط ومناسب للتمرين 💪'}
                         {occupancyData.percentage >= 75 && 'وقت ذروة (الجيم مليان طاقة) ⚡'}
                       </h4>
-                      <p className="text-xs text-zinc-400 font-mono">
+                      <p className="text-[11px] sm:text-xs text-zinc-400 font-mono">
                         {occupancyData.currentOccupancy} وحش يتمرنون الآن من أصل {occupancyData.maxCapacity}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                <div className="text-[10px] sm:text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
                   <span>تحديث حي كل 45 ثانية</span>
                   <span className="text-amber-400 font-bold">Live Tracker</span>
                 </div>
@@ -680,25 +774,25 @@ export const CustomerDashboard = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="wolf-glass rounded-3xl p-6 sm:p-7 border border-amber-500/20 relative overflow-hidden"
+              className="wolf-glass rounded-3xl p-4 sm:p-7 border border-amber-500/20 relative overflow-hidden"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                    <TrendingUp className="w-5 h-5" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-zinc-800">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-white">
+                    <h3 className="text-sm sm:text-lg font-black text-white">
                       مؤشرات اللياقة والقياسات البدنية
                     </h3>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-[11px] sm:text-xs text-zinc-400">
                       بياناتك المسجلة لمتابعة تطور لياقتك وكتلتك العضلية
                     </p>
                   </div>
                 </div>
 
                 {bmi && (
-                  <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-2 self-start sm:self-auto">
                     <span className="text-xs text-zinc-400">مؤشر BMI:</span>
                     <span className="text-sm font-black font-mono text-amber-400">{bmi}</span>
                     <span className={`text-xs font-bold ${bmiStatus.color}`}>({bmiStatus.label})</span>
@@ -707,56 +801,56 @@ export const CustomerDashboard = () => {
               </div>
 
               {/* 4 Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
                 {/* Weight */}
-                <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs mb-2">
-                    <Scale className="w-4 h-4 text-amber-400" />
-                    <span>الوزن الحالي</span>
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
+                    <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                    <span className="text-[11px] sm:text-xs">الوزن الحالي</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-white">
+                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
                       {profile?.weight || '--'}
                     </span>
-                    <span className="text-xs text-zinc-500 font-bold">كجم</span>
+                    <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">كجم</span>
                   </div>
                 </div>
 
                 {/* Height */}
-                <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs mb-2">
-                    <Ruler className="w-4 h-4 text-amber-400" />
-                    <span>الطول</span>
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
+                    <Ruler className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                    <span className="text-[11px] sm:text-xs">الطول</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-white">
+                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
                       {profile?.height || '--'}
                     </span>
-                    <span className="text-xs text-zinc-500 font-bold">سم</span>
+                    <span className="text-[10px] sm:text-xs text-zinc-500 font-bold">سم</span>
                   </div>
                 </div>
 
                 {/* Muscle Percentage */}
-                <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs mb-2">
-                    <Flame className="w-4 h-4 text-emerald-400" />
-                    <span>نسبة العضلات</span>
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
+                    <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                    <span className="text-[11px] sm:text-xs">نسبة العضلات</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-emerald-400">
+                    <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
                       {profile?.musclePercentage ? `${profile.musclePercentage}%` : '--'}
                     </span>
                   </div>
                 </div>
 
                 {/* Fat Percentage */}
-                <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
-                  <div className="flex items-center gap-2 text-zinc-400 text-xs mb-2">
-                    <Activity className="w-4 h-4 text-amber-400" />
-                    <span>نسبة الدهون</span>
+                <div className="bg-zinc-900/80 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 hover:border-amber-500/30 transition-all">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs mb-1.5 sm:mb-2">
+                    <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                    <span className="text-[11px] sm:text-xs">نسبة الدهون</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-white">
+                    <span className="text-xl sm:text-2xl font-black font-mono text-white">
                       {profile?.fatPercentage ? `${profile.fatPercentage}%` : '--'}
                     </span>
                   </div>
@@ -765,12 +859,12 @@ export const CustomerDashboard = () => {
 
               {/* Health Notes & Injuries alert */}
               {(profile?.injuries || profile?.chronicDiseases || profile?.notes) && (
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 space-y-2">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 sm:p-4 space-y-2">
                   <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
                     <HeartPulse className="w-4 h-4" />
                     <span>الملف الصحي والرياضي المعتمد للكباتن:</span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-zinc-300">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs text-zinc-300">
                     {profile?.injuries && (
                       <div>
                         <span className="text-zinc-500 block">إصابات سابقة:</span>
@@ -788,7 +882,7 @@ export const CustomerDashboard = () => {
               )}
 
                 {/* Packages & Membership Plans Section */}
-                <div className="pt-6 border-t border-amber-500/20">
+                <div className="pt-5 sm:pt-6 border-t border-amber-500/20">
                   <PackagesPricingGrid isEmbedded={true} />
                 </div>
               </motion.div>

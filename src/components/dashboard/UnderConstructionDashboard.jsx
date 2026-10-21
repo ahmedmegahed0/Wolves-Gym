@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Crown,
   Key,
-  User
+  User,
+  Home
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';
@@ -74,13 +75,17 @@ export const UnderConstructionDashboard = () => {
       <header className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-amber-500/15 px-4 sm:px-8 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
+          <div 
+            onClick={() => navigate('/')} 
+            className="flex items-center gap-3 cursor-pointer group/logo"
+            title="العودة للصفحة الرئيسية"
+          >
             <div className="w-10 h-10 rounded-xl bg-black/90 border border-amber-500/40 p-1.5 shadow-gold-glow">
-              <img src={wolfLogo} alt="BE THE WOLF" className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+              <img src={wolfLogo} alt="WOLVES" className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 leading-none">
-                BE THE WOLF
+              <h1 className="text-base sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 leading-none group-hover/logo:text-amber-300">
+                WOLVES
               </h1>
               <p className="text-[10px] text-zinc-400 font-semibold mt-1">
                 منظومة إدارة الذئاب المتكاملة
@@ -89,12 +94,12 @@ export const UnderConstructionDashboard = () => {
           </div>
 
           {/* User Badge & Logout */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* User Profile Badge Button */}
             <button
               type="button"
               onClick={() => setIsProfileSettingsModalOpen(true)}
-              className="flex items-center gap-2 bg-zinc-900/90 hover:bg-zinc-800 border border-amber-500/30 hover:border-amber-500/60 rounded-xl px-3 py-1.5 transition-all cursor-pointer group"
+              className="flex items-center gap-2 bg-zinc-900/90 hover:bg-zinc-800 border border-amber-500/30 hover:border-amber-500/60 rounded-xl px-2 sm:px-3 py-1.5 transition-all cursor-pointer group"
               title="إعدادات الحساب والبيانات الشخصية"
             >
               <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-xs group-hover:scale-105 transition-transform">
@@ -110,10 +115,21 @@ export const UnderConstructionDashboard = () => {
               </div>
             </button>
 
+            {/* Home Page Shortcut */}
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-zinc-300 hover:text-amber-400 bg-zinc-900 border border-white/10 hover:border-amber-500/40 rounded-xl transition-all cursor-pointer shadow-sm"
+              title="الذهاب للصفحة الرئيسية للجيم"
+            >
+              <Home className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">الرئيسية</span>
+            </button>
+
             <button
               type="button"
               onClick={() => navigate('/dashboard/packages')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-300 hover:text-black bg-amber-500/15 hover:bg-amber-400 border border-amber-500/35 rounded-xl transition-all shadow-sm"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-300 hover:text-black bg-amber-500/15 hover:bg-amber-400 border border-amber-500/35 rounded-xl transition-all shadow-sm cursor-pointer"
             >
               <Crown className="w-3.5 h-3.5" />
               <span>باقات واشتراكات</span>
@@ -122,19 +138,20 @@ export const UnderConstructionDashboard = () => {
             <button
               type="button"
               onClick={() => navigate('/dashboard/reception')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
             >
-              <span>لوحة الاستقبال</span>
+              <span className="hidden sm:inline">لوحة الاستقبال</span>
+              <span className="sm:hidden">الاستقبال</span>
             </button>
 
             <button
               type="button"
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-all"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-all"
               title="تسجيل الخروج"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>خروج</span>
+              <span className="hidden sm:inline">خروج</span>
             </button>
           </div>
         </div>

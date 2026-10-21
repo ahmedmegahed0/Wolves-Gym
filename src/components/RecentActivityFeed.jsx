@@ -41,7 +41,7 @@ export const RecentActivityFeed = ({ activities = [], onClearActivities, onSelec
           مفيش حركات اتسجلت لسه النهاردة.. ابدأ بتسجيل دخول أول وحش في الجيم!
         </div>
       ) : (
-        <div className="space-y-2.5 max-h-72 overflow-y-auto pl-1">
+        <div className="space-y-2.5 max-h-72 overflow-y-auto pl-1 gold-scrollbar">
           <AnimatePresence initial={false}>
             {activities.map((item) => {
               const isCheckIn = item.type === 'check-in';

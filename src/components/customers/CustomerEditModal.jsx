@@ -146,7 +146,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
           initial={{ opacity: 0, scale: 0.94, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 20 }}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-2xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh]"
+          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 max-w-xl lg:max-w-2xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Top Gold Accent Line */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
@@ -154,73 +154,73 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
           {/* Modal Header */}
           <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-zinc-800">
             <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-gold-glow">
+              <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-gold-glow shrink-0">
                 <User className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <h3 className="text-sm sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
                   تعديل بيانات الوحش
-                  <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg">
+                  <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-lg">
                     #{customer.id}
                   </span>
                 </h3>
-                <p className="text-[11px] sm:text-xs text-zinc-400">
-                  تحديث البيانات الأساسية، القياسات البدنية، والملف الرياضي
+                <p className="text-[10px] sm:text-xs text-zinc-400">
+                  تحديث البيانات الأساسية والقياسات والملف الرياضي
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Navigation Section Tabs */}
-          <div className="flex rounded-2xl bg-black/60 p-1 border border-zinc-800 my-3 sm:my-4">
+          <div className="flex rounded-xl sm:rounded-2xl bg-black/60 p-1 border border-zinc-800 my-2.5 sm:my-4 gap-1">
             <button
               type="button"
               onClick={() => setActiveSection('basic')}
-              className={`flex-1 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'basic'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <User className="w-3.5 h-3.5" />
-              <span>البيانات الأساسية</span>
+              <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">الأساسية</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveSection('physical')}
-              className={`flex-1 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'physical'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Scale className="w-3.5 h-3.5" />
-              <span>القياسات البدنية</span>
+              <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">القياسات</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveSection('health')}
-              className={`flex-1 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'health'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <HeartPulse className="w-3.5 h-3.5" />
-              <span>الملف الصحي والرياضي</span>
+              <HeartPulse className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">الصحي والرياضي</span>
             </button>
           </div>
 
           {/* Form Body with Smooth Transitions */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 px-1 py-1">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 px-1 py-1 gold-scrollbar">
             {/* 1. BASIC INFO SECTION */}
             {activeSection === 'basic' && (
               <motion.div
@@ -539,12 +539,12 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
             )}
 
             {/* Modal Actions */}
-            <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-end gap-2.5">
+            <div className="pt-3 border-t border-zinc-800/80 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2.5 sm:py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold transition-colors"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold transition-colors text-center"
               >
                 إلغاء
               </button>
@@ -552,7 +552,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-[1.02] sm:hover:scale-105 active:scale-95 disabled:opacity-50"
               >
                 {loading ? (
                   <>

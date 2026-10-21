@@ -123,7 +123,7 @@ export const LockerModal = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/25 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]"
+          className="wolf-glass bg-zinc-950/95 border border-amber-500/25 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-2xl w-full mx-4 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-zinc-800">
@@ -214,7 +214,7 @@ export const LockerModal = ({
           </div>
 
           {/* Grid of Lockers */}
-          <div className="flex-1 overflow-y-auto py-3 sm:py-4 pl-1 min-h-[220px]">
+          <div className="flex-1 overflow-y-auto py-3 sm:py-4 pl-1 min-h-[220px] gold-scrollbar">
             {loading && lockers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-3">
                 <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />

@@ -301,8 +301,7 @@ export const CreateSubscriptionModal = ({
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="relative w-full max-w-4xl bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden z-10 my-auto"
+          className="relative w-full max-w-4xl mx-3 sm:mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] z-10 my-auto"
         >
           {/* Subtle Golden Ambient Glow */}
           <div className="absolute top-0 right-0 left-0 h-32 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent pointer-events-none" />

@@ -4,30 +4,45 @@ import apiClient, { getUserInfo, STORAGE_KEYS } from './apiClient';
  * Users Service Module
  * Handles Real-time Email Availability Check, Personal Profile Updates, and User Lookup by ID.
  */
+// In-memory cache for checked email availability to avoid duplicate network requests
+const emailAvailabilityCache = new Map();
+
 export const usersService = {
   /**
-   * Real-time Email Availability Check
+   * Real-time Email Availability Check with caching and AbortSignal support
    * GET /api/Users/check-email-availability?Email={email}
    * @param {string} email
+   * @param {{ signal?: AbortSignal }} options
    * @returns {Promise<{ isAvailable: boolean }>}
    */
-  async checkEmailAvailability(email) {
+  async checkEmailAvailability(email, { signal } = {}) {
     if (!email || !email.trim()) {
       return { isAvailable: false };
     }
     const cleanEmail = email.trim().toLowerCase();
+
+    // Check memory cache first
+    if (emailAvailabilityCache.has(cleanEmail)) {
+      return { isAvailable: emailAvailabilityCache.get(cleanEmail) };
+    }
+
     try {
       const response = await apiClient.get(
-        `/api/Users/check-email-availability?Email=${encodeURIComponent(cleanEmail)}`
+        `/api/Users/check-email-availability?Email=${encodeURIComponent(cleanEmail)}`,
+        { signal }
       );
+      let isAvailable = true;
       if (typeof response.data?.isAvailable === 'boolean') {
-        return { isAvailable: response.data.isAvailable };
+        isAvailable = response.data.isAvailable;
+      } else if (typeof response.data === 'boolean') {
+        isAvailable = response.data;
       }
-      if (typeof response.data === 'boolean') {
-        return { isAvailable: response.data };
-      }
-      return { isAvailable: true };
+      emailAvailabilityCache.set(cleanEmail, isAvailable);
+      return { isAvailable };
     } catch (err) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        throw err;
+      }
       console.warn('GET check-email-availability error, using resilient check:', err.message);
       // Resilient fallback check against known accounts
       const existingEmails = [
@@ -43,7 +58,9 @@ export const usersService = {
         const localUser = getUserInfo();
         if (localUser?.email) existingEmails.push(localUser.email.toLowerCase());
       } catch {}
-      return { isAvailable: !existingEmails.includes(cleanEmail) };
+      const fallbackAvailable = !existingEmails.includes(cleanEmail);
+      emailAvailabilityCache.set(cleanEmail, fallbackAvailable);
+      return { isAvailable: fallbackAvailable };
     }
   },
 

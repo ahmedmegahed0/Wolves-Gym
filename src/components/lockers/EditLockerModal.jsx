@@ -133,8 +133,7 @@ export const EditLockerModal = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md bg-gradient-to-b from-[#16161a] to-[#0c0c0e] border border-amber-500/30 rounded-3xl p-5 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden"
+          className="relative w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#16161a] to-[#0c0c0e] border border-amber-500/30 rounded-3xl p-5 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)]"
         >
           {/* Top Gold Accent Bar */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700" />
@@ -272,12 +271,12 @@ export const EditLockerModal = ({
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
               <button
                 type="button"
                 disabled={loading}
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all disabled:opacity-50 text-center"
               >
                 إلغاء
               </button>
@@ -285,7 +284,7 @@ export const EditLockerModal = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs sm:text-sm font-black shadow-gold-glow transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs sm:text-sm font-black shadow-gold-glow transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none min-h-[44px]"
               >
                 {loading ? (
                   <>

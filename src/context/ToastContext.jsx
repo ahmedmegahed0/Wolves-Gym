@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X, Flame } from 'lucide-react';
 
@@ -41,8 +41,13 @@ export const ToastProvider = ({ children }) => {
     return addToast({ type: 'info', title, message, duration });
   }, [addToast]);
 
+  const contextValue = useMemo(
+    () => ({ addToast, removeToast, success, error, warning, info }),
+    [addToast, removeToast, success, error, warning, info]
+  );
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       
       {/* Toast Notification Container in RTL */}

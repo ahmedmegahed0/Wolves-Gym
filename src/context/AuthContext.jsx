@@ -285,7 +285,7 @@ export const AuthProvider = ({ children }) => {
       const data = await authService.googleLogin({ idToken, userType: 0 });
       updateAuthState();
       const currentUser = getUserInfo();
-      toastSuccess('تم الدخول بحساب Google', 'مرحباً بك مجدداً في BE THE WOLF!');
+      toastSuccess('تم الدخول بحساب Google', 'مرحباً بك مجدداً في WOLVES!');
       await redirectUserByRole(currentUser);
       return { success: true, data };
     } catch (err) {

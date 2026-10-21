@@ -273,7 +273,7 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filteredPackages.map((pkg) => (
             <PackageCard
               key={pkg.id}
@@ -292,7 +292,7 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-gradient-to-b from-[#141210] via-[#0d0d10] to-black rounded-3xl border border-amber-500/40 p-6 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.25)] my-8"
+              className="relative w-full max-w-md sm:max-w-xl mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#141210] via-[#0d0d10] to-black rounded-3xl border border-amber-500/40 p-5 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.25)] my-auto"
             >
               {/* Modal Close Button */}
               <button
@@ -380,12 +380,12 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-zinc-800">
+                  <div className="flex flex-col-reverse sm:flex-row items-center gap-2.5 sm:gap-3 pt-3 border-t border-zinc-800">
                     <button
                       type="button"
                       onClick={() => setSelectedPackage(null)}
                       disabled={subscribing}
-                      className="flex-1 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer text-center"
                     >
                       إلغاء
                     </button>
@@ -393,7 +393,7 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
                     <button
                       type="submit"
                       disabled={subscribing}
-                      className="flex-2 py-3 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
                     >
                       {subscribing ? (
                         <>

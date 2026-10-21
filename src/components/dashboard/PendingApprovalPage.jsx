@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, RefreshCw, LogOut, Sparkles, ShieldCheck, Phone, Mail, User } from 'lucide-react';
+import { Clock, RefreshCw, LogOut, Sparkles, ShieldCheck, Phone, Mail, User, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';
@@ -62,12 +62,16 @@ export const PendingApprovalPage = () => {
         <div className="absolute top-0 right-8 left-8 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
 
         {/* Brand Logo */}
-        <div className="flex flex-col items-center mb-6">
+        <div 
+          onClick={() => navigate('/')} 
+          className="flex flex-col items-center mb-6 cursor-pointer group/logo"
+          title="العودة للصفحة الرئيسية"
+        >
           <div className="w-16 h-16 rounded-2xl bg-black/90 border border-amber-500/40 p-2 shadow-gold-glow mb-3">
-            <img src={wolfLogo} alt="BE THE WOLF" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]" />
+            <img src={wolfLogo} alt="WOLVES" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500">
-            BE THE WOLF
+          <h1 className="text-xl sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover/logo:text-amber-300">
+            WOLVES
           </h1>
           <span className="text-[11px] text-zinc-400 font-semibold mt-0.5 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-amber-400" />
@@ -129,9 +133,19 @@ export const PendingApprovalPage = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             type="button"
+            onClick={() => navigate('/')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 border border-zinc-800 hover:border-amber-500/40 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+            title="الذهاب للصفحة الرئيسية للجيم"
+          >
+            <Home className="w-3.5 h-3.5 text-amber-400" />
+            <span>الرئيسية</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => checkStatus(true)}
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black text-xs font-bold shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black text-xs font-bold shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>{loading ? 'جاري الفحص...' : 'فحص حالة التفعيل الآن'}</span>
@@ -140,7 +154,7 @@ export const PendingApprovalPage = () => {
           <button
             type="button"
             onClick={logout}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>تسجيل الخروج</span>

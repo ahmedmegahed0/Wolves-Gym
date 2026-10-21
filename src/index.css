@@ -59,6 +59,31 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #d97706;
   }
+
+  /* Explicit Gold Scrollbar for Data Tables & Modals */
+  .gold-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .gold-scrollbar::-webkit-scrollbar-track {
+    background: rgba(10, 10, 14, 0.7);
+    border-radius: 9999px;
+  }
+  .gold-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.35);
+    border-radius: 9999px;
+  }
+  .gold-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 158, 11, 0.75);
+  }
+
+  /* Safe Area Insets for Mobile Keyboards & Notches */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
 }
 
 /* Background aggressive ambient gold mesh */
@@ -68,4 +93,19 @@
     radial-gradient(at 85% 15%, rgba(217, 119, 6, 0.06) 0px, transparent 40%),
     radial-gradient(at 50% 90%, rgba(245, 158, 11, 0.05) 0px, transparent 55%),
     radial-gradient(at 50% 40%, rgba(0, 0, 0, 0.9) 0px, #050505 100%);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

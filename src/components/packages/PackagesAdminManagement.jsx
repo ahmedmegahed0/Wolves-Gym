@@ -272,9 +272,10 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
         </div>
       </div>
 
-      {/* Main Data Table */}
-      <div className="bg-[#0e0e11] border border-amber-500/20 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
+      {/* Table & Mobile Cards Container */}
+      <div className="bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/20 rounded-3xl overflow-hidden shadow-2xl">
+        {/* Desktop Table View */}
+        <div className="overflow-x-auto gold-scrollbar hidden md:block">
           <table className="w-full text-right text-xs text-zinc-300">
             <thead className="bg-zinc-950/90 text-zinc-400 font-bold border-b border-amber-500/15 uppercase tracking-wider">
               <tr>
@@ -408,6 +409,101 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View (< md) */}
+        <div className="md:hidden divide-y divide-zinc-800/80 p-3 sm:p-4 space-y-3">
+          {loading && packages.length === 0 ? (
+            <div className="py-12 text-center text-zinc-400 font-bold">
+              <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin mx-auto mb-2" />
+              جاري تحميل الباقات...
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="py-10 text-center text-zinc-500 text-xs">
+              لا توجد باقات حالياً. انقر على "+ إضافة باقة جديدة".
+            </div>
+          ) : (
+            packages.map((pkg) => {
+              const isToggling = togglingId === pkg.id;
+              return (
+                <div key={pkg.id} className="bg-black/60 rounded-2xl p-4 border border-zinc-800/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-lg bg-zinc-900 border border-amber-500/30 text-amber-400 font-mono text-xs font-bold">
+                        #{pkg.id}
+                      </span>
+                      <h4 className="font-black text-white text-sm">{pkg.name}</h4>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        pkg.isActive !== false
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                      <span>{pkg.isActive !== false ? 'نشط' : 'متوقف'}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/50">
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">السعر:</span>
+                      <span className="text-amber-400 font-mono text-sm font-bold">
+                        {Number(pkg.price).toLocaleString('ar-EG')} ج.م
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">المدة:</span>
+                      <span className="text-zinc-300 font-mono text-xs">
+                        {pkg.duration} يوماً
+                      </span>
+                    </div>
+                  </div>
+
+                  {pkg.description && (
+                    <p className="text-[11px] text-zinc-400 line-clamp-2">
+                      {pkg.description.replace(/[\n\r]+/g, ' • ')}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={isToggling}
+                      onClick={() => handleToggleStatus(pkg)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        pkg.isActive !== false
+                          ? 'bg-zinc-900 text-zinc-300 hover:text-rose-400 border border-zinc-800'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}
+                    >
+                      <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
+                      <span>{pkg.isActive !== false ? 'إيقاف مؤقت' : 'تنشيط'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(pkg)}
+                      className="flex-1 py-2 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>تعديل</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailsPackage(pkg)}
+                      className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition-colors"
+                      title="تفاصيل"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Pagination Bar */}

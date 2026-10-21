@@ -136,7 +136,7 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="relative w-full max-w-lg bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden z-10 my-auto"
+          className="relative w-full max-w-lg mx-3 sm:mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] z-10 my-auto"
         >
           {/* Subtle Ambient Gold Flare */}
           <div className="absolute top-0 right-0 left-0 h-28 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent pointer-events-none" />
@@ -282,12 +282,12 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center gap-3 pt-3 border-t border-amber-500/15">
+            <div className="flex flex-col-reverse sm:flex-row items-center gap-2.5 pt-3 border-t border-amber-500/15">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="flex-1 py-3 rounded-2xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                className="w-full sm:flex-1 py-3 rounded-2xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-colors cursor-pointer text-center"
               >
                 إلغاء
               </button>
@@ -295,7 +295,7 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-2 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full sm:flex-2 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-[1.02] sm:hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <>

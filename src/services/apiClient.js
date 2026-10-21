@@ -433,6 +433,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // If request was canceled by AbortController, reject immediately and do NOT treat as server error
+    if (axios.isCancel(error) || error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config;
 
     // Handle ProblemDetails messages
@@ -933,7 +938,7 @@ export const customerService = {
    * GET /api/customers
    * Query: { ApprovalStatus, PageNumber, PageSize, Search, SortBy }
    */
-  async getCustomers({ approvalStatus, pageNumber = 1, pageSize = 10, search = '', sortBy = '' } = {}) {
+  async getCustomers({ approvalStatus, pageNumber = 1, pageSize = 10, search = '', sortBy = '', signal } = {}) {
     const params = new URLSearchParams();
     if (approvalStatus !== undefined && approvalStatus !== null && approvalStatus !== '') {
       params.append('ApprovalStatus', String(approvalStatus));
@@ -944,7 +949,7 @@ export const customerService = {
     if (sortBy && sortBy.trim()) params.append('SortBy', sortBy.trim());
 
     try {
-      const response = await apiClient.get(`/api/customers?${params.toString()}`);
+      const response = await apiClient.get(`/api/customers?${params.toString()}`, { signal });
       const data = response.data;
 
       // Handle paginated envelope vs flat array
@@ -982,6 +987,9 @@ export const customerService = {
         totalPages: 1,
       };
     } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        throw err;
+      }
       console.warn('Backend customers API error, using resilient local storage:', err.message);
 
       // Fallback to local mock data if server is down (e.g. ASP.NET 500 error)
@@ -1140,8 +1148,8 @@ export const customerService = {
 
 // Attendance Service Methods
 export const attendanceService = {
-  async getCurrentOccupancy() {
-    const response = await apiClient.get('/api/Attendances/current-occupancy');
+  async getCurrentOccupancy({ signal } = {}) {
+    const response = await apiClient.get('/api/Attendances/current-occupancy', { signal });
     return response.data;
   },
 
@@ -1178,12 +1186,12 @@ export const lockerService = {
    * @param {boolean|undefined|null} isActive - Optional filter (true = active, false = inactive, undefined = all)
    * @returns {Promise<Array<{ id: number, number: number, isActive: boolean, isAvailable: boolean, createdAt: string, updatedAt: string|null }>>}
    */
-  async getLockers(isActive = undefined) {
+  async getLockers(isActive = undefined, { signal } = {}) {
     let url = '/api/Lockers';
     if (typeof isActive === 'boolean') {
       url += `?isActive=${isActive}`;
     }
-    const response = await apiClient.get(url);
+    const response = await apiClient.get(url, { signal });
     const list = Array.isArray(response.data) ? response.data : [];
     return list.sort((a, b) => Number(a.number) - Number(b.number));
   },
@@ -1278,7 +1286,7 @@ const DEFAULT_PACKAGES = [
     name: 'اشتراك ألفا الذئاب السنوي (VIP)',
     price: 5800,
     duration: 365,
-    description: 'العضوية الملكية الكاملة لصالة BE THE WOLF\nلوكر ذكي ثابت + حقيبة رياضية خاصة بالصالة\nاستخدام غير محدود للساونا والجاكوزي والبخار\nخطة تدريب وتغذية متكاملة مع كابتن خاص\nإمكانية تجميد حتى 60 يوماً + 5 دعوات للأصدقاء',
+    description: 'العضوية الملكية الكاملة لصالة WOLVES\nلوكر ذكي ثابت + حقيبة رياضية خاصة بالصالة\nاستخدام غير محدود للساونا والجاكوزي والبخار\nخطة تدريب وتغذية متكاملة مع كابتن خاص\nإمكانية تجميد حتى 60 يوماً + 5 دعوات للأصدقاء',
     isActive: true,
     createdAt: '2026-10-01T00:00:00Z',
   },
@@ -1306,7 +1314,7 @@ export const packageService = {
    * GET /api/Packages (Public / Customer Plans)
    * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
    */
-  async getPackages({ pageNumber = 1, pageSize = 12, search = '', sortBy = '' } = {}) {
+  async getPackages({ pageNumber = 1, pageSize = 12, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
     if (pageNumber) query.append('PageNumber', pageNumber);
     if (pageSize) query.append('PageSize', pageSize);
@@ -1314,7 +1322,7 @@ export const packageService = {
     if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     try {
-      const response = await apiClient.get(`/api/Packages?${query.toString()}`);
+      const response = await apiClient.get(`/api/Packages?${query.toString()}`, { signal });
       const payload = response.data;
 
       // Handle standard paginated response { data: [...], totalCount: ... }
@@ -1354,6 +1362,7 @@ export const packageService = {
         isFallback: true,
       };
     } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
       console.warn('GET /api/Packages API error, returning cached fallback:', err.message);
       const cached = getCachedPackages();
       let filtered = cached.filter((p) => p.isActive !== false);
@@ -1376,7 +1385,7 @@ export const packageService = {
    * GET /api/Packages/management (Admin / Manager Table)
    * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
    */
-  async getManagementPackages({ pageNumber = 1, pageSize = 10, search = '', sortBy = '' } = {}) {
+  async getManagementPackages({ pageNumber = 1, pageSize = 10, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
     if (pageNumber) query.append('PageNumber', pageNumber);
     if (pageSize) query.append('PageSize', pageSize);
@@ -1384,7 +1393,7 @@ export const packageService = {
     if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     try {
-      const response = await apiClient.get(`/api/Packages/management?${query.toString()}`);
+      const response = await apiClient.get(`/api/Packages/management?${query.toString()}`, { signal });
       const payload = response.data;
 
       if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
@@ -1423,6 +1432,7 @@ export const packageService = {
         isFallback: true,
       };
     } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
       console.warn('GET /api/Packages/management error, returning cached fallback:', err.message);
       const cached = getCachedPackages();
       let filtered = [...cached];
@@ -1773,7 +1783,7 @@ export const trainerService = {
    * GET /api/Trainers
    * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
    */
-  async getTrainers({ pageNumber = 1, pageSize = 8, search = '', sortBy = '' } = {}) {
+  async getTrainers({ pageNumber = 1, pageSize = 8, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
@@ -1781,7 +1791,7 @@ export const trainerService = {
     if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     try {
-      const response = await apiClient.get(`/api/Trainers?${query.toString()}`);
+      const response = await apiClient.get(`/api/Trainers?${query.toString()}`, { signal });
       const payload = response.data;
 
       let list = [];
@@ -1811,23 +1821,15 @@ export const trainerService = {
         };
       });
 
-      // If server returned only 1 trainer and user is not searching, supplement with curated coaches
-      let finalData = enriched;
-      if (finalData.length < 3 && (!search || !search.trim())) {
-        const existingIds = new Set(finalData.map((d) => d.id));
-        const extra = DEFAULT_TRAINERS.filter((d) => !existingIds.has(d.id));
-        finalData = [...finalData, ...extra];
-        totalCount = Math.max(totalCount, finalData.length);
-      }
-
       return {
-        data: finalData,
-        totalCount: totalCount || finalData.length,
+        data: enriched,
+        totalCount: totalCount ?? enriched.length,
         currentPage: payload?.currentPage ?? pageNumber,
-        totalPages: payload?.totalPages ?? (Math.ceil((totalCount || finalData.length) / pageSize) || 1),
+        totalPages: payload?.totalPages ?? (Math.ceil((totalCount ?? enriched.length) / pageSize) || 1),
         pageSize: payload?.pageSize ?? pageSize,
       };
     } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
       console.warn('GET /api/Trainers error, returning fallback trainers:', err.message);
       let filtered = [...DEFAULT_TRAINERS];
       if (search && search.trim()) {

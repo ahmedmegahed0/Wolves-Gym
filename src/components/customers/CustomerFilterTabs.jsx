@@ -13,17 +13,20 @@ export const CustomerFilterTabs = ({
 }) => {
   const [localSearch, setLocalSearch] = useState(searchQuery || '');
 
-  // Debounce search input
+  // Debounce search input (only if query value changed)
   useEffect(() => {
+    if (localSearch === (searchQuery || '')) return;
     const timer = setTimeout(() => {
       onSearchChange(localSearch);
-    }, 350);
+    }, 400);
     return () => clearTimeout(timer);
-  }, [localSearch, onSearchChange]);
+  }, [localSearch, onSearchChange, searchQuery]);
 
   // Keep in sync if parent clears
   useEffect(() => {
-    setLocalSearch(searchQuery || '');
+    if (searchQuery !== localSearch) {
+      setLocalSearch(searchQuery || '');
+    }
   }, [searchQuery]);
 
   const tabs = [

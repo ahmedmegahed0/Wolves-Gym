@@ -27,7 +27,8 @@ import {
   ChevronLeft,
   PanelRightClose,
   PanelRightOpen,
-  Plus
+  Plus,
+  Home
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -44,6 +45,27 @@ import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+
+const LiveClockBadge = React.memo(() => {
+  const [time, setTime] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
+      <Clock className="w-3.5 h-3.5 text-amber-400" />
+      <span className="font-cairo font-bold hidden sm:inline">
+        {time.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
+      </span>
+      <span className="text-zinc-600 hidden sm:inline">|</span>
+      <span className="text-amber-400 font-black">
+        {time.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </span>
+    </div>
+  );
+});
 
 export const AttendanceDashboard = ({ initialSection }) => {
   const navigate = useNavigate();
@@ -124,22 +146,31 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
   // Periodic check for pending subscription requests
   useEffect(() => {
+    let isMounted = true;
     const fetchPending = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await customerService.getCustomers({ approvalStatus: 0, pageSize: 1 });
-        setPendingCount(res.totalCount || 0);
+        if (isMounted) {
+          setPendingCount(res.totalCount || 0);
+        }
       } catch (e) {
         console.warn('Pending badge fetch error:', e);
       }
     };
     fetchPending();
     const timer = setInterval(fetchPending, 30000);
-    return () => clearInterval(timer);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [currentOccupancy, setCurrentOccupancy] = useState(0);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const handleOccupancyUpdated = useCallback((count) => {
+    setCurrentOccupancy(count);
+  }, []);
   
   // On mobile, always use 'tabs' view mode
   const [activeTab, setActiveTab] = useState('check-in');
@@ -164,12 +195,6 @@ export const AttendanceDashboard = ({ initialSection }) => {
       return [];
     }
   });
-
-  // Live clock
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Save activities to localStorage
   useEffect(() => {
@@ -302,13 +327,17 @@ export const AttendanceDashboard = ({ initialSection }) => {
           <div className={`flex items-center gap-3 px-1 py-2 mb-5 border-b border-amber-500/15 transition-all ${
             isCollapsed ? 'justify-center' : 'justify-between'
           }`}>
-            <div className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
+            <div 
+              onClick={() => navigate('/')} 
+              className={`flex items-center gap-3 min-w-0 cursor-pointer group/logo ${isCollapsed ? 'justify-center' : ''}`}
+              title="العودة للصفحة الرئيسية"
+            >
               <div className="relative group flex-shrink-0">
                 <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
                 <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-b from-zinc-900 to-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1.5">
                   <img
                     src={wolfLogo}
-                    alt="BE THE WOLF"
+                    alt="WOLVES"
                     className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
                   />
                 </div>
@@ -316,8 +345,8 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
               {!isCollapsed && (
                 <div className="min-w-0">
-                  <h1 className="text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 truncate">
-                    BE THE WOLF
+                  <h1 className="text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 truncate group-hover/logo:text-amber-300">
+                    WOLVES
                   </h1>
                   <p className="text-[10px] text-zinc-400 font-semibold truncate font-mono">
                     GYM RECEPTION
@@ -341,6 +370,34 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
           {/* Navigation Items List */}
           <nav className="space-y-1.5" aria-label="أقسام النظام الرئيسية">
+            {/* Quick Home Page Link in Sidebar */}
+            <div className="relative group pb-1.5 mb-1.5 border-b border-amber-500/15">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 font-bold ${
+                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-2.5'
+                }`}
+                title="الذهاب للصفحة الرئيسية للجيم"
+              >
+                <div className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
+                  <div className="p-2 rounded-xl bg-zinc-900/90 text-amber-400 border border-zinc-800/80 group-hover:border-amber-500/40 group-hover:scale-105 transition-all flex-shrink-0">
+                    <Home className="w-4 h-4" />
+                  </div>
+                  {!isCollapsed && (
+                    <span className="text-xs truncate font-bold">
+                      الصفحة الرئيسية
+                    </span>
+                  )}
+                </div>
+              </button>
+              {isCollapsed && (
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-zinc-950/95 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                  الصفحة الرئيسية
+                </div>
+              )}
+            </div>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = mainTab === item.id;
@@ -533,9 +590,13 @@ export const AttendanceDashboard = ({ initialSection }) => {
             >
               <div>
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800">
-                  <div className="flex items-center gap-2.5">
-                    <img src={wolfLogo} alt="BE THE WOLF" className="w-8 h-8 object-contain" />
-                    <span className="text-sm font-black text-amber-400">BE THE WOLF</span>
+                  <div 
+                    onClick={() => navigate('/')} 
+                    className="flex items-center gap-2.5 cursor-pointer"
+                    title="العودة للصفحة الرئيسية"
+                  >
+                    <img src={wolfLogo} alt="WOLVES" className="w-8 h-8 object-contain" />
+                    <span className="text-sm font-black text-amber-400">WOLVES</span>
                   </div>
                   <button
                     type="button"
@@ -547,6 +608,18 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 </div>
 
                 <nav className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate('/');
+                    }}
+                    className="w-full text-right p-3 rounded-2xl flex items-center gap-3 bg-zinc-900/90 text-amber-300 hover:text-white border border-amber-500/25 font-bold transition-all cursor-pointer mb-2"
+                  >
+                    <Home className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs">الصفحة الرئيسية</span>
+                  </button>
+
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = mainTab === item.id;
@@ -659,8 +732,18 @@ export const AttendanceDashboard = ({ initialSection }) => {
               </div>
             </div>
 
-            {/* Left: Quick New Subscription Button + Profile Shortcut + Live Clock */}
+            {/* Left: Home Button + Quick New Subscription Button + Profile Shortcut + Live Clock */}
             <div className="flex items-center gap-2 sm:gap-2.5">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-amber-500/40 text-xs font-bold text-zinc-300 hover:text-amber-400 transition-all cursor-pointer shadow-sm"
+                title="الذهاب للصفحة الرئيسية للجيم"
+              >
+                <Home className="w-3.5 h-3.5 text-amber-400" />
+                <span>الرئيسية</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleOpenNewSubscription()}
@@ -689,16 +772,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 </button>
               )}
 
-              <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-cairo font-bold hidden sm:inline">
-                  {currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </span>
-                <span className="text-zinc-600 hidden sm:inline">|</span>
-                <span className="text-amber-400 font-black">
-                  {currentTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                </span>
-              </div>
+              <LiveClockBadge />
             </div>
           </div>
         </header>
@@ -776,7 +850,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   <div className="lg:col-span-5 w-full flex flex-col">
                     <OccupancyCard
                       refreshTrigger={refreshTrigger}
-                      onOccupancyUpdated={(count) => setCurrentOccupancy(count)}
+                      onOccupancyUpdated={handleOccupancyUpdated}
                     />
                   </div>
 

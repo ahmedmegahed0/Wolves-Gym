@@ -8,6 +8,7 @@ import PackagesDashboard from './components/packages/PackagesDashboard';
 import TrainersSection from './components/trainers/TrainersSection';
 import PendingApprovalPage from './components/dashboard/PendingApprovalPage';
 import UnderConstructionDashboard from './components/dashboard/UnderConstructionDashboard';
+import LandingPage from './components/landing/LandingPage';
 import AuthContainer from './components/auth/AuthContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { ToastProvider } from './context/ToastContext';
@@ -122,14 +123,17 @@ function App() {
                 }
               />
 
+              {/* Landing Page (Public Home) */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
+
               {/* Legacy and convenience redirects */}
               <Route path="/dashboard" element={<RootRedirect />} />
               <Route path="/member" element={<Navigate to="/dashboard/customer" replace />} />
               <Route path="/customers" element={<RootRedirect />} />
 
-              {/* Dynamic Role-Based Fallback Root Redirect */}
-              <Route path="/" element={<RootRedirect />} />
-              <Route path="*" element={<RootRedirect />} />
+              {/* Fallback unknown route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AuthProvider>
         </ToastProvider>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Search, 
@@ -12,11 +13,13 @@ import {
   ChevronLeft, 
   Sparkles,
   Award,
-  AlertCircle
+  AlertCircle,
+  Home
 } from 'lucide-react';
 import TrainerCard from './TrainerCard';
 import { trainerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import useDebounce from '../../hooks/useDebounce';
 import wolfLogo from '../../assets/logo.png';
 
 /**
@@ -41,6 +44,7 @@ export const TrainersSection = ({
   title = 'كتيبة المدربين والكباتن المعتمدين',
   subtitle = 'نخبة من أفضل أبطال ومدربي اللياقة البدنية وكمال الأجسام لتحقيق أهدافك الرياضية'
 }) => {
+  const navigate = useNavigate();
   const { error: toastError, success: toastSuccess } = useToast();
 
   // Query & Filter states
@@ -48,6 +52,7 @@ export const TrainersSection = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [activeSpecialty, setActiveSpecialty] = useState('all');
   const [sortBy, setSortBy] = useState('');
 
@@ -57,8 +62,8 @@ export const TrainersSection = ({
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch Trainers from API
-  const fetchTrainers = useCallback(async (isManualRefresh = false) => {
+  // Fetch Trainers from API with AbortSignal support
+  const fetchTrainers = useCallback(async (isManualRefresh = false, signal = null) => {
     if (isManualRefresh) setRefreshing(true);
     else setLoading(true);
 
@@ -66,25 +71,33 @@ export const TrainersSection = ({
       const res = await trainerService.getTrainers({
         pageNumber,
         pageSize,
-        search: search.trim(),
+        search: debouncedSearch.trim(),
         sortBy,
+        signal,
       });
 
       setTrainers(Array.isArray(res?.data) ? res.data : []);
       setTotalCount(res?.totalCount ?? 0);
       setTotalPages(res?.totalPages ?? 1);
     } catch (err) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return; // Safely ignore obsolete aborted request
+      }
       console.error('Error fetching trainers:', err);
       toastError('تعذر تحميل بيانات الكباتن', err.message || 'يرجى التأكد من اتصال السيرفر والمحاولة مجدداً.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, search, sortBy, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, sortBy, toastError]);
 
-  // Trigger fetch on query param change
+  // Trigger fetch with cancellation of in-flight obsolete queries
   useEffect(() => {
-    fetchTrainers();
+    const controller = new AbortController();
+    fetchTrainers(false, controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [fetchTrainers]);
 
   // Client-side specialty filter on top of search results
@@ -130,7 +143,7 @@ export const TrainersSection = ({
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wide">
                 <Dumbbell className="w-4 h-4" />
-                <span>طاقم التدريب الرياضي الرسمي • BE THE WOLF</span>
+                <span>طاقم التدريب الرياضي الرسمي • WOLVES</span>
               </div>
               <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 tracking-tight">
                 {title}
@@ -141,6 +154,16 @@ export const TrainersSection = ({
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="px-4 py-3 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 border border-white/10 hover:border-amber-500/40 text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                title="الذهاب للصفحة الرئيسية للجيم"
+              >
+                <Home className="w-4 h-4 text-amber-400" />
+                <span>الرئيسية</span>
+              </button>
+
               <div className="px-4 py-3 rounded-2xl bg-black/60 border border-amber-500/25 flex items-center gap-3 shadow-lg">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
                   <ShieldCheck className="w-5 h-5" />

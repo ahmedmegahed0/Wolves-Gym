@@ -21,7 +21,8 @@ import {
   LogOut,
   Key,
   User,
-  ArrowRight
+  ArrowRight,
+  Home
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import LockerCard from './LockerCard';
@@ -31,6 +32,27 @@ import { lockerService, getRoleMeta } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
+
+const LiveClockBadge = React.memo(() => {
+  const [time, setTime] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="hidden lg:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
+      <Clock className="w-3.5 h-3.5 text-amber-400" />
+      <span className="font-cairo font-bold">
+        {time.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
+      </span>
+      <span className="text-zinc-600">|</span>
+      <span className="text-amber-400 font-black">
+        {time.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+      </span>
+    </div>
+  );
+});
 
 /**
  * LockersDashboard: Comprehensive Lockers Management Module
@@ -69,14 +91,6 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
 
   // Track locker IDs currently performing status toggle
   const [togglingIds, setTogglingIds] = useState(new Set());
-
-  // Live time for standalone navbar
-  const [currentTime, setCurrentTime] = useState(new Date());
-  useEffect(() => {
-    if (isEmbedded) return;
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, [isEmbedded]);
 
   // Fetch lockers from API
   const fetchLockers = useCallback(async (showRefreshingSpinner = false) => {
@@ -199,21 +213,25 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
             
             {/* Logo & Brand */}
-            <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <div 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2.5 sm:gap-4 min-w-0 cursor-pointer group/logo"
+              title="العودة للصفحة الرئيسية"
+            >
               <div className="relative group flex-shrink-0">
                 <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-xl sm:rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
                 <div className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1">
                   <img
                     src={wolfLogo}
-                    alt="BE THE WOLF"
+                    alt="WOLVES"
                     className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
                   />
                 </div>
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 m-0 truncate">
-                  BE THE WOLF
+                <h1 className="text-base sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 m-0 truncate group-hover/logo:text-amber-300">
+                  WOLVES
                 </h1>
                 <p className="text-[10px] sm:text-xs text-zinc-400 font-semibold tracking-wide mt-0.5 hidden sm:block">
                   منظومة التحكم وإدارة دواليب ولوكرات الجيم
@@ -223,6 +241,15 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
 
             {/* Navigation links to other sections */}
             <nav className="flex items-center gap-1.5 p-1 bg-black/60 rounded-2xl border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black text-zinc-400 hover:text-amber-400 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="الذهاب للصفحة الرئيسية للجيم"
+              >
+                <Home className="w-3.5 h-3.5 text-amber-400" />
+                <span>الرئيسية</span>
+              </button>
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/reception')}
@@ -253,16 +280,7 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
 
             {/* Right Controls */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden lg:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-cairo font-bold">
-                  {currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </span>
-                <span className="text-zinc-600">|</span>
-                <span className="text-amber-400 font-black">
-                  {currentTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
+              <LiveClockBadge />
 
               {isAuthenticated && (
                 <div className="flex items-center gap-1 sm:gap-2 bg-zinc-900/90 border border-amber-500/30 rounded-xl sm:rounded-2xl p-1 sm:p-1.5">
@@ -307,7 +325,7 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                  عرض شبكي بصري تفاعلي لمراقبة وتسكين دواليب صالة BE THE WOLF
+                  عرض شبكي بصري تفاعلي لمراقبة وتسكين دواليب صالة WOLVES
                 </p>
               </div>
             </div>
@@ -508,7 +526,7 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
           ) : filteredLockers.length > 0 ? (
             <motion.div 
               layout
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
+              className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 sm:gap-3"
             >
               <AnimatePresence>
                 {filteredLockers.map((locker) => (
@@ -535,7 +553,7 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
               </h3>
               <p className="text-xs sm:text-sm text-zinc-400 max-w-sm mb-5">
                 {lockers.length === 0
-                  ? 'ابدأ بتسجيل أول دولاب في صالة BE THE WOLF لتتمكن من تسكينه للأعضاء أثناء الدخول.'
+                  ? 'ابدأ بتسجيل أول دولاب في صالة WOLVES لتتمكن من تسكينه للأعضاء أثناء الدخول.'
                   : 'جرّب تعديل كلمات البحث أو اختيار فلتر "الكل" لعرض كافة الدواليب.'}
               </p>
               {lockers.length === 0 ? (

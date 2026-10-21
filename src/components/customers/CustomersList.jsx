@@ -52,8 +52,24 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [rejectConfirmModal, setRejectConfirmModal] = useState({ isOpen: false, customer: null });
 
-  // Fetch Customers Data
-  const fetchCustomers = useCallback(async (isManualRefresh = false) => {
+  // Fetch Tab Counts (Only fetched once on mount and after mutations, NEVER on every filter/search keystroke)
+  const fetchTabCounts = useCallback(async () => {
+    try {
+      const allRes = await customerService.getCustomers({ pageSize: 1000 });
+      const allItems = allRes.items || [];
+      setTabCounts({
+        all: allItems.length,
+        pending: allItems.filter((c) => Number(c.approvalStatus) === 0).length,
+        approved: allItems.filter((c) => Number(c.approvalStatus) === 1).length,
+        rejected: allItems.filter((c) => Number(c.approvalStatus) === 2).length,
+      });
+    } catch (countErr) {
+      console.warn('Could not load tab counts:', countErr);
+    }
+  }, []);
+
+  // Fetch Customers Data with AbortSignal
+  const fetchCustomers = useCallback(async (isManualRefresh = false, signal = null) => {
     if (isManualRefresh) setRefreshing(true);
     else setLoading(true);
 
@@ -65,26 +81,16 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
         pageSize,
         search: searchQuery,
         sortBy,
+        signal,
       });
 
       setCustomers(result.items || []);
       setTotalCount(result.totalCount || 0);
       setTotalPages(result.totalPages || 1);
-
-      // Also compute quick counts from all customers
-      try {
-        const allRes = await customerService.getCustomers({ pageSize: 1000 });
-        const allItems = allRes.items || [];
-        setTabCounts({
-          all: allItems.length,
-          pending: allItems.filter((c) => Number(c.approvalStatus) === 0).length,
-          approved: allItems.filter((c) => Number(c.approvalStatus) === 1).length,
-          rejected: allItems.filter((c) => Number(c.approvalStatus) === 2).length,
-        });
-      } catch (countErr) {
-        console.warn('Could not load tab counts:', countErr);
-      }
     } catch (err) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return; // Safely ignore aborted request
+      }
       console.error('Error fetching customers:', err);
       toastError(
         'تعذر تحميل بيانات المشتركين',
@@ -96,22 +102,31 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
     }
   }, [activeTab, pageNumber, pageSize, searchQuery, sortBy, toastError]);
 
-  // Initial & Dependency Fetch
+  // Initial & Dependency Fetch with in-flight cancellation
   useEffect(() => {
-    fetchCustomers();
+    const controller = new AbortController();
+    fetchCustomers(false, controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, [fetchCustomers]);
 
+  // Fetch tab counts once on mount
+  useEffect(() => {
+    fetchTabCounts();
+  }, [fetchTabCounts]);
+
   // Tab change resets page to 1
-  const handleTabChange = (newTab) => {
+  const handleTabChange = useCallback((newTab) => {
     setActiveTab(newTab);
     setPageNumber(1);
-  };
+  }, []);
 
   // Search change resets page to 1
-  const handleSearchChange = (query) => {
+  const handleSearchChange = useCallback((query) => {
     setSearchQuery(query);
     setPageNumber(1);
-  };
+  }, []);
 
   // 1. APPROVE MEMBER ACTION (PATCH status: 1)
   const handleApprove = async (customer) => {
@@ -123,6 +138,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
         `تم تفعيل اشتراك الكابتن (${customer.name}) وأصبح عضواً نشطاً في الجيم.`
       );
       fetchCustomers();
+      fetchTabCounts();
     } catch (err) {
       console.error('Approve member error:', err);
       toastError('فشل قبول العضو', err.friendlyMessage || 'تعذر تغيير حالة الاشتراك.');
@@ -146,6 +162,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
         `تم نقل طلب العضو (${customer.name}) إلى قائمة الاشتراكات المرفوضة.`
       );
       fetchCustomers();
+      fetchTabCounts();
     } catch (err) {
       console.error('Reject member error:', err);
       toastError('فشل رفض العضو', err.friendlyMessage || 'تعذر تحديث حالة الاشتراك.');
@@ -160,6 +177,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
       prev.map((c) => (String(c.id) === String(updated.id) ? updated : c))
     );
     fetchCustomers();
+    fetchTabCounts();
   };
 
   return (
@@ -197,7 +215,10 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
           )}
 
           <button
-            onClick={() => fetchCustomers(true)}
+            onClick={() => {
+              fetchCustomers(true);
+              fetchTabCounts();
+            }}
             disabled={refreshing || loading}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/25 text-xs font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)]"
             title="تحديث قائمة المشتركين"
@@ -273,7 +294,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto gold-scrollbar">
               <table className="w-full text-right text-xs">
                 <thead>
                   <tr className="bg-black/60 border-b border-zinc-800/80 text-zinc-400 font-bold uppercase tracking-wider">

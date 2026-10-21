@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Home } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';
 import LoginForm from './LoginForm';
@@ -11,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { normalizeRole } from '../../services/apiClient';
 
 export const AuthContainer = ({ initialView }) => {
+  const navigate = useNavigate();
   const { activeAuthView, setActiveAuthView, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
@@ -53,6 +55,19 @@ export const AuthContainer = ({ initialView }) => {
       </div>
 
       <div className="w-full max-w-[420px] relative z-10">
+        {/* Back to Home Button */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-amber-400 bg-black/60 hover:bg-black/90 border border-zinc-800 hover:border-amber-500/40 backdrop-blur-md transition-all cursor-pointer shadow-sm group"
+            title="العودة للصفحة الرئيسية"
+          >
+            <Home className="w-3.5 h-3.5 text-amber-400 transition-transform group-hover:-translate-x-0.5" />
+            <span>العودة للرئيسية</span>
+          </button>
+        </div>
+
         {/* Main Auth Card */}
         <motion.div
           initial={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -64,25 +79,29 @@ export const AuthContainer = ({ initialView }) => {
           <div className="absolute top-0 left-6 right-6 sm:left-8 sm:right-8 h-[2px] bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
 
           {/* Logo & Brand */}
-          <div className="flex flex-col items-center mb-7">
+          <div 
+            onClick={() => navigate('/')} 
+            className="flex flex-col items-center mb-7 cursor-pointer group/brand"
+            title="الذهاب للصفحة الرئيسية"
+          >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.4, type: 'spring', stiffness: 200 }}
               className="relative mb-4"
             >
-              <div className="absolute -inset-2 bg-gradient-to-br from-amber-500/30 to-yellow-500/10 rounded-2xl blur-xl" />
-              <div className="relative w-14 h-14 rounded-2xl bg-black/90 border border-amber-500/40 flex items-center justify-center p-1.5 shadow-lg">
+              <div className="absolute -inset-2 bg-gradient-to-br from-amber-500/30 to-yellow-500/10 rounded-2xl blur-xl group-hover/brand:opacity-100 transition-opacity" />
+              <div className="relative w-14 h-14 rounded-2xl bg-black/90 border border-amber-500/40 flex items-center justify-center p-1.5 shadow-lg group-hover/brand:scale-105 transition-transform">
                 <img
                   src={wolfLogo}
-                  alt="BE THE WOLF"
+                  alt="WOLVES"
                   className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                 />
               </div>
             </motion.div>
 
-            <h1 className="text-xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500">
-              BE THE WOLF
+            <h1 className="text-xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover/brand:text-amber-300 transition-colors">
+              WOLVES
             </h1>
           </div>
 
@@ -168,7 +187,7 @@ export const AuthContainer = ({ initialView }) => {
 
         {/* Footer */}
         <p className="text-center text-[11px] text-zinc-600 mt-5">
-          BE THE WOLF &copy; 2026
+          WOLVES &copy; 2026
         </p>
       </div>
     </div>

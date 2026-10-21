@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useId } from 'react';
+import React, { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
@@ -15,7 +15,7 @@ import {
 import { attendanceService } from '../services/apiClient';
 import { useToast } from '../context/ToastContext';
 
-export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
+export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger }) => {
   const { error: toastError, info: toastInfo } = useToast();
   const gradientId = useId();
 
@@ -32,49 +32,89 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
   const [showCapacityModal, setShowCapacityModal] = useState(false);
   const [tempCapacity, setTempCapacity] = useState(maxCapacity);
 
+  // Store callbacks & toast handlers in refs to prevent dependency loops
+  const onOccupancyUpdatedRef = useRef(onOccupancyUpdated);
+  useEffect(() => {
+    onOccupancyUpdatedRef.current = onOccupancyUpdated;
+  }, [onOccupancyUpdated]);
+
+  const toastErrorRef = useRef(toastError);
+  useEffect(() => {
+    toastErrorRef.current = toastError;
+  }, [toastError]);
+
+  const autoRefreshIntervalRef = useRef(autoRefreshInterval);
+  useEffect(() => {
+    autoRefreshIntervalRef.current = autoRefreshInterval;
+  }, [autoRefreshInterval]);
+
+  const secondsLeftRef = useRef(autoRefreshInterval);
+  const isFetchingRef = useRef(false);
+
   // Fetch current occupancy from GET /api/Attendances/current-occupancy
   const fetchOccupancy = useCallback(async (isManual = false) => {
+    // Prevent duplicate in-flight requests
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     if (isManual) {
       setRefreshing(true);
     }
+
     try {
       const data = await attendanceService.getCurrentOccupancy();
-      const count = typeof data?.count === 'number' ? data.count : 0;
+      const count = typeof data?.count === 'number' ? data.count : (typeof data?.currentOccupancy === 'number' ? data.currentOccupancy : 0);
       setOccupancy(count);
       setLastUpdated(new Date());
-      setSecondsUntilNext(autoRefreshInterval);
-      if (onOccupancyUpdated) {
-        onOccupancyUpdated(count);
+
+      // Reset countdown timer
+      const intervalSec = autoRefreshIntervalRef.current;
+      secondsLeftRef.current = intervalSec;
+      setSecondsUntilNext(intervalSec);
+
+      if (onOccupancyUpdatedRef.current) {
+        onOccupancyUpdatedRef.current(count);
       }
     } catch (err) {
-      console.error('Error fetching occupancy:', err);
-      if (isManual) {
-        toastError('تعذر جلب العدد المباشر', err.friendlyMessage || 'تأكد من الاتصال بالسيرفر وحاول مجدداً.');
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') return;
+      console.warn('Error fetching occupancy:', err);
+      if (isManual && toastErrorRef.current) {
+        toastErrorRef.current('تعذر جلب العدد المباشر', err.friendlyMessage || 'تأكد من الاتصال بالسيرفر وحاول مجدداً.');
       }
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
       setRefreshing(false);
     }
-  }, [autoRefreshInterval, onOccupancyUpdated, toastError]);
+  }, []); // Completely stable with zero changing dependencies
 
-  // Initial fetch and manual refresh triggers
+  // Initial fetch and manual refresh triggers (e.g. check-in / check-out events)
   useEffect(() => {
-    fetchOccupancy();
-  }, [fetchOccupancy, refreshTrigger]);
+    fetchOccupancy(false);
+  }, [refreshTrigger, fetchOccupancy]);
 
-  // Auto-refresh countdown & timer
+  // Auto-refresh countdown & timer (pauses when document is in background)
   useEffect(() => {
-    if (autoRefreshInterval === 0) return;
+    if (autoRefreshInterval === 0) {
+      setSecondsUntilNext(0);
+      return;
+    }
 
+    secondsLeftRef.current = autoRefreshInterval;
     setSecondsUntilNext(autoRefreshInterval);
+
     const intervalTimer = setInterval(() => {
-      setSecondsUntilNext((prev) => {
-        if (prev <= 1) {
-          fetchOccupancy(false);
-          return autoRefreshInterval;
-        }
-        return prev - 1;
-      });
+      // Pause polling if user is on another tab to save bandwidth
+      if (typeof document !== 'undefined' && document.hidden) return;
+
+      secondsLeftRef.current -= 1;
+      if (secondsLeftRef.current <= 0) {
+        secondsLeftRef.current = autoRefreshInterval;
+        setSecondsUntilNext(autoRefreshInterval);
+        fetchOccupancy(false);
+      } else {
+        setSecondsUntilNext(secondsLeftRef.current);
+      }
     }, 1000);
 
     return () => clearInterval(intervalTimer);
@@ -418,6 +458,6 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
       </AnimatePresence>
     </div>
   );
-};
+});
 
 export default OccupancyCard;

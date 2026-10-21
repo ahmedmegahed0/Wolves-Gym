@@ -137,7 +137,7 @@ export const PackageFormModal = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl bg-gradient-to-b from-[#121216] via-[#0d0d10] to-black rounded-3xl border border-amber-500/30 p-6 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.2)] my-8"
+          className="relative w-full max-w-md sm:max-w-xl mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#121216] via-[#0d0d10] to-black rounded-3xl border border-amber-500/30 p-5 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.2)] my-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 mb-5 border-b border-amber-500/15">
@@ -331,12 +331,12 @@ export const PackageFormModal = ({
             </div>
 
             {/* Submit & Cancel Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800/80">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-zinc-800/80">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer text-center"
               >
                 إلغاء
               </button>
@@ -344,7 +344,7 @@ export const PackageFormModal = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs sm:text-sm font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[44px]"
               >
                 {loading ? (
                   <>

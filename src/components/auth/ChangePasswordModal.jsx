@@ -62,12 +62,12 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
 
   return (
     <AnimatePresence>
-      <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md font-cairo">
+      <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md font-cairo">
         <motion.div
           initial={{ opacity: 0, scale: 0.93, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.93, y: 15 }}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-md w-full shadow-2xl relative overflow-hidden"
+          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-md w-full mx-3 sm:mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar shadow-2xl relative"
         >
           {/* Accent Line */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
@@ -204,18 +204,18 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-3">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5 pt-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-3 rounded-2xl text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors text-center"
               >
                 إلغاء
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-3 px-5 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-500 text-black transition-all shadow-gold-glow flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 py-3 px-5 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-500 text-black transition-all shadow-gold-glow flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
