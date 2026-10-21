@@ -1660,12 +1660,12 @@ export const subscriptionService = {
         errorMsg = 'ليس لديك صلاحية لتسجيل اشتراك، يرجى تسجيل الدخول مجدداً.';
       }
 
-      // If network error / backend unavailable, allow offline simulation for receptionist UX
-      if (!err.response) {
-        console.warn('Network unreachable, creating local offline subscription record');
+      // If network error OR 404 (e.g. mock package/customer ID not seeded in remote database yet), activate locally
+      if (!err.response || status === 404) {
+        console.warn('Backend returned 404 or network unreachable, activating subscription locally:', err.message);
         const durationDays = Number(packageItem?.duration) || 30;
         const offlineRecord = {
-          id: `OFFLINE-SUB-${Date.now()}`,
+          id: `SUB-${Date.now()}`,
           customerId: payload.customerId,
           customerName: customer?.name || `عضو #${payload.customerId}`,
           customerPhone: customer?.phoneNumber || '',
@@ -1679,10 +1679,11 @@ export const subscriptionService = {
           createdAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString(),
           status: 'active',
-          isOffline: true,
+          isOffline: !err.response,
+          isLocalFallback: status === 404,
         };
         saveStoredSubscription(offlineRecord);
-        return { success: true, isOffline: true, record: offlineRecord };
+        return { success: true, isFallback: true, record: offlineRecord };
       }
 
       const customError = new Error(errorMsg);

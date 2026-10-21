@@ -65,7 +65,7 @@ export const CreateSubscriptionModal = ({
   preselectedCustomer = null,
   preselectedPackage = null,
 }) => {
-  const { toastSuccess, toastError, toastWarning } = useToast();
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useToast();
 
   // Data sources
   const [customers, setCustomers] = useState([]);
