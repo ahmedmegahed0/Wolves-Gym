@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   LogIn, 
@@ -9,10 +9,11 @@ import {
   Loader2, 
   Zap,
   Grid,
-  RotateCcw
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { attendanceService } from '../services/apiClient';
+import { attendanceService, lockerService } from '../services/apiClient';
 import { useToast } from '../context/ToastContext';
 import LockerModal from './LockerModal';
 
@@ -25,6 +26,26 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLockerModalOpen, setIsLockerModalOpen] = useState(false);
+
+  // Active lockers for fast dropdown selection (Requirement 5)
+  const [activeLockers, setActiveLockers] = useState([]);
+  const [loadingLockers, setLoadingLockers] = useState(false);
+
+  const fetchActiveLockers = async () => {
+    setLoadingLockers(true);
+    try {
+      const data = await lockerService.getLockers(true);
+      setActiveLockers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.warn('Failed to fetch active lockers for check-in:', e);
+    } finally {
+      setLoadingLockers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveLockers();
+  }, []);
 
   // Form validation
   const validate = () => {
@@ -79,11 +100,12 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
         });
       }
 
-      // Reset form after short success animation
+      // Reset form and refresh available lockers list after success
       setTimeout(() => {
         setCode('');
         setLockerId('');
         setIsSuccess(false);
+        fetchActiveLockers();
       }, 2000);
     } catch (err) {
       console.error('Check-in error:', err);
@@ -184,7 +206,7 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
               )}
             </div>
 
-            {/* Locker ID Field with interactive picker */}
+            {/* Locker ID Field with interactive picker & quick dropdown */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
@@ -193,6 +215,33 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
                 </label>
                 <span className="text-[10px] text-zinc-500 font-mono">Locker #</span>
               </div>
+
+              {/* Quick Dropdown Selector for Active Available Lockers (Requirement 5) */}
+              {activeLockers.length > 0 && (
+                <div className="mb-2">
+                  <select
+                    value={lockerId}
+                    onChange={(e) => {
+                      setLockerId(e.target.value);
+                      if (errors.lockerId) setErrors((prev) => ({ ...prev, lockerId: null }));
+                    }}
+                    disabled={loading}
+                    className="w-full bg-zinc-950/90 text-amber-300 text-xs rounded-xl px-3 py-2 border border-amber-500/25 focus:outline-none focus:border-amber-400 font-mono cursor-pointer"
+                  >
+                    <option value="">-- اختر لوكر سريع من المتاح ({activeLockers.filter(l => l.isAvailable).length} لوكر متاح) --</option>
+                    {activeLockers.map((l) => (
+                      <option 
+                        key={l.id} 
+                        value={l.number}
+                        disabled={!l.isAvailable}
+                        className={!l.isAvailable ? 'text-zinc-600 bg-zinc-900' : 'text-amber-400 bg-black font-bold'}
+                      >
+                        لوكر #{l.number} {l.isAvailable ? '✅ (متاح وفاضي)' : '🔒 (مشغول بالتمرين)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -208,7 +257,7 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
                       setLockerId(e.target.value);
                       if (errors.lockerId) setErrors((prev) => ({ ...prev, lockerId: null }));
                     }}
-                    placeholder="رقم اللوكر المخصص"
+                    placeholder="رقم اللوكر أو اختر من القائمة"
                     className={`w-full bg-black/60 text-white placeholder-zinc-500 text-sm rounded-2xl pr-10 pl-4 py-3 border font-mono transition-all focus:outline-none ${
                       errors.lockerId
                         ? 'border-rose-500 focus:border-rose-400 focus:ring-1 focus:ring-rose-500'
@@ -282,6 +331,7 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
         isOpen={isLockerModalOpen}
         onClose={() => setIsLockerModalOpen(false)}
         selectedLockerId={Number(lockerId)}
+        initialLockers={activeLockers}
         onSelectLocker={(id) => {
           setLockerId(id);
           if (errors.lockerId) setErrors((prev) => ({ ...prev, lockerId: null }));

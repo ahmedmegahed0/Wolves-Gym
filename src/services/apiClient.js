@@ -450,17 +450,30 @@ apiClient.interceptors.response.use(
           if (e.description?.toLowerCase().includes('pending for approval') || e.code?.includes('APPROVAL')) {
             return 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
           }
+          if (e.code === 'LOCKER_NUMBER_ALREADY_EXISTS' || e.description?.toLowerCase().includes('already exists')) {
+            return 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
+          }
+          if (e.code === 'LOCKER_NOT_FOUND' || e.description?.toLowerCase().includes('was not found')) {
+            return 'اللوكر المطلوب غير موجود أو تم حذفه.';
+          }
+          if (e.code === 'GreaterThanValidator' || e.description?.toLowerCase().includes('greater than zero')) {
+            return 'رقم اللوكر لازم يكون رقم صحيح وموجب أكبر من صفر.';
+          }
           return e.description || e.code;
         });
         friendlyMessage = errorDescriptions.join('; ');
       } else if (data.detail) {
         if (data.detail.toLowerCase().includes('pending for approval')) {
           friendlyMessage = 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
+        } else if (data.detail.toLowerCase().includes('already exists')) {
+          friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
         } else {
           friendlyMessage = data.detail;
         }
       } else if (data.title) {
-        friendlyMessage = data.title === 'Unauthorized' ? 'البريد أو كلمة المرور غير صحيحة' : data.title;
+        if (data.title === 'Unauthorized') friendlyMessage = 'البريد أو كلمة المرور غير صحيحة';
+        else if (data.title === 'Conflict') friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
+        else friendlyMessage = data.title;
       } else if (typeof data === 'string') {
         friendlyMessage = data;
       }
@@ -471,7 +484,9 @@ apiClient.interceptors.response.use(
       } else if (status === 403 && isDefaultGenericMessage) {
         friendlyMessage = 'حسابك معلق وفي انتظار تفعيل الإدارة (Pending Approval)، أو ليس لديك صلاحية للدخول.';
       } else if (status === 404 && isDefaultGenericMessage) {
-        friendlyMessage = 'المورد المطلوب أو الحساب غير موجود.';
+        friendlyMessage = 'اللوكر أو المورد المطلوب غير موجود بالسيستم.';
+      } else if (status === 409 && isDefaultGenericMessage) {
+        friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
       }
     } else if (error.request) {
       friendlyMessage = 'تعذر الاتصال بسيرفر الجيم. يرجى التحقق من اتصال الإنترنت.';
@@ -1149,10 +1164,76 @@ export const attendanceService = {
 
   async getLockers(isActive = true) {
     try {
-      const response = await apiClient.get(`/api/Lockers?isActive=${isActive}`);
-      return response.data;
+      return await lockerService.getLockers(isActive);
     } catch {
-      return null;
+      return [];
+    }
+  },
+};
+
+// Lockers Service Methods for Lockers Management Module
+export const lockerService = {
+  /**
+   * GET /api/Lockers
+   * @param {boolean|undefined|null} isActive - Optional filter (true = active, false = inactive, undefined = all)
+   * @returns {Promise<Array<{ id: number, number: number, isActive: boolean, isAvailable: boolean, createdAt: string, updatedAt: string|null }>>}
+   */
+  async getLockers(isActive = undefined) {
+    let url = '/api/Lockers';
+    if (typeof isActive === 'boolean') {
+      url += `?isActive=${isActive}`;
+    }
+    const response = await apiClient.get(url);
+    const list = Array.isArray(response.data) ? response.data : [];
+    return list.sort((a, b) => Number(a.number) - Number(b.number));
+  },
+
+  /**
+   * POST /api/Lockers
+   * @param {{ number: number }} payload
+   */
+  async createLocker({ number }) {
+    const payload = {
+      number: Number(number),
+    };
+    const response = await apiClient.post('/api/Lockers', payload);
+    return response.data;
+  },
+
+  /**
+   * PATCH /api/Lockers/{id}/status
+   * @param {number|string} id
+   * @param {boolean} isActive
+   */
+  async toggleLockerStatus(id, isActive) {
+    const payload = {
+      isActive: Boolean(isActive),
+    };
+    const response = await apiClient.patch(`/api/Lockers/${id}/status`, payload);
+    return response.data;
+  },
+
+  /**
+   * Edit Locker Details: PATCH /api/Lockers/{id} (with fallback to PUT /api/Lockers/{id})
+   * @param {number|string} id
+   * @param {{ number: number, isActive?: boolean }} data
+   */
+  async updateLocker(id, { number, isActive }) {
+    const payload = {
+      number: Number(number),
+    };
+    if (typeof isActive === 'boolean') {
+      payload.isActive = isActive;
+    }
+    try {
+      const response = await apiClient.patch(`/api/Lockers/${id}`, payload);
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 405) {
+        const putRes = await apiClient.put(`/api/Lockers/${id}`, payload);
+        return putRes.data;
+      }
+      throw err;
     }
   },
 };

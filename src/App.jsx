@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import AttendanceDashboard from './components/AttendanceDashboard';
 import CustomerDashboard from './components/customers/CustomerDashboard';
+import LockersDashboard from './components/lockers/LockersDashboard';
 import PendingApprovalPage from './components/dashboard/PendingApprovalPage';
 import UnderConstructionDashboard from './components/dashboard/UnderConstructionDashboard';
 import AuthContainer from './components/auth/AuthContainer';
@@ -53,6 +54,17 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Lockers Management Module: Protected Route */}
+              <Route
+                path="/dashboard/lockers"
+                element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin']}>
+                    <LockersDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/lockers" element={<Navigate to="/dashboard/lockers" replace />} />
 
               {/* Requirement 2 & 3: Customer Portal */}
               <Route

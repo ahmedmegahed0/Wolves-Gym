@@ -25,6 +25,7 @@ import ChangePasswordModal from './auth/ChangePasswordModal';
 import CustomersList from './customers/CustomersList';
 import CustomerProfileCard from './customers/CustomerProfileCard';
 import CustomerDashboard from './customers/CustomerDashboard';
+import LockersDashboard from './lockers/LockersDashboard';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -49,12 +50,13 @@ export const AttendanceDashboard = ({ initialSection }) => {
   const isManager = roleMeta.role === 'Manager';
   const isSuperAdmin = roleMeta.role === 'SuperAdmin';
 
-  // Navigation main module tab: 'attendance' vs 'customers'
+  // Navigation main module tab: 'attendance' vs 'lockers' vs 'customers'
   const [mainTab, setMainTab] = useState(() => {
     if (isTrainer) return 'customers';
     if (isGator) return 'attendance';
     if (initialSection) return initialSection;
     if (location.pathname === '/customers') return 'customers';
+    if (location.pathname.includes('/lockers')) return 'lockers';
     return 'attendance';
   });
 
@@ -248,8 +250,22 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 }`}
               >
                 <Flame className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">الحضور واللوكرات</span>
+                <span className="hidden sm:inline">الحضور والإشغال</span>
                 <span className="sm:hidden">الإشغال</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMainTab('lockers')}
+                className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all flex items-center gap-1.5 ${
+                  mainTab === 'lockers'
+                    ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black shadow-gold-glow'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">إدارة اللوكرات</span>
+                <span className="sm:hidden">اللوكرات</span>
               </button>
 
               <button
@@ -358,6 +374,16 @@ export const AttendanceDashboard = ({ initialSection }) => {
               transition={{ duration: 0.2 }}
             >
               <CustomersList />
+            </motion.div>
+          ) : mainTab === 'lockers' ? (
+            <motion.div
+              key="lockers-view"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              <LockersDashboard isEmbedded={true} />
             </motion.div>
           ) : (
             <motion.div
