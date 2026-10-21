@@ -8,9 +8,10 @@ import RegisterForm from './RegisterForm';
 import ConfirmEmailForm from './ConfirmEmailForm';
 import ForgotPasswordWizard from './ForgotPasswordWizard';
 import { useAuth } from '../../context/AuthContext';
+import { normalizeRole } from '../../services/apiClient';
 
 export const AuthContainer = ({ initialView }) => {
-  const { activeAuthView, setActiveAuthView, isAuthenticated } = useAuth();
+  const { activeAuthView, setActiveAuthView, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (initialView) {
@@ -18,9 +19,16 @@ export const AuthContainer = ({ initialView }) => {
     }
   }, [initialView, setActiveAuthView]);
 
-  // If user is already authenticated, redirect directly to dashboard
+  // If user is already authenticated, redirect directly to role-specific dashboard
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const role = normalizeRole(user?.role);
+    if (role === 'Receptionist') {
+      return <Navigate to="/dashboard/reception" replace />;
+    }
+    if (role === 'Customer') {
+      return <Navigate to="/dashboard/customer" replace />;
+    }
+    return <Navigate to="/dashboard/under-construction" replace />;
   }
 
   // View states
@@ -30,7 +38,7 @@ export const AuthContainer = ({ initialView }) => {
   const isLogin = activeAuthView === 'login';
 
   return (
-    <div dir="rtl" className="min-h-screen text-zinc-100 flex items-center justify-center font-cairo px-4 py-6 relative overflow-hidden">
+    <div dir="rtl" className="min-h-screen text-zinc-100 flex items-center justify-center font-cairo px-3 sm:px-4 py-4 sm:py-6 relative overflow-hidden">
       {/* Full-screen Gym Background */}
       <div className="fixed inset-0">
         <img
@@ -50,10 +58,10 @@ export const AuthContainer = ({ initialView }) => {
           initial={{ opacity: 0, y: 24, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative bg-zinc-950/80 backdrop-blur-2xl border border-zinc-800/60 rounded-[2rem] p-7 sm:p-8 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.95)]"
+          className="relative bg-zinc-950/80 backdrop-blur-2xl border border-zinc-800/60 rounded-3xl sm:rounded-[2rem] p-5 sm:p-8 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.95)]"
         >
           {/* Top Gold Line */}
-          <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
+          <div className="absolute top-0 left-6 right-6 sm:left-8 sm:right-8 h-[2px] bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
 
           {/* Logo & Brand */}
           <div className="flex flex-col items-center mb-7">

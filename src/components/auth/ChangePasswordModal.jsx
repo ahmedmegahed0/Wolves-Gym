@@ -67,22 +67,22 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
           initial={{ opacity: 0, scale: 0.93, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.93, y: 15 }}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-6 lg:p-7 max-w-md w-full shadow-2xl relative overflow-hidden"
+          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-4 sm:p-6 lg:p-7 max-w-md w-full shadow-2xl relative overflow-hidden"
         >
           {/* Accent Line */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
 
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-gold-glow">
-                <Key className="w-5 h-5" />
+          <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-zinc-800">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-gold-glow">
+                <Key className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
                 <h3 className="text-base font-black text-white tracking-tight">
                   تغيير كلمة المرور
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-[11px] sm:text-xs text-zinc-400">
                   تحديث أمان حسابك الشخصي في الجيم
                 </p>
               </div>

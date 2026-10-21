@@ -151,7 +151,7 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
   };
 
   return (
-    <div className="wolf-glass rounded-3xl p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
+    <div className="wolf-glass rounded-3xl p-4 sm:p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
       {/* Decorative Golden Ambient Glow */}
       <div 
         className="absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl opacity-15 pointer-events-none transition-all duration-700"
@@ -160,20 +160,20 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
       <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-80" />
 
       {/* Header bar */}
-      <div className="flex items-center justify-between gap-4 mb-4 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-            <Flame className="w-5 h-5 fill-amber-400/20" />
+      <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 mb-3 sm:mb-4 relative z-10">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+            <Flame className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400/20" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
               الإشغال المباشر في الجيم
               <span className="flex h-2.5 w-2.5 relative">
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.statusDot}`} />
                 <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.statusDot}`} />
               </span>
             </h2>
-            <p className="text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
               <Clock className="w-3.5 h-3.5 text-amber-500/70" />
               آخر تحديث: {lastUpdated.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
@@ -181,21 +181,21 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
         </div>
 
         {/* Action button: Auto-refresh & Manual trigger */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Refresh interval dropdown pill */}
           <div className="relative">
             <select
               value={autoRefreshInterval}
               onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
               aria-label="مدة التحديث التلقائي"
-              className="bg-zinc-950 text-zinc-300 text-xs rounded-xl px-3 py-2 border border-zinc-800 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer pr-3 pl-7 hover:border-amber-500/40 transition-colors font-medium"
+              className="bg-zinc-950 text-zinc-300 text-[11px] sm:text-xs rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 border border-zinc-800 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer pr-2.5 sm:pr-3 pl-6 sm:pl-7 hover:border-amber-500/40 transition-colors font-medium"
             >
               <option value={10}>كل 10 ثوانٍ</option>
               <option value={30}>كل 30 ثانية</option>
               <option value={60}>كل دقيقة</option>
               <option value={0}>تحديث يدوي</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-1.5 sm:pl-2 text-zinc-400">
               <svg className="fill-current h-3 w-3" viewBox="0 0 20 20">
                 <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
               </svg>
@@ -207,21 +207,19 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
             onClick={() => fetchOccupancy(true)}
             disabled={refreshing}
             title="تحديث العدد الآن"
-            className="p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group"
+            className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group"
           >
-            <RotateCw className={`w-4 h-4 transition-transform group-hover:rotate-180 duration-500 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
+            <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:rotate-180 duration-500 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Main Hero Radial Gauge in Metallic Amber/Gold */}
-      <div className="my-3 py-2 flex flex-col items-center justify-center relative">
+      <div className="my-2 sm:my-3 py-1 sm:py-2 flex flex-col items-center justify-center relative">
         <div className="relative flex items-center justify-center">
           <svg
-            width={size}
-            height={size}
             viewBox={`0 0 ${size} ${size}`}
-            className="transform -rotate-90 filter drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+            className="w-44 h-44 sm:w-52 sm:h-52 transform -rotate-90 filter drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]"
           >
             <defs>
               <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -291,16 +289,16 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
         </div>
 
         {/* Dynamic Status Text Badge */}
-        <div className="mt-5 flex items-center justify-center">
+        <div className="mt-3 sm:mt-5 flex items-center justify-center px-1">
           <motion.div
             key={status.label}
             initial={{ y: 5, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-xs font-bold ${status.bg} ${status.color} ${status.glow} backdrop-blur-md`}
+            className={`inline-flex flex-wrap items-center justify-center text-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border text-[11px] sm:text-xs font-bold ${status.bg} ${status.color} ${status.glow} backdrop-blur-md max-w-full`}
           >
-            <span className={`w-2 h-2 rounded-full ${status.statusDot} animate-pulse`} />
+            <span className={`w-2 h-2 rounded-full ${status.statusDot} animate-pulse flex-shrink-0`} />
             <span className="text-white font-extrabold">{status.label}</span>
-            <span className="text-amber-500/40">|</span>
+            <span className="text-amber-500/40 hidden sm:inline">|</span>
             <span className="text-zinc-300 font-medium">
               {status.sub}
             </span>
@@ -309,15 +307,15 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
       </div>
 
       {/* Real-time stats footer bar */}
-      <div className="mt-5 pt-4 border-t border-zinc-800/80 grid grid-cols-3 gap-2.5 text-center">
-        <div className="bg-zinc-950/80 rounded-2xl p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[11px] font-bold text-zinc-400">مكان فاضي</div>
-          <div className="text-lg font-black text-amber-400 font-mono mt-0.5">{availableSlots}</div>
+      <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-zinc-800/80 grid grid-cols-3 gap-1.5 sm:gap-2.5 text-center">
+        <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">مكان فاضي</div>
+          <div className="text-base sm:text-lg font-black text-amber-400 font-mono mt-0.5">{availableSlots}</div>
         </div>
 
-        <div className="bg-zinc-950/80 rounded-2xl p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[11px] font-bold text-zinc-400">سعة الجيم</div>
-          <div className="text-lg font-black text-white font-mono mt-0.5 flex items-center justify-center gap-1">
+        <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">سعة الجيم</div>
+          <div className="text-base sm:text-lg font-black text-white font-mono mt-0.5 flex items-center justify-center gap-1">
             {maxCapacity}
             <button
               onClick={() => {
@@ -332,9 +330,9 @@ export const OccupancyCard = ({ onOccupancyUpdated, refreshTrigger }) => {
           </div>
         </div>
 
-        <div className="bg-zinc-950/80 rounded-2xl p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[11px] font-bold text-zinc-400">تحديث بعد</div>
-          <div className="text-lg font-black text-yellow-500 font-mono mt-0.5">
+        <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">تحديث بعد</div>
+          <div className="text-base sm:text-lg font-black text-yellow-500 font-mono mt-0.5">
             {autoRefreshInterval > 0 ? `${secondsUntilNext} ث` : 'يدوي'}
           </div>
         </div>

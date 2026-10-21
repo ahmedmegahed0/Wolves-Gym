@@ -83,25 +83,25 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
 
   return (
     <>
-      <div className="wolf-glass rounded-3xl p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
+      <div className="wolf-glass rounded-3xl p-4 sm:p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
         {/* Subtle Gold/Bronze Accent Line */}
         <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-500 opacity-90" />
 
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <LogOut className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
                   تسجيل خروج واستلام مفتاح
-                  <span className="text-[10px] font-mono uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg font-bold">
+                  <span className="text-[9px] sm:text-[10px] font-mono uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30 px-1.5 sm:px-2 py-0.5 rounded-lg font-bold">
                     CHECK-OUT
                   </span>
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-[11px] sm:text-xs text-zinc-400">
                   تسجيل انتهاء التمرين وإفراغ اللوكر لاستقبال وحوش جدد
                 </p>
               </div>
@@ -188,7 +188,7 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-600 text-black shadow-gold-glow hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-black text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-600 text-black shadow-gold-glow hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
               >
                 {loading ? (
                   <>
@@ -212,12 +212,12 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
       {/* Exit Confirmation Modal with Egyptian gym tone */}
       <AnimatePresence>
         {exitModalData && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="wolf-glass bg-zinc-950/95 border border-amber-500/35 rounded-3xl p-7 max-w-sm w-full shadow-2xl relative overflow-hidden"
+              className="wolf-glass bg-zinc-950/95 border border-amber-500/35 rounded-3xl p-5 sm:p-7 max-w-sm w-full shadow-2xl relative overflow-hidden"
             >
               {/* Background accent glow */}
               <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/20 rounded-full blur-2xl" />

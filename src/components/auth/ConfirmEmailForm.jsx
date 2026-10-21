@@ -138,7 +138,7 @@ export const ConfirmEmailForm = ({ onSwitchToLogin }) => {
           أدخل كود التفعيل (6 أرقام):
         </label>
 
-        <div className="flex items-center justify-between gap-2" dir="ltr">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2" dir="ltr">
           {codeDigits.map((digit, idx) => (
             <input
               key={idx}
@@ -149,7 +149,7 @@ export const ConfirmEmailForm = ({ onSwitchToLogin }) => {
               value={digit}
               onChange={(e) => handleDigitChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(idx, e)}
-              className={`w-12 h-14 text-center text-xl font-mono font-black text-amber-300 bg-black/80 rounded-2xl border transition-all focus:outline-none ${
+              className={`w-9 sm:w-12 h-11 sm:h-14 text-center text-lg sm:text-xl font-mono font-black text-amber-300 bg-black/80 rounded-xl sm:rounded-2xl border transition-all focus:outline-none ${
                 digit
                   ? 'border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)] bg-amber-500/10'
                   : 'border-zinc-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400'

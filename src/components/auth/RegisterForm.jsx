@@ -146,8 +146,8 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
         {errors.phoneNumber && <p className="text-[11px] text-rose-400 mt-0.5 text-right">{errors.phoneNumber}</p>}
       </div>
 
-      {/* Passwords Row */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Passwords Row - stacked on mobile, 2 cols on tablet/desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {/* Password */}
         <div>
           <label className="text-[13px] font-semibold text-zinc-400 block mb-1 text-right">كلمة المرور</label>

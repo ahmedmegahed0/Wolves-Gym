@@ -4,18 +4,18 @@ import { Activity, LogIn, LogOut, Clock, KeyRound, Trash2, ArrowUpLeft, Flame } 
 
 export const RecentActivityFeed = ({ activities = [], onClearActivities, onSelectMember }) => {
   return (
-    <div className="wolf-glass rounded-3xl p-6 lg:p-7 border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)]">
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-            <Activity className="w-5 h-5" />
+    <div className="wolf-glass rounded-3xl p-4 sm:p-6 lg:p-7 border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)]">
+      <div className="flex items-center justify-between mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-zinc-800">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+            <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+            <h3 className="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
               سجل حركة الوحوش المباشر
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             </h3>
-            <p className="text-xs text-zinc-400">
+            <p className="text-[11px] sm:text-xs text-zinc-400">
               تدفق لحظي لعمليات تسجيل الدخول والخروج في الجيم اليوم
             </p>
           </div>
@@ -24,7 +24,7 @@ export const RecentActivityFeed = ({ activities = [], onClearActivities, onSelec
         {activities.length > 0 && (
           <button
             onClick={onClearActivities}
-            className="text-xs text-zinc-400 hover:text-rose-400 p-2 rounded-xl hover:bg-zinc-800 transition-colors flex items-center gap-1.5 font-bold"
+            className="text-xs text-zinc-400 hover:text-rose-400 p-1.5 sm:p-2 rounded-xl hover:bg-zinc-800 transition-colors flex items-center gap-1.5 font-bold"
             title="مسح سجل الحركات"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export const RecentActivityFeed = ({ activities = [], onClearActivities, onSelec
                   {onSelectMember && isCheckIn && (
                     <button
                       onClick={() => onSelectMember(item.code)}
-                      className="opacity-0 group-hover:opacity-100 px-3 py-1.5 text-xs rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition-all flex items-center gap-1 shadow-gold-glow"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition-all flex items-center gap-1 shadow-gold-glow flex-shrink-0"
                     >
                       <span>تسجيل خروج</span>
                       <ArrowUpLeft className="w-3 h-3" />

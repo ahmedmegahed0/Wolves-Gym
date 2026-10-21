@@ -4,7 +4,9 @@ import {
   getAccessToken, 
   getUserInfo, 
   clearAuthTokens, 
-  authService 
+  authService,
+  normalizeRole,
+  customerService
 } from '../services/apiClient';
 import { useToast } from './ToastContext';
 
@@ -30,6 +32,41 @@ export const AuthProvider = ({ children }) => {
     setToken(currentToken);
     setUser(currentUser);
   }, []);
+
+  // Central Role-Based Destination Resolver (Requirement 2)
+  const redirectUserByRole = useCallback(async (targetUser) => {
+    const role = normalizeRole(targetUser?.role);
+
+    // 1. Receptionist -> /dashboard/reception
+    if (role === 'Receptionist') {
+      setActiveAuthView('dashboard');
+      navigate('/dashboard/reception', { replace: true });
+      return;
+    }
+
+    // 2. Customer -> GET /api/customers/me check
+    if (role === 'Customer') {
+      try {
+        const profile = await customerService.getCustomerMe();
+        const approvalStatus = profile?.approvalStatus !== undefined ? Number(profile.approvalStatus) : 0;
+        if (approvalStatus === 1) {
+          setActiveAuthView('member');
+          navigate('/dashboard/customer', { replace: true });
+        } else {
+          setActiveAuthView('pending');
+          navigate('/pending-approval', { replace: true });
+        }
+      } catch {
+        setActiveAuthView('pending');
+        navigate('/pending-approval', { replace: true });
+      }
+      return;
+    }
+
+    // 3. SuperAdmin, Manager, Trainer -> /dashboard/under-construction
+    setActiveAuthView('under-construction');
+    navigate('/dashboard/under-construction', { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     const handleAuthExpired = () => {
@@ -61,12 +98,15 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authService.login({ email, password });
       updateAuthState();
+      const currentUser = getUserInfo();
+
       toastSuccess(
         'أهلاً بك يا وحش!',
-        'تم تسجيل الدخول بنجاح.. جاهز للتمرين ولإدارة الجيم!'
+        `تم تسجيل الدخول بنجاح (${currentUser?.name || email})`
       );
-      setActiveAuthView('dashboard');
-      navigate('/dashboard', { replace: true });
+
+      // Execute strict role-based redirection
+      await redirectUserByRole(currentUser);
       return { success: true, data };
     } catch (err) {
       console.error('Login error:', err);
@@ -231,9 +271,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authService.googleLogin({ idToken, userType: 0 });
       updateAuthState();
+      const currentUser = getUserInfo();
       toastSuccess('تم الدخول بحساب Google', 'مرحباً بك مجدداً في BE THE WOLF!');
-      setActiveAuthView('dashboard');
-      navigate('/dashboard', { replace: true });
+      await redirectUserByRole(currentUser);
       return { success: true, data };
     } catch (err) {
       console.error('Google login error:', err);

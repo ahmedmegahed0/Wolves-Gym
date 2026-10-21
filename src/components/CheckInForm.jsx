@@ -98,25 +98,25 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
 
   return (
     <>
-      <div className="wolf-glass rounded-3xl p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
+      <div className="wolf-glass rounded-3xl p-4 sm:p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
         {/* Subtle Gold Accent Line */}
         <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
 
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <LogIn className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
                   تسجيل دخول وحش جديد
-                  <span className="text-[10px] font-mono uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg font-bold">
+                  <span className="text-[9px] sm:text-[10px] font-mono uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30 px-1.5 sm:px-2 py-0.5 rounded-lg font-bold">
                     CHECK-IN
                   </span>
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-[11px] sm:text-xs text-zinc-400">
                   امسح الباركود أو أدخل كود العضو وسلمه لوكر التمرين
                 </p>
               </div>
@@ -222,11 +222,11 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
                 <button
                   type="button"
                   onClick={() => setIsLockerModalOpen(true)}
-                  className="px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/25 flex items-center gap-2 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(245,158,11,0.1)]"
+                  className="px-2.5 sm:px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/25 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(245,158,11,0.1)] whitespace-nowrap"
                   title="فتح خريطة اللوكرات الذكية"
                 >
-                  <Grid className="w-4 h-4" />
-                  <span>خريطة اللوكرات</span>
+                  <Grid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>اللوكرات</span>
                 </button>
               </div>
 
@@ -247,7 +247,7 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-4 px-6 rounded-2xl font-black text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
+                className={`w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-black text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
                   isSuccess
                     ? 'bg-amber-400 text-black shadow-gold-glow'
                     : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-500 text-black shadow-gold-glow hover:scale-[1.02] active:scale-[0.98]'
