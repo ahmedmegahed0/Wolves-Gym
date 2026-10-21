@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 import wolfLogo from '../../assets/logo.png';
+import gymBg from '../../assets/gym-bg.jpg';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ConfirmEmailForm from './ConfirmEmailForm';
 import ForgotPasswordWizard from './ForgotPasswordWizard';
 import { useAuth } from '../../context/AuthContext';
 
-export const AuthContainer = () => {
+export const AuthContainer = ({ initialView }) => {
   const { activeAuthView, setActiveAuthView, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (initialView) {
+      setActiveAuthView(initialView);
+    }
+  }, [initialView, setActiveAuthView]);
+
+  // If user is already authenticated, redirect directly to dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   // View states
   const isConfirmEmail = activeAuthView === 'confirm-email';
@@ -18,156 +30,139 @@ export const AuthContainer = () => {
   const isLogin = activeAuthView === 'login';
 
   return (
-    <div dir="rtl" className="min-h-screen bg-black bg-wolf-mesh text-zinc-100 flex flex-col justify-between font-cairo px-4 py-8">
-      {/* Top Bar with quick link to Dashboard */}
-      <div className="max-w-md w-full mx-auto flex items-center justify-between pb-4">
-        <button
-          type="button"
-          onClick={() => setActiveAuthView('dashboard')}
-          className="text-xs text-zinc-400 hover:text-amber-400 flex items-center gap-1.5 transition-colors p-2 rounded-xl hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
-        >
-          <ArrowRight className="w-4 h-4" />
-          <span>لوحة الحضور واللوكرات</span>
-        </button>
-
-        {isAuthenticated && (
-          <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-cairo">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            الجلسة نشطة ومصادقة
-          </span>
-        )}
+    <div dir="rtl" className="min-h-screen text-zinc-100 flex items-center justify-center font-cairo px-4 py-6 relative overflow-hidden">
+      {/* Full-screen Gym Background */}
+      <div className="fixed inset-0">
+        <img
+          src={gymBg}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        {/* Dark gradient overlays for readability */}
+        <div className="absolute inset-0 bg-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
       </div>
 
-      {/* Main Glassmorphic Auth Card */}
-      <div className="max-w-md w-full mx-auto">
+      <div className="w-full max-w-[420px] relative z-10">
+        {/* Main Auth Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="wolf-glass bg-zinc-950/90 border border-amber-500/25 rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.95)] relative overflow-hidden"
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="relative bg-zinc-950/80 backdrop-blur-2xl border border-zinc-800/60 rounded-[2rem] p-7 sm:p-8 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.95)]"
         >
-          {/* Subtle Golden Accent Glow */}
-          <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
-          <div className="absolute -top-16 -right-16 w-40 h-40 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+          {/* Top Gold Line */}
+          <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
 
-          {/* Logo & Brand Title */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="relative group mb-3">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1.5">
+          {/* Logo & Brand */}
+          <div className="flex flex-col items-center mb-7">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4, type: 'spring', stiffness: 200 }}
+              className="relative mb-4"
+            >
+              <div className="absolute -inset-2 bg-gradient-to-br from-amber-500/30 to-yellow-500/10 rounded-2xl blur-xl" />
+              <div className="relative w-14 h-14 rounded-2xl bg-black/90 border border-amber-500/40 flex items-center justify-center p-1.5 shadow-lg">
                 <img
                   src={wolfLogo}
                   alt="BE THE WOLF"
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]"
+                  className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 m-0">
+            <h1 className="text-xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500">
               BE THE WOLF
             </h1>
-            <p className="text-xs text-zinc-400 mt-1 font-semibold">
-              بوابة تسجيل ومصادقة أبطال الجيم
-            </p>
           </div>
 
-          {/* Tabs switch: Only shown when in login or register view */}
+          {/* Tabs: Only for login/register views */}
           {!isConfirmEmail && !isForgotPassword && (
-            <div className="flex rounded-2xl bg-black/80 p-1.5 border border-zinc-800 mb-6 relative">
+            <div className="flex rounded-2xl bg-black/70 p-1 border border-zinc-800/50 mb-6 relative">
               <button
                 type="button"
                 onClick={() => setActiveAuthView('login')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 relative z-10 ${
-                  isLogin
-                    ? 'text-black font-black'
-                    : 'text-zinc-400 hover:text-white'
+                className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative z-10 ${
+                  isLogin ? 'text-black' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                <span>تسجيل الدخول</span>
+                تسجيل الدخول
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveAuthView('register')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 relative z-10 ${
-                  isRegister
-                    ? 'text-black font-black'
-                    : 'text-zinc-400 hover:text-white'
+                className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all relative z-10 ${
+                  isRegister ? 'text-black' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                <span>حساب جديد</span>
+                حساب جديد
               </button>
 
-              {/* Animated Tab Background Indicator */}
+              {/* Animated Slider */}
               <motion.div
                 layout
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className={`absolute top-1.5 bottom-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 shadow-gold-glow ${
-                  isLogin ? 'right-1.5 left-1/2 ml-1' : 'left-1.5 right-1/2 mr-1'
+                transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+                className={`absolute top-1 bottom-1 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 ${
+                  isLogin ? 'right-1 left-[calc(50%+2px)]' : 'left-1 right-[calc(50%+2px)]'
                 }`}
               />
             </div>
           )}
 
-          {/* Form Content Slider */}
+          {/* Form Content */}
           <AnimatePresence mode="wait">
             {isConfirmEmail ? (
               <motion.div
                 key="confirm-email"
-                initial={{ opacity: 0, x: -15 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 15 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
               >
-                <ConfirmEmailForm
-                  onSwitchToLogin={() => setActiveAuthView('login')}
-                />
+                <ConfirmEmailForm onSwitchToLogin={() => setActiveAuthView('login')} />
               </motion.div>
             ) : isForgotPassword ? (
               <motion.div
                 key="forgot-password"
-                initial={{ opacity: 0, x: -15 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 15 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
               >
-                <ForgotPasswordWizard
-                  onSwitchToLogin={() => setActiveAuthView('login')}
-                />
+                <ForgotPasswordWizard onSwitchToLogin={() => setActiveAuthView('login')} />
               </motion.div>
             ) : isRegister ? (
               <motion.div
                 key="register"
-                initial={{ opacity: 0, x: -15 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 15 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
               >
-                <RegisterForm
-                  onSwitchToLogin={() => setActiveAuthView('login')}
-                />
+                <RegisterForm onSwitchToLogin={() => setActiveAuthView('login')} />
               </motion.div>
             ) : (
               <motion.div
                 key="login"
-                initial={{ opacity: 0, x: 15 }}
+                initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -15 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.2 }}
               >
-                <LoginForm
-                  onSwitchToRegister={() => setActiveAuthView('register')}
-                />
+                <LoginForm onSwitchToRegister={() => setActiveAuthView('register')} />
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
 
-      {/* Footer Info */}
-      <footer className="text-center text-xs text-zinc-500 pt-6">
-        BE THE WOLF &copy; 2026 • جميع الحقوق محفوظة لكتيبة الذئاب
-      </footer>
+        {/* Footer */}
+        <p className="text-center text-[11px] text-zinc-600 mt-5">
+          BE THE WOLF &copy; 2026
+        </p>
+      </div>
     </div>
   );
 };

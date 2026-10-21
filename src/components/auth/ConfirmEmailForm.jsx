@@ -202,8 +202,8 @@ export const ConfirmEmailForm = ({ onSwitchToLogin }) => {
           <RotateCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
           <span>
             {canResend
-              ? 'إعادة إرسال كود التفعيل الآن'
-              : `إعادة الإرسال بعد (${resendCooldown} ثانية)`}
+              ? 'إعادة إرسال الكود'
+              : `إعادة إرسال الكود بعد (${resendCooldown} ثانية)`}
           </span>
         </button>
 

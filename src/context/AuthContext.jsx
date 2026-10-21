@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   getAccessToken, 
   getUserInfo, 
@@ -10,6 +11,7 @@ import { useToast } from './ToastContext';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
   const [token, setToken] = useState(() => getAccessToken());
@@ -33,13 +35,15 @@ export const AuthProvider = ({ children }) => {
     const handleAuthExpired = () => {
       updateAuthState();
       setActiveAuthView('login');
+      navigate('/login', { replace: true });
       toastError('انتهت الجلسة', 'انتهت صلاحية جلسة الدخول. برجاء تسجيل الدخول مجدداً.');
     };
 
     const handleLoggedOut = () => {
       updateAuthState();
       setActiveAuthView('login');
-      toastInfo('تم تسجيل الخروج', 'تم تسجيل خروجك بنجاح.. مستنينك في التمرين الجاي يا وحش');
+      navigate('/login', { replace: true });
+      toastInfo('تم تسجيل الخروج', 'نورتنا يا كوتش.. مستنينك في التمرين الجاي');
     };
 
     window.addEventListener('gym_auth_expired', handleAuthExpired);
@@ -49,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener('gym_auth_expired', handleAuthExpired);
       window.removeEventListener('gym_auth_logged_out', handleLoggedOut);
     };
-  }, [toastError, toastInfo, updateAuthState]);
+  }, [toastError, toastInfo, updateAuthState, navigate]);
 
   // Login handler
   const handleLogin = async ({ email, password }) => {
@@ -62,6 +66,7 @@ export const AuthProvider = ({ children }) => {
         'تم تسجيل الدخول بنجاح.. جاهز للتمرين ولإدارة الجيم!'
       );
       setActiveAuthView('dashboard');
+      navigate('/dashboard', { replace: true });
       return { success: true, data };
     } catch (err) {
       console.error('Login error:', err);
@@ -228,6 +233,7 @@ export const AuthProvider = ({ children }) => {
       updateAuthState();
       toastSuccess('تم الدخول بحساب Google', 'مرحباً بك مجدداً في BE THE WOLF!');
       setActiveAuthView('dashboard');
+      navigate('/dashboard', { replace: true });
       return { success: true, data };
     } catch (err) {
       console.error('Google login error:', err);
@@ -249,6 +255,7 @@ export const AuthProvider = ({ children }) => {
       updateAuthState();
       setActiveAuthView('login');
       setLoading(false);
+      navigate('/login', { replace: true });
     }
   };
 

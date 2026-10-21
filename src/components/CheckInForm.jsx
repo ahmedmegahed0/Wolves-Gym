@@ -274,11 +274,7 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
           </form>
         </div>
 
-        {/* Footer info tip */}
-        <div className="mt-4 pt-3 border-t border-zinc-800/80 text-[11px] text-zinc-400 flex items-center justify-between">
-          <span>المسار البرمجي: <code className="text-amber-400 font-mono">/api/Attendances/check-in</code></span>
-          <span className="text-zinc-500">تحديث فوري لعداد الوحوش</span>
-        </div>
+
       </div>
 
       {/* Visual Locker Selection Modal */}

@@ -206,11 +206,7 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
           </form>
         </div>
 
-        {/* Footer info */}
-        <div className="mt-4 pt-3 border-t border-zinc-800/80 text-[11px] text-zinc-400 flex items-center justify-between">
-          <span>المسار البرمجي: <code className="text-amber-400 font-mono">/api/Attendances/check-out</code></span>
-          <span className="text-zinc-500">خصم فوري من الإشغال</span>
-        </div>
+
       </div>
 
       {/* Exit Confirmation Modal with Egyptian gym tone */}

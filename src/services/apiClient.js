@@ -33,11 +33,19 @@ export const getRefreshToken = () => {
 
 export const setAuthTokens = ({ accessToken, refreshToken, userInfo = null }) => {
   if (accessToken) {
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken.trim());
-    localStorage.setItem('gym_auth_token', accessToken.trim());
+    const accessStr =
+      typeof accessToken === 'string'
+        ? accessToken
+        : (accessToken?.token || accessToken?.accessToken || JSON.stringify(accessToken));
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, String(accessStr).trim());
+    localStorage.setItem('gym_auth_token', String(accessStr).trim());
   }
   if (refreshToken) {
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken.trim());
+    const refreshStr =
+      typeof refreshToken === 'string'
+        ? refreshToken
+        : (refreshToken?.token || refreshToken?.refreshToken || JSON.stringify(refreshToken));
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, String(refreshStr).trim());
   }
   if (userInfo) {
     localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
@@ -93,12 +101,30 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Request Interceptor: Inject Bearer Token
+// Auth endpoints that should NEVER send a Bearer token
+const AUTH_PUBLIC_ENDPOINTS = [
+  '/api/Authentication/login',
+  '/api/Authentication/register-customer',
+  '/api/Authentication/google',
+  '/api/Authentication/confirm-email',
+  '/api/Authentication/resend-confirmation-email',
+  '/api/Authentication/send-reset-password-email',
+  '/api/Authentication/validate-reset-password-code',
+  '/api/Authentication/reset-password',
+];
+
+// Request Interceptor: Inject Bearer Token (skip auth endpoints)
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const isAuthEndpoint = AUTH_PUBLIC_ENDPOINTS.some((ep) => config.url?.includes(ep));
+    if (!isAuthEndpoint) {
+      const token = getAccessToken();
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } else {
+      // Explicitly remove any Authorization header for public auth endpoints
+      delete config.headers.Authorization;
     }
     return config;
   },
@@ -116,20 +142,37 @@ apiClient.interceptors.response.use(
     if (error.response?.data) {
       const { data, status } = error.response;
       if (Array.isArray(data.errors) && data.errors.length > 0) {
-        friendlyMessage = data.errors.map((e) => e.description || e.code).join('; ');
+        const errorDescriptions = data.errors.map((e) => {
+          if (e.code === 'AUTH_INVALID_CREDENTIALS' || e.description?.includes('Invalid Email or password')) {
+            return 'البريد الإلكتروني أو كلمة المرور غير صحيحة، أو هذا الحساب غير موجود على سيرفر wolves.runasp.net';
+          }
+          if (e.code === 'AUTH_EMAIL_NOT_VERIFIED' || e.description?.includes('Email is not verified')) {
+            return 'الحساب موجود لكن لم يتم تفعيل البريد الإلكتروني بكود التحقق بعد.';
+          }
+          if (e.description?.toLowerCase().includes('pending for approval') || e.code?.includes('APPROVAL')) {
+            return 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
+          }
+          return e.description || e.code;
+        });
+        friendlyMessage = errorDescriptions.join('; ');
       } else if (data.detail) {
-        friendlyMessage = data.detail;
+        if (data.detail.toLowerCase().includes('pending for approval')) {
+          friendlyMessage = 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
+        } else {
+          friendlyMessage = data.detail;
+        }
       } else if (data.title) {
-        friendlyMessage = data.title;
+        friendlyMessage = data.title === 'Unauthorized' ? 'البريد أو كلمة المرور غير صحيحة' : data.title;
       } else if (typeof data === 'string') {
         friendlyMessage = data;
       }
 
-      if (status === 401 && !friendlyMessage) {
-        friendlyMessage = 'بيانات الدخول غير صحيحة أو انتهت الجلسة.';
-      } else if (status === 403) {
-        friendlyMessage = 'ليس لديك صلاحية لتنفيذ هذا الإجراء.';
-      } else if (status === 404 && !friendlyMessage) {
+      const isDefaultGenericMessage = !friendlyMessage || friendlyMessage === 'حدث خطأ أثناء الاتصال بالسيرفر. يرجى المحاولة لاحقاً.';
+      if (status === 401 && isDefaultGenericMessage) {
+        friendlyMessage = 'بيانات الدخول غير صحيحة أو هذا الحساب غير مسجل بالسيرفر.';
+      } else if (status === 403 && isDefaultGenericMessage) {
+        friendlyMessage = 'حسابك معلق وفي انتظار تفعيل الإدارة (Pending Approval)، أو ليس لديك صلاحية للدخول.';
+      } else if (status === 404 && isDefaultGenericMessage) {
         friendlyMessage = 'المورد المطلوب أو الحساب غير موجود.';
       }
     } else if (error.request) {
@@ -238,6 +281,9 @@ export const authService = {
    * Body: { email, password }
    */
   async login({ email, password }) {
+    // Clear any stale tokens BEFORE login to prevent "You are already Logged in !" error
+    clearAuthTokens();
+
     const payload = {
       email: String(email || '').trim().toLowerCase(),
       password: String(password || ''),
@@ -265,6 +311,9 @@ export const authService = {
    * Body: { idToken, userType: 0 }
    */
   async googleLogin({ idToken, userType = 0 }) {
+    // Clear any stale tokens BEFORE Google login
+    clearAuthTokens();
+
     const payload = {
       idToken: String(idToken || '').trim(),
       userType: Number(userType),

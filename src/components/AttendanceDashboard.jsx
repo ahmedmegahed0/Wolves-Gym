@@ -10,7 +10,9 @@ import {
   Maximize2,
   User,
   LogOut,
-  Key
+  Key,
+  Menu,
+  X
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -35,9 +37,10 @@ export const AttendanceDashboard = () => {
   const [currentOccupancy, setCurrentOccupancy] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   
-  // View mode for Check-in / Check-out: 'split' or 'tabs'
-  const [activeTab, setActiveTab] = useState('check-in'); // 'check-in' | 'check-out'
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'tabs'
+  // On mobile, always use 'tabs' view mode
+  const [activeTab, setActiveTab] = useState('check-in');
+  const [viewMode, setViewMode] = useState('split');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Activity stream
   const [activities, setActivities] = useState(() => {
@@ -127,16 +130,16 @@ export const AttendanceDashboard = () => {
   const occupiedLockerCount = activeMembers.filter((m) => m.lockerId).length;
 
   return (
-    <div dir="rtl" className="min-h-screen bg-black bg-wolf-mesh text-zinc-100 pb-20 font-cairo">
-      {/* Sleek Navigation Bar with Golden "BE THE WOLF" Branding & Auth Actions */}
+    <div dir="rtl" className="min-h-screen bg-black bg-wolf-mesh text-zinc-100 pb-8 sm:pb-20 font-cairo">
+      {/* Navigation Bar */}
       <header className="sticky top-0 z-40 wolf-glass bg-zinc-950/90 border-b border-amber-500/20 backdrop-blur-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Logo & Brand Title */}
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
-              <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <div className="relative group flex-shrink-0">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-xl sm:rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
+              <div className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1">
                 <img
                   src={wolfLogo}
                   alt="BE THE WOLF"
@@ -145,23 +148,23 @@ export const AttendanceDashboard = () => {
               </div>
             </div>
 
-            <div>
-              <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 m-0">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 m-0 truncate">
                 BE THE WOLF
               </h1>
-              <p className="text-xs text-zinc-400 font-semibold tracking-wide mt-0.5">
-                لوحة إدارة الحضور واللوكرات وتتبع الإشغال اللحظي
+              <p className="text-[10px] sm:text-xs text-zinc-400 font-semibold tracking-wide mt-0.5 hidden sm:block">
+                لوحة إدارة الحضور والإشغال
               </p>
             </div>
           </div>
 
-          {/* Right Controls: Live Clock & Account Action Button */}
-          <div className="flex items-center gap-3">
-            {/* Live Digital Clock */}
-            <div className="hidden md:flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300 shadow-inner">
-              <Clock className="w-4 h-4 text-amber-400" />
+          {/* Right Controls */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Digital Clock - hidden on small mobile */}
+            <div className="hidden lg:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
               <span className="font-cairo font-bold">
-                {currentTime.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'short' })}
+                {currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
               <span className="text-zinc-600">|</span>
               <span className="text-amber-400 font-black">
@@ -169,14 +172,20 @@ export const AttendanceDashboard = () => {
               </span>
             </div>
 
-            {/* Account Profile / Logout OR Login Trigger */}
+            {/* Compact time on tablet */}
+            <div className="hidden sm:flex lg:hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-amber-400 font-bold">
+              <Clock className="w-3.5 h-3.5" />
+              {currentTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+
+            {/* Account Profile / Logout */}
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 bg-zinc-900/90 border border-amber-500/30 rounded-2xl p-1.5 pr-3 pl-2 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono">
+              <div className="flex items-center gap-1 sm:gap-2 bg-zinc-900/90 border border-amber-500/30 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 sm:pr-3 sm:pl-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-7 h-7 rounded-lg sm:rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono">
                     {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
                   </div>
-                  <div className="text-right hidden sm:block">
+                  <div className="text-right hidden md:block">
                     <span className="text-xs font-bold text-white block leading-none">
                       {user?.name || 'كابتن الجيم'}
                     </span>
@@ -186,7 +195,7 @@ export const AttendanceDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIsChangePasswordModalOpen(true)}
-                  className="p-1.5 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded-xl transition-colors"
+                  className="p-1.5 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded-lg transition-colors hidden sm:flex"
                   title="تغيير كلمة المرور"
                 >
                   <Key className="w-4 h-4" />
@@ -194,7 +203,7 @@ export const AttendanceDashboard = () => {
                 <button
                   type="button"
                   onClick={logout}
-                  className="p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 rounded-xl transition-colors"
+                  className="p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 rounded-lg transition-colors"
                   title="تسجيل الخروج"
                 >
                   <LogOut className="w-4 h-4" />
@@ -204,10 +213,10 @@ export const AttendanceDashboard = () => {
               <button
                 type="button"
                 onClick={() => setActiveAuthView('login')}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow transition-all hover:scale-105 active:scale-95"
               >
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">تسجيل الدخول / الحساب</span>
+                <span className="hidden sm:inline">تسجيل الدخول</span>
                 <span className="sm:hidden">دخول</span>
               </button>
             )}
@@ -216,93 +225,99 @@ export const AttendanceDashboard = () => {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 space-y-4 sm:space-y-8">
         
-        {/* Metric Quick Stats Bar: 3 Clean Useful Cards */}
-        <section aria-label="إحصائيات الوحوش في الجيم" className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="wolf-glass rounded-3xl p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center gap-4 group">
-            <div className="p-3.5 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform">
-              <Users className="w-6 h-6" />
+        {/* Metric Quick Stats Bar */}
+        <section aria-label="إحصائيات الجيم" className="grid grid-cols-3 gap-2 sm:gap-5">
+          {/* Stat 1 */}
+          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 group text-center sm:text-right">
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform">
+              <Users className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="text-xs font-bold text-zinc-400">
-                الوحوش في الجيم الآن
+              <div className="text-[10px] sm:text-xs font-bold text-zinc-400 hidden sm:block">
+                في الجيم الآن
               </div>
-              <div className="text-2xl font-black text-white font-mono mt-0.5">
-                {currentOccupancy} <span className="text-xs font-normal text-amber-400 font-cairo">وحش</span>
+              <div className="text-lg sm:text-2xl font-black text-white font-mono">
+                {currentOccupancy}
               </div>
+              <div className="text-[9px] sm:text-xs text-amber-400 font-cairo sm:hidden">في الجيم</div>
             </div>
           </div>
 
-          <div className="wolf-glass rounded-3xl p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center gap-4 group">
-            <div className="p-3.5 rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] group-hover:scale-110 transition-transform">
-              <Activity className="w-6 h-6" />
+          {/* Stat 2 */}
+          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 group text-center sm:text-right">
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] group-hover:scale-110 transition-transform">
+              <Activity className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="text-xs font-bold text-zinc-400">
-                إجمالي حركات دخول اليوم
+              <div className="text-[10px] sm:text-xs font-bold text-zinc-400 hidden sm:block">
+                دخول اليوم
               </div>
-              <div className="text-2xl font-black text-white font-mono mt-0.5">
-                {totalCheckInsToday} <span className="text-xs font-normal text-yellow-400 font-cairo">تمرينة</span>
+              <div className="text-lg sm:text-2xl font-black text-white font-mono">
+                {totalCheckInsToday}
               </div>
+              <div className="text-[9px] sm:text-xs text-yellow-400 font-cairo sm:hidden">تمرينة</div>
             </div>
           </div>
 
-          <div className="wolf-glass rounded-3xl p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center gap-4 group">
-            <div className="p-3.5 rounded-2xl bg-zinc-900 border border-amber-600/30 text-amber-500 shadow-[0_0_15px_rgba(217,119,6,0.2)] group-hover:scale-110 transition-transform">
-              <KeyRound className="w-6 h-6" />
+          {/* Stat 3 */}
+          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 group text-center sm:text-right">
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-600/30 text-amber-500 shadow-[0_0_15px_rgba(217,119,6,0.2)] group-hover:scale-110 transition-transform">
+              <KeyRound className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="text-xs font-bold text-zinc-400">
-                اللوكرات المشغولة حالياً
+              <div className="text-[10px] sm:text-xs font-bold text-zinc-400 hidden sm:block">
+                لوكرات مشغولة
               </div>
-              <div className="text-2xl font-black text-white font-mono mt-0.5">
-                {occupiedLockerCount} <span className="text-xs font-normal text-amber-400 font-cairo">لوكر نشط</span>
+              <div className="text-lg sm:text-2xl font-black text-white font-mono">
+                {occupiedLockerCount}
               </div>
+              <div className="text-[9px] sm:text-xs text-amber-400 font-cairo sm:hidden">لوكر</div>
             </div>
           </div>
         </section>
 
         {/* Section Title & View Switcher */}
-        <div className="flex items-center justify-between pb-2">
+        <div className="flex items-center justify-between pb-1 sm:pb-2">
           <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-400 fill-amber-400/20" />
-            <h2 className="text-lg font-black text-white tracking-tight">
-              منطقة الاستقبال والتحكم في الحضور
+            <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400/20" />
+            <h2 className="text-sm sm:text-lg font-black text-white tracking-tight">
+              الاستقبال والتحكم
             </h2>
           </div>
 
           {/* Toggle between Side-by-Side and Tabbed on desktop */}
-          <div className="hidden sm:flex items-center gap-1 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800">
+          <div className="hidden md:flex items-center gap-1 p-1 bg-zinc-900/90 rounded-xl border border-zinc-800">
             <button
               onClick={() => setViewMode('split')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 viewMode === 'split'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Columns className="w-3.5 h-3.5" />
-              عرض متجاور
+              متجاور
             </button>
             <button
               onClick={() => setViewMode('tabs')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 viewMode === 'tabs'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Maximize2 className="w-3.5 h-3.5" />
-              عرض تبويبات
+              تبويبات
             </button>
           </div>
         </div>
 
         {/* Primary Operations Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start">
           
-          {/* Left Column: Live Occupancy Radial Widget (Hero Card, 5 columns) */}
+          {/* Left Column: Live Occupancy Radial Widget */}
           <div className="lg:col-span-5 w-full">
             <OccupancyCard
               refreshTrigger={refreshTrigger}
@@ -310,78 +325,100 @@ export const AttendanceDashboard = () => {
             />
           </div>
 
-          {/* Right Column: Check-In & Check-Out Forms (7 columns) */}
-          <div className="lg:col-span-7 w-full space-y-6">
-            {viewMode === 'tabs' ? (
-              <div className="space-y-4">
-                {/* Tab switch pills */}
-                <div className="flex rounded-2xl bg-zinc-950 p-1.5 border border-zinc-800">
-                  <button
-                    onClick={() => setActiveTab('check-in')}
-                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
-                      activeTab === 'check-in'
-                        ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black shadow-gold-glow'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <span>تسجيل دخول واستلام لوكر</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('check-out')}
-                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
-                      activeTab === 'check-out'
-                        ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-black shadow-gold-glow'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <span>تسجيل خروج وتسليم لوكر</span>
-                  </button>
-                </div>
+          {/* Right Column: Check-In & Check-Out Forms */}
+          <div className="lg:col-span-7 w-full space-y-4 sm:space-y-6">
+            {/* Mobile: always tabs. Desktop: respect viewMode */}
+            <div className="md:hidden space-y-3">
+              {/* Mobile Tab Switch */}
+              <div className="flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
+                <button
+                  onClick={() => setActiveTab('check-in')}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    activeTab === 'check-in'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-gold-glow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  تسجيل دخول
+                </button>
+                <button
+                  onClick={() => setActiveTab('check-out')}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    activeTab === 'check-out'
+                      ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black shadow-gold-glow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  تسجيل خروج
+                </button>
+              </div>
 
-                <AnimatePresence mode="wait">
-                  {activeTab === 'check-in' ? (
-                    <motion.div
-                      key="check-in-tab"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
+              <AnimatePresence mode="wait">
+                {activeTab === 'check-in' ? (
+                  <motion.div key="m-checkin" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}>
+                    <CheckInForm onCheckInSuccess={handleCheckInSuccess} />
+                  </motion.div>
+                ) : (
+                  <motion.div key="m-checkout" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
+                    <CheckOutForm onCheckOutSuccess={handleCheckOutSuccess} recentActiveMembers={activeMembers} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Desktop: viewMode-based */}
+            <div className="hidden md:block">
+              {viewMode === 'tabs' ? (
+                <div className="space-y-4">
+                  <div className="flex rounded-2xl bg-zinc-950 p-1.5 border border-zinc-800">
+                    <button
+                      onClick={() => setActiveTab('check-in')}
+                      className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+                        activeTab === 'check-in'
+                          ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black shadow-gold-glow'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
                     >
-                      <CheckInForm onCheckInSuccess={handleCheckInSuccess} />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="check-out-tab"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
+                      تسجيل دخول واستلام لوكر
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('check-out')}
+                      className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+                        activeTab === 'check-out'
+                          ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
                     >
-                      <CheckOutForm
-                        onCheckOutSuccess={handleCheckOutSuccess}
-                        recentActiveMembers={activeMembers}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              /* Side-by-Side (Split) View */
-              <div className="space-y-6">
-                <CheckInForm onCheckInSuccess={handleCheckInSuccess} />
-                <div id="checkout-panel">
-                  <CheckOutForm
-                    onCheckOutSuccess={handleCheckOutSuccess}
-                    recentActiveMembers={activeMembers}
-                  />
+                      تسجيل خروج وتسليم لوكر
+                    </button>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {activeTab === 'check-in' ? (
+                      <motion.div key="check-in-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                        <CheckInForm onCheckInSuccess={handleCheckInSuccess} />
+                      </motion.div>
+                    ) : (
+                      <motion.div key="check-out-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                        <CheckOutForm onCheckOutSuccess={handleCheckOutSuccess} recentActiveMembers={activeMembers} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-6">
+                  <CheckInForm onCheckInSuccess={handleCheckInSuccess} />
+                  <div id="checkout-panel">
+                    <CheckOutForm onCheckOutSuccess={handleCheckOutSuccess} recentActiveMembers={activeMembers} />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Real-Time Attendance Stream Log */}
-        <section aria-label="سجل حركات الحضور اللحظي">
+        <section aria-label="سجل حركات الحضور">
           <RecentActivityFeed
             activities={activities}
             onClearActivities={handleClearActivities}
