@@ -22,7 +22,7 @@ export const AuthContainer = ({ initialView }) => {
   // If user is already authenticated, redirect directly to role-specific dashboard
   if (isAuthenticated) {
     const role = normalizeRole(user?.role);
-    if (role === 'Receptionist') {
+    if (role === 'Receptionist' || role === 'SuperAdmin' || role === 'Manager') {
       return <Navigate to="/dashboard/reception" replace />;
     }
     if (role === 'Customer') {

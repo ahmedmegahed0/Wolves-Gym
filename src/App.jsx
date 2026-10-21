@@ -22,7 +22,7 @@ const RootRedirect = () => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const role = normalizeRole(user?.role);
-  if (role === 'Receptionist') {
+  if (role === 'Receptionist' || role === 'SuperAdmin' || role === 'Manager') {
     return <Navigate to="/dashboard/reception" replace />;
   }
   if (role === 'Customer') {
@@ -49,8 +49,8 @@ function App() {
               <Route
                 path="/dashboard/reception"
                 element={
-                  <ProtectedRoute allowedRoles={['Receptionist']}>
-                    <AttendanceDashboard initialSection="attendance" />
+                  <ProtectedRoute allowedRoles={['Receptionist', 'SuperAdmin', 'Manager', 'Trainer']}>
+                    <AttendanceDashboard />
                   </ProtectedRoute>
                 }
               />

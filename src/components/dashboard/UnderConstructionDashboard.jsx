@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Hammer, 
@@ -18,6 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getRoleMeta } from '../../services/apiClient';
 
 export const UnderConstructionDashboard = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const roleMeta = getRoleMeta(user?.role);
 
@@ -89,6 +91,14 @@ export const UnderConstructionDashboard = () => {
                 </span>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/reception')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
+            >
+              <span>لوحة الاستقبال</span>
+            </button>
 
             <button
               type="button"

@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
   const redirectUserByRole = useCallback(async (targetUser) => {
     const role = normalizeRole(targetUser?.role);
 
-    // 1. Receptionist -> /dashboard/reception
-    if (role === 'Receptionist') {
+    // 1. Receptionist, SuperAdmin, Manager -> /dashboard/reception
+    if (role === 'Receptionist' || role === 'SuperAdmin' || role === 'Manager') {
       setActiveAuthView('dashboard');
       navigate('/dashboard/reception', { replace: true });
       return;
