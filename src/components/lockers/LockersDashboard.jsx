@@ -30,6 +30,7 @@ import EditLockerModal from './EditLockerModal';
 import { lockerService, getRoleMeta } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 
 /**
  * LockersDashboard: Comprehensive Lockers Management Module
@@ -38,7 +39,14 @@ import { useToast } from '../../context/ToastContext';
  */
 export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, setIsChangePasswordModalOpen } = useAuth();
+  const { 
+    user, 
+    isAuthenticated, 
+    logout, 
+    setIsChangePasswordModalOpen,
+    isProfileSettingsModalOpen,
+    setIsProfileSettingsModalOpen 
+  } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const roleMeta = getRoleMeta(user?.role);
@@ -258,9 +266,14 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
 
               {isAuthenticated && (
                 <div className="flex items-center gap-1 sm:gap-2 bg-zinc-900/90 border border-amber-500/30 rounded-xl sm:rounded-2xl p-1 sm:p-1.5">
-                  <div className="w-7 h-7 rounded-lg sm:rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileSettingsModalOpen(true)}
+                    className="w-7 h-7 rounded-lg sm:rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono hover:scale-105 transition-transform cursor-pointer"
+                    title="تعديل البيانات الشخصية"
+                  >
                     {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
-                  </div>
+                  </button>
                   <button
                     type="button"
                     onClick={logout}
@@ -569,6 +582,12 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
         locker={selectedLocker}
         onLockerUpdated={handleLockerUpdated}
         existingNumbers={existingNumbers}
+      />
+
+      {/* User Profile Settings Modal */}
+      <UserProfileSettingsModal
+        isOpen={isProfileSettingsModalOpen}
+        onClose={() => setIsProfileSettingsModalOpen(false)}
       />
     </div>
   );

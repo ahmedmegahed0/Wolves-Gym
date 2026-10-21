@@ -11,16 +11,28 @@ import {
   TrendingUp, 
   Users, 
   FileText,
-  AlertTriangle 
+  AlertTriangle,
+  Crown,
+  Key,
+  User
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';
 import { useAuth } from '../../context/AuthContext';
 import { getRoleMeta } from '../../services/apiClient';
+import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
+import ChangePasswordModal from '../auth/ChangePasswordModal';
 
 export const UnderConstructionDashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { 
+    user, 
+    logout, 
+    isProfileSettingsModalOpen, 
+    setIsProfileSettingsModalOpen,
+    isChangePasswordModalOpen,
+    setIsChangePasswordModalOpen
+  } = useAuth();
   const roleMeta = getRoleMeta(user?.role);
 
   // Role-specific upcoming features teaser
@@ -78,19 +90,25 @@ export const UnderConstructionDashboard = () => {
 
           {/* User Badge & Logout */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-900/90 border border-amber-500/30 rounded-xl px-3 py-1.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-xs">
+            {/* User Profile Badge Button */}
+            <button
+              type="button"
+              onClick={() => setIsProfileSettingsModalOpen(true)}
+              className="flex items-center gap-2 bg-zinc-900/90 hover:bg-zinc-800 border border-amber-500/30 hover:border-amber-500/60 rounded-xl px-3 py-1.5 transition-all cursor-pointer group"
+              title="إعدادات الحساب والبيانات الشخصية"
+            >
+              <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-xs group-hover:scale-105 transition-transform">
                 {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
               </div>
               <div className="text-right hidden sm:block">
-                <span className="text-xs font-bold text-white block leading-tight">
+                <span className="text-xs font-bold text-white block leading-tight group-hover:text-amber-400 transition-colors">
                   {user?.name || roleMeta.label}
                 </span>
                 <span className={`text-[10px] font-mono flex items-center gap-1 ${roleMeta.textColor}`}>
                   {roleMeta.badge}
                 </span>
               </div>
-            </div>
+            </button>
 
             <button
               type="button"
@@ -207,6 +225,18 @@ export const UnderConstructionDashboard = () => {
           </div>
         </motion.div>
       </main>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+      />
+
+      {/* User Profile Settings Modal */}
+      <UserProfileSettingsModal
+        isOpen={isProfileSettingsModalOpen}
+        onClose={() => setIsProfileSettingsModalOpen(false)}
+      />
     </div>
   );
 };

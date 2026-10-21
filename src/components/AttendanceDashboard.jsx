@@ -41,6 +41,7 @@ import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
 import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
+import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,7 +55,9 @@ export const AttendanceDashboard = ({ initialSection }) => {
     logout, 
     setActiveAuthView,
     isChangePasswordModalOpen,
-    setIsChangePasswordModalOpen
+    setIsChangePasswordModalOpen,
+    isProfileSettingsModalOpen,
+    setIsProfileSettingsModalOpen
   } = useAuth();
 
   const roleMeta = getRoleMeta(user?.role);
@@ -417,9 +420,9 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 <div className="relative group">
                   <button
                     type="button"
-                    onClick={() => setShowProfileModal(true)}
+                    onClick={() => setIsProfileSettingsModalOpen(true)}
                     className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-900 to-black text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono hover:scale-105 transition-transform shadow-sm"
-                    title={user?.name || 'الملف الرياضي'}
+                    title={user?.name || 'تعديل البيانات الشخصية'}
                   >
                     {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
                   </button>
@@ -444,9 +447,9 @@ export const AttendanceDashboard = ({ initialSection }) => {
               <div className="flex items-center justify-between bg-gradient-to-r from-zinc-950/90 to-zinc-900/80 border border-amber-500/20 rounded-2xl p-2.5 shadow-sm">
                 <button
                   type="button"
-                  onClick={() => setShowProfileModal(true)}
+                  onClick={() => setIsProfileSettingsModalOpen(true)}
                   className="flex items-center gap-2.5 min-w-0 text-right group flex-1"
-                  title="عرض الملف الرياضي"
+                  title="تعديل البيانات الشخصية والحساب"
                 >
                   <div className="relative flex-shrink-0">
                     <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono group-hover:scale-105 transition-transform">
@@ -465,6 +468,14 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 </button>
 
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileSettingsModalOpen(true)}
+                    className="p-1.5 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                    title="تعديل البيانات الشخصية"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => setIsChangePasswordModalOpen(true)}
@@ -570,11 +581,32 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
               {isAuthenticated && (
                 <div className="pt-4 border-t border-zinc-800 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-300">{user?.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsProfileSettingsModalOpen(true);
+                    }}
+                    className="flex items-center gap-2.5 text-right hover:text-amber-400 transition-colors cursor-pointer group"
+                    title="تعديل البيانات الشخصية"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-black flex items-center justify-center font-black text-xs font-mono group-hover:scale-105 transition-transform">
+                      {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-white block group-hover:text-amber-400 transition-colors">
+                        {user?.name || 'حسابي'}
+                      </span>
+                      <span className="text-[10px] text-amber-400/90 font-mono">
+                        تعديل الحساب 🐺
+                      </span>
+                    </div>
+                  </button>
                   <button
                     type="button"
                     onClick={logout}
-                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg"
+                    className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                    title="تسجيل الخروج"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
@@ -627,12 +659,12 @@ export const AttendanceDashboard = ({ initialSection }) => {
               </div>
             </div>
 
-            {/* Left: Quick New Subscription Button + Live Clock */}
-            <div className="flex items-center gap-2.5">
+            {/* Left: Quick New Subscription Button + Profile Shortcut + Live Clock */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <button
                 type="button"
                 onClick={() => handleOpenNewSubscription()}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
                 title="تسجيل اشتراك جديد بالصالة"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />
@@ -640,7 +672,24 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 <span className="sm:hidden">اشتراك جديد</span>
               </button>
 
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
+              {/* Profile Shortcut in Header */}
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => setIsProfileSettingsModalOpen(true)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-amber-500/25 hover:border-amber-500/50 transition-all cursor-pointer group"
+                  title="إعدادات الحساب والبيانات الشخصية"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 text-black font-black text-xs flex items-center justify-center font-mono group-hover:scale-105 transition-transform">
+                    {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
+                  </div>
+                  <span className="text-xs font-bold text-white max-w-[110px] truncate hidden md:inline group-hover:text-amber-400 transition-colors">
+                    {user?.name || 'حسابي'}
+                  </span>
+                </button>
+              )}
+
+              <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
                 <span className="font-cairo font-bold hidden sm:inline">
                   {currentTime.toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })}
@@ -1049,6 +1098,12 @@ export const AttendanceDashboard = ({ initialSection }) => {
       <ChangePasswordModal
         isOpen={isChangePasswordModalOpen}
         onClose={() => setIsChangePasswordModalOpen(false)}
+      />
+
+      {/* User Profile Settings & Personal Data Modal */}
+      <UserProfileSettingsModal
+        isOpen={isProfileSettingsModalOpen}
+        onClose={() => setIsProfileSettingsModalOpen(false)}
       />
 
       {/* New Member Subscription Modal for Reception & Admin */}

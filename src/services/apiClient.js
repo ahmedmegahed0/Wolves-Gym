@@ -1850,6 +1850,7 @@ export const trainerService = {
   },
 };
 
+export { usersService } from './usersService';
 export default apiClient;
 
 

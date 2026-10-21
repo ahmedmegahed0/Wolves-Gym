@@ -6,7 +6,8 @@ import {
   clearAuthTokens, 
   authService,
   normalizeRole,
-  customerService
+  customerService,
+  STORAGE_KEYS
 } from '../services/apiClient';
 import { useToast } from './ToastContext';
 
@@ -24,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] = useState(false);
 
   // Sync token state changes
   const updateAuthState = useCallback(() => {
@@ -31,6 +33,17 @@ export const AuthProvider = ({ children }) => {
     const currentUser = getUserInfo();
     setToken(currentToken);
     setUser(currentUser);
+  }, []);
+
+  // Update current user without full page reload
+  const updateCurrentUser = useCallback((newUserData) => {
+    setUser((prev) => {
+      const updated = { ...(prev || {}), ...newUserData };
+      try {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   }, []);
 
   // Central Role-Based Destination Resolver (Requirement 2)
@@ -311,6 +324,9 @@ export const AuthProvider = ({ children }) => {
         setPendingConfirmationEmail,
         isChangePasswordModalOpen,
         setIsChangePasswordModalOpen,
+        isProfileSettingsModalOpen,
+        setIsProfileSettingsModalOpen,
+        updateCurrentUser,
         loading,
         login: handleLogin,
         register: handleRegister,

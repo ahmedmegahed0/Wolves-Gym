@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { usersService } from '../../services/usersService';
 
 export const RegisterForm = ({ onSwitchToLogin }) => {
   const { register, loading } = useAuth();
@@ -17,6 +18,32 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [emailStatus, setEmailStatus] = useState('idle'); // 'idle' | 'checking' | 'available' | 'taken'
+
+  // Debounced real-time email availability check (500ms)
+  useEffect(() => {
+    const email = formData.email.trim();
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailStatus('idle');
+      return;
+    }
+
+    setEmailStatus('checking');
+    const timer = setTimeout(async () => {
+      try {
+        const res = await usersService.checkEmailAvailability(email);
+        if (res.isAvailable) {
+          setEmailStatus('available');
+        } else {
+          setEmailStatus('taken');
+        }
+      } catch {
+        setEmailStatus('idle');
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.email]);
 
   const validate = () => {
     const errs = {};
@@ -30,6 +57,8 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
       errs.email = 'أدخل البريد الإلكتروني';
     } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
       errs.email = 'صيغة البريد غير صحيحة';
+    } else if (emailStatus === 'taken') {
+      errs.email = 'هذا البريد مسجل مسبقاً، يرجى تسجيل الدخول';
     }
 
     if (!formData.phoneNumber.trim()) {
@@ -118,11 +147,56 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
             onChange={handleChange}
             placeholder="example@wolves.com"
             dir="ltr"
-            className={`${inputClass('email')} font-mono tracking-wide`}
+            className={`w-full bg-zinc-900/60 text-white placeholder-zinc-600 text-sm rounded-xl pr-10 pl-4 py-2.5 border font-mono tracking-wide transition-all focus:outline-none text-right ${
+              emailStatus === 'taken' || errors.email
+                ? 'border-rose-500/60 focus:border-rose-400 focus:ring-1 focus:ring-rose-500/30'
+                : emailStatus === 'available'
+                ? 'border-emerald-500/60 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/30'
+                : 'border-zinc-800/60 focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/20 hover:border-zinc-700'
+            }`}
             disabled={loading}
           />
+          {emailStatus === 'checking' && (
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+            </div>
+          )}
         </div>
-        {errors.email && <p className="text-[11px] text-rose-400 mt-0.5 text-right">{errors.email}</p>}
+
+        {/* Real-time Email Availability Feedback */}
+        {emailStatus === 'checking' && (
+          <p className="text-[11px] text-zinc-400 mt-1 flex items-center gap-1">
+            <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+            <span>جاري التحقق من توفر البريد الإلكتروني...</span>
+          </p>
+        )}
+
+        {emailStatus === 'available' && !errors.email && (
+          <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>البريد متاح للتسجيل</span>
+          </p>
+        )}
+
+        {emailStatus === 'taken' && (
+          <div className="text-[11px] text-rose-400 mt-1 flex items-center justify-between font-bold">
+            <span className="flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span>هذا البريد مسجل مسبقاً، يرجى تسجيل الدخول</span>
+            </span>
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="underline text-amber-400 hover:text-amber-300 mr-2 shrink-0 cursor-pointer"
+            >
+              تسجيل الدخول
+            </button>
+          </div>
+        )}
+
+        {errors.email && emailStatus !== 'taken' && (
+          <p className="text-[11px] text-rose-400 mt-0.5 text-right">{errors.email}</p>
+        )}
       </div>
 
       {/* Phone */}

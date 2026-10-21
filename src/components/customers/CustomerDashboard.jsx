@@ -34,9 +34,17 @@ import { customerService, attendanceService, STORAGE_KEYS } from '../../services
 import ChangePasswordModal from '../auth/ChangePasswordModal';
 import PackagesPricingGrid from '../packages/PackagesPricingGrid';
 import TrainersSection from '../trainers/TrainersSection';
+import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 
 export const CustomerDashboard = () => {
-  const { user, logout, isChangePasswordModalOpen, setIsChangePasswordModalOpen } = useAuth();
+  const { 
+    user, 
+    logout, 
+    isChangePasswordModalOpen, 
+    setIsChangePasswordModalOpen,
+    isProfileSettingsModalOpen,
+    setIsProfileSettingsModalOpen
+  } = useAuth();
   const { success: toastSuccess, info: toastInfo } = useToast();
 
   const [profile, setProfile] = useState(null);
@@ -269,19 +277,24 @@ export const CustomerDashboard = () => {
               <span>باقات واشتراكات</span>
             </button>
 
-            <div className="flex items-center gap-2 bg-zinc-900/80 border border-amber-500/20 rounded-xl px-2.5 py-1.5 text-xs">
-              <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-[11px]">
+            <button
+              type="button"
+              onClick={() => setIsProfileSettingsModalOpen(true)}
+              className="flex items-center gap-2 bg-zinc-900/80 hover:bg-zinc-800 border border-amber-500/20 hover:border-amber-500/50 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer group"
+              title="إعدادات الملف الشخصي وتحديث البيانات"
+            >
+              <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-[11px] group-hover:scale-105 transition-transform">
                 {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
               </div>
               <div className="text-right hidden sm:block">
-                <span className="font-bold text-white block text-[11px] leading-tight">
+                <span className="font-bold text-white block text-[11px] leading-tight group-hover:text-amber-300 transition-colors">
                   {profile?.name || user?.name || 'عضو الجيم'}
                 </span>
                 <span className="text-[9px] text-amber-400 font-mono flex items-center gap-0.5">
-                  🐺 وحش الجيم
+                  🐺 تعديل الحساب
                 </span>
               </div>
-            </div>
+            </button>
 
             <button
               onClick={logout}
@@ -789,6 +802,12 @@ export const CustomerDashboard = () => {
       <ChangePasswordModal
         isOpen={isChangePasswordModalOpen}
         onClose={() => setIsChangePasswordModalOpen(false)}
+      />
+
+      {/* User Profile Settings Modal */}
+      <UserProfileSettingsModal
+        isOpen={isProfileSettingsModalOpen}
+        onClose={() => setIsProfileSettingsModalOpen(false)}
       />
     </div>
   );
