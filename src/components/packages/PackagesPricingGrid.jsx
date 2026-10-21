@@ -110,16 +110,30 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
 
     setSubscribing(true);
     try {
-      const customerId = user?.customerId || user?.id || 1;
+      let customerId = user?.customerId || user?.id;
+      let customerProfile = null;
+
+      // Ensure customerId is obtained from GET /api/customers/me if customer role
+      try {
+        customerProfile = await customerService.getCustomerMe();
+        if (customerProfile?.id || customerProfile?.customerId) {
+          customerId = customerProfile.id || customerProfile.customerId;
+        }
+      } catch (meErr) {
+        console.warn('Could not fetch /api/customers/me:', meErr);
+      }
+
       await packageService.subscribe({
-        customerId,
+        customerId: customerId || 1,
         packageId: selectedPackage.id,
         paymentMethod,
         notes: subscriptionNotes,
+        customer: customerProfile || user,
+        packageItem: selectedPackage,
       });
 
       setSubscriptionSuccess(true);
-      toastSuccess('تم تأكيد طلب الاشتراك!', `أهلاً بك في كتيبة ${selectedPackage.name}.`);
+      toastSuccess('مبروك يا وحش!', `تم تفعيل اشتراكك في باقة ${selectedPackage.name} وجاهز للتمرين.`);
     } catch (err) {
       toastError('تعذر إتمام الاشتراك', err.message || 'حدث خطأ أثناء إرسال طلب الاشتراك.');
     } finally {
@@ -403,11 +417,11 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-black text-white mb-1">
-                      تم تسجيل طلب اشتراكك بنجاح!
+                    <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 mb-2">
+                      مبروك يا وحش! تم تفعيل اشتراكك وجاهز للتمرين 🔥🐺
                     </h3>
                     <p className="text-xs text-zinc-300 max-w-sm mx-auto leading-relaxed">
-                      تم اعتماد طلب اشتراكك في <span className="text-amber-400 font-bold">{selectedPackage.name}</span>. يمكنك الآن التوجه لصالة الجيم لبدء تدريبك فوراً!
+                      تم اعتماد اشتراكك بنجاح في <span className="text-amber-400 font-bold">{selectedPackage.name}</span>. كارت الوحش واللوكر الخاص بك جاهزان الآن بالصالة!
                     </p>
                   </div>
 

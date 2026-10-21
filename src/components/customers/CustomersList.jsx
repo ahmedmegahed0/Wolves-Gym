@@ -19,7 +19,9 @@ import {
   QrCode, 
   Loader2,
   Sparkles,
-  Info
+  Info,
+  Crown,
+  Plus
 } from 'lucide-react';
 import { customerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
@@ -27,7 +29,7 @@ import ApprovalBadge from './ApprovalBadge';
 import CustomerFilterTabs from './CustomerFilterTabs';
 import CustomerEditModal from './CustomerEditModal';
 
-export const CustomersList = () => {
+export const CustomersList = ({ onOpenNewSubscription = null }) => {
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
   // Filters & Pagination State
@@ -181,8 +183,19 @@ export const CustomersList = () => {
           </div>
         </div>
 
-        {/* Quick Refresh Button */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        {/* Quick Actions & Refresh */}
+        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+          {onOpenNewSubscription && (
+            <button
+              type="button"
+              onClick={() => onOpenNewSubscription()}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>تسجيل اشتراك جديد</span>
+            </button>
+          )}
+
           <button
             onClick={() => fetchCustomers(true)}
             disabled={refreshing || loading}
@@ -344,7 +357,20 @@ export const CustomersList = () => {
 
                         {/* Actions */}
                         <td className="py-4 px-5">
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* Subscribe to Package Button */}
+                            {onOpenNewSubscription && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenNewSubscription(c)}
+                                className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1 hover:scale-105 active:scale-95"
+                                title="تسجيل أو تجديد اشتراك في باقة تدريب لهذا العضو"
+                              >
+                                <Crown className="w-3.5 h-3.5 text-amber-400 group-hover:text-black" />
+                                <span>اشتراك باقة</span>
+                              </button>
+                            )}
+
                             {/* Accept button for pending/rejected */}
                             {Number(c.approvalStatus) !== 1 && (
                               <button
@@ -445,7 +471,18 @@ export const CustomersList = () => {
                     </div>
 
                     {/* Action Buttons Row */}
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {onOpenNewSubscription && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenNewSubscription(c)}
+                          className="flex-1 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Crown className="w-3.5 h-3.5" />
+                          <span>اشتراك باقة</span>
+                        </button>
+                      )}
+
                       {Number(c.approvalStatus) !== 1 && (
                         <button
                           type="button"
@@ -458,7 +495,7 @@ export const CustomersList = () => {
                           ) : (
                             <Check className="w-3.5 h-3.5" />
                           )}
-                          <span>تفعيل الاشتراك</span>
+                          <span>تفعيل</span>
                         </button>
                       )}
 

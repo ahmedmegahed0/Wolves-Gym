@@ -31,7 +31,7 @@ import PackageFormModal from './PackageFormModal';
  * Comprehensive management dashboard and data table for SuperAdmin and Manager
  * Handles GET /api/Packages/management, status toggles, edits, and creation.
  */
-export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false }) => {
+export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false, onOpenNewSubscription = null }) => {
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [packages, setPackages] = useState([]);
@@ -143,7 +143,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
           {onBackToPublicGrid && (
             <button
               type="button"
@@ -154,10 +154,22 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             </button>
           )}
 
+          {onOpenNewSubscription && (
+            <button
+              type="button"
+              onClick={() => onOpenNewSubscription()}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              title="تسجيل اشتراك جديد بالصالة لأحد الوحوش"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>تسجيل اشتراك جديد</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>إضافة باقة جديدة</span>

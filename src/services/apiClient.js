@@ -1542,7 +1542,7 @@ export const packageService = {
   },
 
   /**
-   * Toggle Package Active Status
+    * Toggle Package Active Status
    * @param {number|string} id
    * @param {object} currentPackage
    */
@@ -1558,7 +1558,43 @@ export const packageService = {
    * POST /api/Subscriptions
    * Body: { customerId, packageId, paymentMethod, notes }
    */
-  async subscribe({ customerId, packageId, paymentMethod = 0, notes = '' }) {
+  async subscribe({ customerId, packageId, paymentMethod = 0, notes = '', customer = null, packageItem = null }) {
+    return await subscriptionService.createSubscription({ customerId, packageId, paymentMethod, notes, customer, packageItem });
+  },
+};
+
+const SUBSCRIPTIONS_HISTORY_KEY = 'gym_wolf_subscriptions_history';
+
+export const getStoredSubscriptions = () => {
+  try {
+    const raw = localStorage.getItem(SUBSCRIPTIONS_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveStoredSubscription = (sub) => {
+  try {
+    const current = getStoredSubscriptions();
+    const updated = [sub, ...current.filter((item) => String(item.id) !== String(sub.id)).slice(0, 99)];
+    localStorage.setItem(SUBSCRIPTIONS_HISTORY_KEY, JSON.stringify(updated));
+    return updated;
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Subscriptions Service Module
+ * Handles POST /api/Subscriptions & Subscription Auditing
+ */
+export const subscriptionService = {
+  /**
+   * POST /api/Subscriptions
+   * @param {{ customerId: number, packageId: number, paymentMethod: number, notes?: string, customer?: object, packageItem?: object }} params
+   */
+  async createSubscription({ customerId, packageId, paymentMethod = 0, notes = '', customer = null, packageItem = null }) {
     const payload = {
       customerId: Number(customerId),
       packageId: Number(packageId),
@@ -1568,12 +1604,99 @@ export const packageService = {
 
     try {
       const response = await apiClient.post('/api/Subscriptions', payload);
-      return response.data || { success: true };
+
+      // Create rich history record
+      const durationDays = Number(packageItem?.duration) || 30;
+      const record = {
+        id: response.data?.id || `SUB-${Date.now()}`,
+        customerId: payload.customerId,
+        customerName: customer?.name || `عضو #${payload.customerId}`,
+        customerPhone: customer?.phoneNumber || '',
+        customerCode: customer?.code || `ID-${payload.customerId}`,
+        packageId: payload.packageId,
+        packageName: packageItem?.name || `باقة #${payload.packageId}`,
+        packagePrice: Number(packageItem?.price) || 0,
+        packageDuration: durationDays,
+        paymentMethod: payload.paymentMethod,
+        notes: payload.notes,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString(),
+        status: 'active',
+        isSynced: true,
+      };
+
+      saveStoredSubscription(record);
+
+      return {
+        ...(response.data || {}),
+        success: true,
+        record,
+      };
     } catch (err) {
-      console.warn('POST /api/Subscriptions API error:', err.message);
-      // Simulate success for frontend feedback if offline/mock
-      return { success: true, isMock: true, subscribedAt: new Date().toISOString() };
+      console.error('POST /api/Subscriptions API error:', err);
+
+      const status = err.response?.status;
+      const data = err.response?.data;
+      let errorMsg = 'تعذر إتمام تسجيل الاشتراك.';
+
+      if (typeof data === 'string') {
+        errorMsg = data;
+      } else if (data?.message) {
+        errorMsg = data.message;
+      } else if (data?.title) {
+        errorMsg = data.title;
+      } else if (data?.errors) {
+        const firstKey = Object.keys(data.errors)[0];
+        if (firstKey && data.errors[firstKey]?.length > 0) {
+          errorMsg = data.errors[firstKey][0];
+        }
+      }
+
+      if (status === 400) {
+        errorMsg = errorMsg || 'بيانات الاشتراك غير صحيحة، أو العضو لديه اشتراك ساري بالفعل في هذه الباقة.';
+      } else if (status === 404) {
+        errorMsg = errorMsg || 'العضو أو الباقة المحددة غير موجودة في النظام.';
+      } else if (status === 401 || status === 403) {
+        errorMsg = 'ليس لديك صلاحية لتسجيل اشتراك، يرجى تسجيل الدخول مجدداً.';
+      }
+
+      // If network error / backend unavailable, allow offline simulation for receptionist UX
+      if (!err.response) {
+        console.warn('Network unreachable, creating local offline subscription record');
+        const durationDays = Number(packageItem?.duration) || 30;
+        const offlineRecord = {
+          id: `OFFLINE-SUB-${Date.now()}`,
+          customerId: payload.customerId,
+          customerName: customer?.name || `عضو #${payload.customerId}`,
+          customerPhone: customer?.phoneNumber || '',
+          customerCode: customer?.code || `ID-${payload.customerId}`,
+          packageId: payload.packageId,
+          packageName: packageItem?.name || `باقة #${payload.packageId}`,
+          packagePrice: Number(packageItem?.price) || 0,
+          packageDuration: durationDays,
+          paymentMethod: payload.paymentMethod,
+          notes: payload.notes,
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString(),
+          status: 'active',
+          isOffline: true,
+        };
+        saveStoredSubscription(offlineRecord);
+        return { success: true, isOffline: true, record: offlineRecord };
+      }
+
+      const customError = new Error(errorMsg);
+      customError.status = status;
+      customError.response = err.response;
+      throw customError;
     }
+  },
+
+  /**
+   * Get subscriptions history for audit table
+   */
+  getSubscriptionsHistory() {
+    return getStoredSubscriptions();
   },
 };
 

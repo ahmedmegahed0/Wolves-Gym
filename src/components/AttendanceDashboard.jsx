@@ -26,7 +26,8 @@ import {
   ChevronRight,
   ChevronLeft,
   PanelRightClose,
-  PanelRightOpen
+  PanelRightOpen,
+  Plus
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -39,6 +40,7 @@ import CustomerProfileCard from './customers/CustomerProfileCard';
 import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
+import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -98,6 +100,17 @@ export const AttendanceDashboard = ({ initialSection }) => {
   const [pendingCount, setPendingCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // New Subscription Modal States
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [subscriptionModalCustomer, setSubscriptionModalCustomer] = useState(null);
+  const [subscriptionModalPackage, setSubscriptionModalPackage] = useState(null);
+
+  const handleOpenNewSubscription = (customer = null, pkg = null) => {
+    setSubscriptionModalCustomer(customer);
+    setSubscriptionModalPackage(pkg);
+    setIsSubscriptionModalOpen(true);
+  };
 
   // Sync with route changes
   useEffect(() => {
@@ -614,8 +627,19 @@ export const AttendanceDashboard = ({ initialSection }) => {
               </div>
             </div>
 
-            {/* Left: Live Clock & Server Online indicator */}
+            {/* Left: Quick New Subscription Button + Live Clock */}
             <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleOpenNewSubscription()}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="تسجيل اشتراك جديد بالصالة"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span className="hidden sm:inline">تسجيل اشتراك جديد</span>
+                <span className="sm:hidden">اشتراك جديد</span>
+              </button>
+
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono text-zinc-300">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
                 <span className="font-cairo font-bold hidden sm:inline">
@@ -970,7 +994,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.2 }}
               >
-                <PackagesDashboard isEmbedded={true} />
+                <PackagesDashboard
+                  isEmbedded={true}
+                  onOpenNewSubscription={handleOpenNewSubscription}
+                />
               </motion.div>
             )}
 
@@ -985,7 +1012,9 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.2 }}
               >
-                <CustomersList />
+                <CustomersList
+                  onOpenNewSubscription={handleOpenNewSubscription}
+                />
               </motion.div>
             )}
 
@@ -1020,6 +1049,21 @@ export const AttendanceDashboard = ({ initialSection }) => {
       <ChangePasswordModal
         isOpen={isChangePasswordModalOpen}
         onClose={() => setIsChangePasswordModalOpen(false)}
+      />
+
+      {/* New Member Subscription Modal for Reception & Admin */}
+      <CreateSubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => {
+          setIsSubscriptionModalOpen(false);
+          setSubscriptionModalCustomer(null);
+          setSubscriptionModalPackage(null);
+        }}
+        preselectedCustomer={subscriptionModalCustomer}
+        preselectedPackage={subscriptionModalPackage}
+        onSuccess={() => {
+          setRefreshTrigger((p) => p + 1);
+        }}
       />
     </div>
   );

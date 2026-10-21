@@ -17,16 +17,22 @@ import { useAuth } from '../../context/AuthContext';
 import { getRoleMeta } from '../../services/apiClient';
 import wolfLogo from '../../assets/logo.png';
 
+import CreateSubscriptionModal from '../subscriptions/CreateSubscriptionModal';
+
 /**
  * PackagesDashboard Component
  * Central Hub for Gym Membership Packages & Plans
  * Seamlessly toggles between the Customer Pricing Cards Grid and Admin Data Table.
  */
-export const PackagesDashboard = ({ isEmbedded = false, initialView = 'grid' }) => {
+export const PackagesDashboard = ({ isEmbedded = false, initialView = 'grid', onOpenNewSubscription = null }) => {
   const { user } = useAuth();
   const roleMeta = getRoleMeta(user?.role);
 
   const canManage = ['SuperAdmin', 'Manager', 'Receptionist', 'Reception'].includes(roleMeta.role);
+
+  // Standalone subscription modal state
+  const [standaloneSubModalOpen, setStandaloneSubModalOpen] = useState(false);
+  const handleOpenSub = onOpenNewSubscription || (() => setStandaloneSubModalOpen(true));
 
   // Default view
   const [activeView, setActiveView] = useState(() => {
@@ -124,10 +130,19 @@ export const PackagesDashboard = ({ isEmbedded = false, initialView = 'grid' }) 
             <PackagesAdminManagement
               isEmbedded={true}
               onBackToPublicGrid={() => setActiveView('grid')}
+              onOpenNewSubscription={handleOpenSub}
             />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Standalone CreateSubscriptionModal if rendered outside AttendanceDashboard */}
+      {!onOpenNewSubscription && (
+        <CreateSubscriptionModal
+          isOpen={standaloneSubModalOpen}
+          onClose={() => setStandaloneSubModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
