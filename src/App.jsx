@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import AttendanceDashboard from './components/AttendanceDashboard';
 import CustomerDashboard from './components/customers/CustomerDashboard';
 import LockersDashboard from './components/lockers/LockersDashboard';
+import PackagesDashboard from './components/packages/PackagesDashboard';
 import PendingApprovalPage from './components/dashboard/PendingApprovalPage';
 import UnderConstructionDashboard from './components/dashboard/UnderConstructionDashboard';
 import AuthContainer from './components/auth/AuthContainer';
@@ -65,6 +66,19 @@ function App() {
                 }
               />
               <Route path="/lockers" element={<Navigate to="/dashboard/lockers" replace />} />
+
+              {/* Packages & Membership Plans: Protected & Customer Routes */}
+              <Route
+                path="/dashboard/packages"
+                element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin', 'Customer', 'Trainer']}>
+                    <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
+                      <PackagesDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/packages" element={<Navigate to="/dashboard/packages" replace />} />
 
               {/* Requirement 2 & 3: Customer Portal */}
               <Route

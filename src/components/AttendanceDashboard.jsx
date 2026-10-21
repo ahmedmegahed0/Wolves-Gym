@@ -38,6 +38,7 @@ import CustomersList from './customers/CustomersList';
 import CustomerProfileCard from './customers/CustomerProfileCard';
 import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
+import PackagesDashboard from './packages/PackagesDashboard';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -70,6 +71,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
     if (initialSection) return initialSection;
     if (location.pathname === '/customers') return 'customers';
     if (location.pathname.includes('/lockers')) return 'lockers';
+    if (location.pathname.includes('/packages')) return 'packages';
     if (location.pathname.includes('/attendance')) return 'attendance';
     return 'cards';
   });
@@ -236,6 +238,12 @@ export const AttendanceDashboard = ({ initialSection }) => {
       id: 'lockers',
       label: 'إدارة اللوكرات',
       icon: KeyRound,
+      badge: null,
+    },
+    {
+      id: 'packages',
+      label: 'باقات واشتراكات',
+      icon: Crown,
       badge: null,
     },
     {
@@ -937,7 +945,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
             )}
 
             {/* ======================================================== */}
-            {/* VIEW 3: LOCKERS MANAGEMENT (إدارة اللوكرات - الثالثة)       */}
+            {/* VIEW 3: LOCKERS MANAGEMENT (إدارة اللوكرات)               */}
             {/* ======================================================== */}
             {mainTab === 'lockers' && (
               <motion.div
@@ -952,7 +960,22 @@ export const AttendanceDashboard = ({ initialSection }) => {
             )}
 
             {/* ======================================================== */}
-            {/* VIEW 4: CUSTOMERS / MONSTERS (إدارة الوحوش - الرابعة)       */}
+            {/* VIEW 4: PACKAGES & PLANS (باقات واشتراكات كتيبة الذئاب)    */}
+            {/* ======================================================== */}
+            {mainTab === 'packages' && (
+              <motion.div
+                key="packages-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <PackagesDashboard isEmbedded={true} />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 5: CUSTOMERS / MONSTERS (إدارة الوحوش)               */}
             {/* ======================================================== */}
             {mainTab === 'customers' && (
               <motion.div

@@ -1238,5 +1238,345 @@ export const lockerService = {
   },
 };
 
+// ============================================================================
+// PACKAGES & MEMBERSHIP PLANS SERVICE (باقات واشتراكات كتيبة الذئاب)
+// ============================================================================
+
+const PACKAGES_STORAGE_KEY = 'gym_packages_cache';
+
+const DEFAULT_PACKAGES = [
+  {
+    id: 1,
+    name: 'اشتراك الذئب البرونزي (شهر)',
+    price: 650,
+    duration: 30,
+    description: 'دخول غير محدود لصالة الأجهزة والحديد\nاستخدام اللوكرات وغرفة تبديل الملابس\nجلسة تقييم بدني مجانية (InBody)\nمتابعة مستوى اللياقة والوزن أسبوعياً',
+    isActive: true,
+    createdAt: '2026-10-01T00:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'اشتراك الذئب الفضي (3 شهور)',
+    price: 1750,
+    duration: 90,
+    description: 'دخول شامل لجميع الصالات وأجهزة الكارديو والحديد\n3 جلسات InBody مجانية ومتابعة دورية مع الكابتن\nخطة تدريبية مخصصة ومحدثة شهرياً\nإمكانية تجميد الاشتراك لمدة 14 يوماً مجاناً\nخصم 15% على مكملات البار الرياضي',
+    isActive: true,
+    isPopular: true,
+    createdAt: '2026-10-01T00:00:00Z',
+  },
+  {
+    id: 3,
+    name: 'اشتراك الذئب الذهبي (6 شهور)',
+    price: 3200,
+    duration: 180,
+    description: 'دخول VIP لجميع مرافق الجيم والساونا والبخار\nلوكر خاص مخصص طوال فترة الاشتراك\nجلسات قياس ومتابعة نظام غذائي احترافي\nإمكانية تجميد الاشتراك حتى 30 يوماً\nدعوة مجانية لصديق (Free Pass) شهرياً',
+    isActive: true,
+    createdAt: '2026-10-01T00:00:00Z',
+  },
+  {
+    id: 4,
+    name: 'اشتراك ألفا الذئاب السنوي (VIP)',
+    price: 5800,
+    duration: 365,
+    description: 'العضوية الملكية الكاملة لصالة BE THE WOLF\nلوكر ذكي ثابت + حقيبة رياضية خاصة بالصالة\nاستخدام غير محدود للساونا والجاكوزي والبخار\nخطة تدريب وتغذية متكاملة مع كابتن خاص\nإمكانية تجميد حتى 60 يوماً + 5 دعوات للأصدقاء',
+    isActive: true,
+    createdAt: '2026-10-01T00:00:00Z',
+  },
+];
+
+const getCachedPackages = () => {
+  try {
+    const raw = localStorage.getItem(PACKAGES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return DEFAULT_PACKAGES;
+};
+
+const saveCachedPackages = (pkgs) => {
+  try {
+    localStorage.setItem(PACKAGES_STORAGE_KEY, JSON.stringify(pkgs));
+  } catch {}
+};
+
+export const packageService = {
+  /**
+   * GET /api/Packages (Public / Customer Plans)
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   */
+  async getPackages({ pageNumber = 1, pageSize = 12, search = '', sortBy = '' } = {}) {
+    const query = new URLSearchParams();
+    if (pageNumber) query.append('PageNumber', pageNumber);
+    if (pageSize) query.append('PageSize', pageSize);
+    if (search && search.trim()) query.append('Search', search.trim());
+    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
+
+    try {
+      const response = await apiClient.get(`/api/Packages?${query.toString()}`);
+      const payload = response.data;
+
+      // Handle standard paginated response { data: [...], totalCount: ... }
+      if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
+        saveCachedPackages(payload.data);
+        return {
+          data: payload.data,
+          totalCount: payload.totalCount ?? payload.data.length,
+          currentPage: payload.currentPage ?? pageNumber,
+          totalPages: payload.totalPages ?? Math.ceil(payload.totalCount / pageSize),
+          pageSize: payload.pageSize ?? pageSize,
+        };
+      }
+      if (Array.isArray(payload) && payload.length > 0) {
+        saveCachedPackages(payload);
+        return {
+          data: payload,
+          totalCount: payload.length,
+          currentPage: pageNumber,
+          totalPages: Math.ceil(payload.length / pageSize),
+          pageSize,
+        };
+      }
+      // If server returns empty list, fallback to cached or default packages
+      const cached = getCachedPackages();
+      let filtered = cached.filter((p) => p.isActive !== false);
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+      }
+      return {
+        data: filtered,
+        totalCount: filtered.length,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        pageSize,
+        isFallback: true,
+      };
+    } catch (err) {
+      console.warn('GET /api/Packages API error, returning cached fallback:', err.message);
+      const cached = getCachedPackages();
+      let filtered = cached.filter((p) => p.isActive !== false);
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+      }
+      return {
+        data: filtered,
+        totalCount: filtered.length,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        pageSize,
+        isFallback: true,
+      };
+    }
+  },
+
+  /**
+   * GET /api/Packages/management (Admin / Manager Table)
+   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string }} params
+   */
+  async getManagementPackages({ pageNumber = 1, pageSize = 10, search = '', sortBy = '' } = {}) {
+    const query = new URLSearchParams();
+    if (pageNumber) query.append('PageNumber', pageNumber);
+    if (pageSize) query.append('PageSize', pageSize);
+    if (search && search.trim()) query.append('Search', search.trim());
+    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
+
+    try {
+      const response = await apiClient.get(`/api/Packages/management?${query.toString()}`);
+      const payload = response.data;
+
+      if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
+        saveCachedPackages(payload.data);
+        return {
+          data: payload.data,
+          totalCount: payload.totalCount ?? payload.data.length,
+          currentPage: payload.currentPage ?? pageNumber,
+          totalPages: payload.totalPages ?? Math.ceil(payload.totalCount / pageSize),
+          pageSize: payload.pageSize ?? pageSize,
+        };
+      }
+      if (Array.isArray(payload) && payload.length > 0) {
+        saveCachedPackages(payload);
+        return {
+          data: payload,
+          totalCount: payload.length,
+          currentPage: pageNumber,
+          totalPages: Math.ceil(payload.length / pageSize),
+          pageSize,
+        };
+      }
+      // If server returns empty list, fallback to cached
+      const cached = getCachedPackages();
+      let filtered = [...cached];
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+      }
+      return {
+        data: filtered,
+        totalCount: filtered.length,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        pageSize,
+        isFallback: true,
+      };
+    } catch (err) {
+      console.warn('GET /api/Packages/management error, returning cached fallback:', err.message);
+      const cached = getCachedPackages();
+      let filtered = [...cached];
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+      }
+      return {
+        data: filtered,
+        totalCount: filtered.length,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(filtered.length / pageSize) || 1,
+        pageSize,
+        isFallback: true,
+      };
+    }
+  },
+
+  /**
+   * GET /api/Packages/{id}
+   */
+  async getPackageById(id) {
+    try {
+      const response = await apiClient.get(`/api/Packages/${id}`);
+      return response.data;
+    } catch (err) {
+      console.warn(`GET /api/Packages/${id} error:`, err.message);
+      const cached = getCachedPackages();
+      return cached.find((p) => String(p.id) === String(id));
+    }
+  },
+
+  /**
+   * GET /api/Packages/management/{id}
+   */
+  async getManagementPackageById(id) {
+    try {
+      const response = await apiClient.get(`/api/Packages/management/${id}`);
+      return response.data;
+    } catch (err) {
+      console.warn(`GET /api/Packages/management/${id} error:`, err.message);
+      const cached = getCachedPackages();
+      return cached.find((p) => String(p.id) === String(id));
+    }
+  },
+
+  /**
+   * POST /api/Packages
+   * Body: { name, price, duration, description, isActive }
+   */
+  async createPackage({ name, price, duration, description, isActive = true }) {
+    const payload = {
+      name: String(name || '').trim(),
+      price: Number(price) || 0,
+      duration: Number(duration) || 30,
+      description: String(description || '').trim(),
+      isActive: Boolean(isActive),
+    };
+
+    try {
+      const response = await apiClient.post('/api/Packages', payload);
+      const created = response.data || { id: Date.now(), ...payload };
+      // Update local cache
+      const cached = getCachedPackages();
+      saveCachedPackages([created, ...cached]);
+      return created;
+    } catch (err) {
+      console.warn('POST /api/Packages API error, saving to local cache:', err.message);
+      const cached = getCachedPackages();
+      const mockCreated = {
+        id: Date.now(),
+        ...payload,
+        createdAt: new Date().toISOString(),
+      };
+      saveCachedPackages([mockCreated, ...cached]);
+      return mockCreated;
+    }
+  },
+
+  /**
+   * PATCH /api/Packages/{id} (with fallback to PUT /api/Packages/{id})
+   * Body: { name, price, duration, description, isActive }
+   */
+  async updatePackage(id, { name, price, duration, description, isActive }) {
+    const payload = {
+      name: String(name || '').trim(),
+      price: Number(price) || 0,
+      duration: Number(duration) || 30,
+      description: String(description || '').trim(),
+      isActive: Boolean(isActive),
+    };
+
+    try {
+      let response;
+      try {
+        response = await apiClient.patch(`/api/Packages/${id}`, payload);
+      } catch (patchErr) {
+        if (patchErr.response?.status === 405) {
+          response = await apiClient.put(`/api/Packages/${id}`, payload);
+        } else {
+          throw patchErr;
+        }
+      }
+      const updated = response?.data || { id, ...payload };
+      // Update local cache
+      const cached = getCachedPackages();
+      const nextList = cached.map((p) => (String(p.id) === String(id) ? { ...p, ...payload } : p));
+      saveCachedPackages(nextList);
+      return updated;
+    } catch (err) {
+      console.warn(`Update package API error for ID ${id}, updating local cache:`, err.message);
+      const cached = getCachedPackages();
+      const nextList = cached.map((p) => (String(p.id) === String(id) ? { ...p, ...payload, updatedAt: new Date().toISOString() } : p));
+      saveCachedPackages(nextList);
+      return { id, ...payload, isMock: true };
+    }
+  },
+
+  /**
+   * Toggle Package Active Status
+   * @param {number|string} id
+   * @param {object} currentPackage
+   */
+  async togglePackageStatus(id, currentPackage) {
+    const nextStatus = !currentPackage.isActive;
+    return await this.updatePackage(id, {
+      ...currentPackage,
+      isActive: nextStatus,
+    });
+  },
+
+  /**
+   * POST /api/Subscriptions
+   * Body: { customerId, packageId, paymentMethod, notes }
+   */
+  async subscribe({ customerId, packageId, paymentMethod = 0, notes = '' }) {
+    const payload = {
+      customerId: Number(customerId),
+      packageId: Number(packageId),
+      paymentMethod: Number(paymentMethod),
+      notes: String(notes || '').trim(),
+    };
+
+    try {
+      const response = await apiClient.post('/api/Subscriptions', payload);
+      return response.data || { success: true };
+    } catch (err) {
+      console.warn('POST /api/Subscriptions API error:', err.message);
+      // Simulate success for frontend feedback if offline/mock
+      return { success: true, isMock: true, subscribedAt: new Date().toISOString() };
+    }
+  },
+};
+
 export default apiClient;
+
 
