@@ -32,6 +32,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { customerService, attendanceService, STORAGE_KEYS } from '../../services/apiClient';
 import ChangePasswordModal from '../auth/ChangePasswordModal';
+import PackagesPricingGrid from '../packages/PackagesPricingGrid';
 
 export const CustomerDashboard = () => {
   const { user, logout, isChangePasswordModalOpen, setIsChangePasswordModalOpen } = useAuth();
@@ -694,6 +695,11 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
               )}
+
+              {/* Packages & Membership Plans Section */}
+              <div className="pt-6 border-t border-amber-500/20">
+                <PackagesPricingGrid isEmbedded={true} />
+              </div>
             </motion.div>
           </>
         )}

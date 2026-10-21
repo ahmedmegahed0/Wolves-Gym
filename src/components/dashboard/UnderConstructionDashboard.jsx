@@ -94,6 +94,15 @@ export const UnderConstructionDashboard = () => {
 
             <button
               type="button"
+              onClick={() => navigate('/dashboard/packages')}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-300 hover:text-black bg-amber-500/15 hover:bg-amber-400 border border-amber-500/35 rounded-xl transition-all shadow-sm"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>باقات واشتراكات</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => navigate('/dashboard/reception')}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
             >
