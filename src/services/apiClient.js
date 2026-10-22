@@ -38,70 +38,7 @@ export const getRefreshToken = () => {
   );
 };
 
-// Project accounts provided by gym team
-export const KNOWN_ACCOUNTS = [
-  {
-    Name: 'Super Admin',
-    Email: 'superadmin@gymify.com',
-    PhoneNumber: '01000000000',
-    Address: 'Cairo, Egypt',
-    Password: '12345678Hh',
-    Role: 'SuperAdmin',
-    UserType: 'SuperAdmin',
-  },
-  {
-    Name: 'Trainer Ahmed',
-    Email: 'trainer@project.com',
-    PhoneNumber: '01234567893',
-    Address: 'Cairo, Egypt',
-    Password: '12345678Hh',
-    Role: 'Trainer',
-    UserType: 'Employee',
-    Salary: 6000,
-    YearsOfExperience: 3,
-  },
-  {
-    Name: 'Manager Sara',
-    Email: 'manager@project.com',
-    PhoneNumber: '01234567894',
-    Address: 'Cairo, Egypt',
-    Password: '12345678Hh',
-    Role: 'Manager',
-    UserType: 'Employee',
-    Salary: 10000,
-  },
-  {
-    Name: 'Gator Mohamed',
-    Email: 'gator@project.com',
-    PhoneNumber: '01234567895',
-    Address: 'Cairo, Egypt',
-    Password: '12345678Hh',
-    Role: 'Gator',
-    UserType: 'Employee',
-    Salary: 4000,
-  },
-  {
-    Name: 'Customer User',
-    Email: 'member@project.com',
-    PhoneNumber: '01234567892',
-    Address: 'Giza, Egypt',
-    Password: '12345678Hh',
-    Role: 'Customer',
-    UserType: 'Customer',
-    ApprovalStatus: 'Approved',
-    IsActive: true,
-  },
-  {
-    Name: 'Reception Sara',
-    Email: 'reception@project.com',
-    PhoneNumber: '01234567896',
-    Address: 'Cairo, Egypt',
-    Password: '12345678Hh',
-    Role: 'Receptionist',
-    UserType: 'Employee',
-    Salary: 5000,
-  },
-];
+
 
 /**
  * Standard role normalizer
@@ -244,19 +181,6 @@ export const extractUserFromToken = (token, fallbackEmail = '') => {
   const decoded = decodeJwt(token);
 
   if (!decoded) {
-    const matched = KNOWN_ACCOUNTS.find(
-      (a) => a.Email.toLowerCase() === String(fallbackEmail || '').toLowerCase()
-    );
-    if (matched) {
-      return {
-        name: matched.Name,
-        email: matched.Email,
-        role: normalizeRole(matched.Role),
-        userType: matched.UserType,
-        phoneNumber: matched.PhoneNumber,
-        address: matched.Address,
-      };
-    }
     return {
       name: fallbackEmail ? fallbackEmail.split('@')[0] : 'عضو الجيم',
       email: fallbackEmail || '',
@@ -284,11 +208,14 @@ export const extractUserFromToken = (token, fallbackEmail = '') => {
     decoded.nameid ||
     decoded.sub;
 
-  const matched = KNOWN_ACCOUNTS.find(
-    (a) => a.Email.toLowerCase() === String(email || fallbackEmail || '').toLowerCase()
-  );
+  const nameClaim =
+    decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+    decoded.name ||
+    decoded.Name ||
+    decoded.unique_name ||
+    decoded.given_name;
 
-  // Decide exact normalized role from JWT claims first (Requirement 1)
+  // Decide exact normalized role from JWT claims
   let role = 'Customer';
   if (roleClaim) {
     role = normalizeRole(roleClaim);
@@ -297,22 +224,26 @@ export const extractUserFromToken = (token, fallbackEmail = '') => {
     if (ut === 'superadmin' || userTypeClaim === 1) role = 'SuperAdmin';
     else if (ut === 'customer' || userTypeClaim === 4) role = 'Customer';
     else role = 'Customer';
-  } else if (matched?.Role) {
-    role = normalizeRole(matched.Role);
   }
 
   const userType = userTypeClaim || (role === 'Customer' ? 'Customer' : 'Employee');
 
+  const phoneNumber =
+    decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone'] ||
+    decoded.phoneNumber ||
+    decoded.PhoneNumber ||
+    '';
+
   return {
     id,
     email: email || fallbackEmail,
-    name: matched?.Name || (email ? email.split('@')[0] : 'وحش الجيم'),
+    name: nameClaim || (email ? email.split('@')[0] : 'وحش الجيم'),
     role,
-    userType: matched?.UserType || userType,
+    userType,
     permissions: Array.isArray(decoded.Permission)
       ? decoded.Permission
       : (decoded.Permission ? [decoded.Permission] : []),
-    phoneNumber: matched?.PhoneNumber || '',
+    phoneNumber,
   };
 };
 
@@ -1003,13 +934,60 @@ export const lockerService = {
 // PACKAGES & MEMBERSHIP PLANS SERVICE (باقات واشتراكات كتيبة الذئاب)
 // ============================================================================
 
+export const PACKAGE_TYPES = {
+  REGULAR: 0,
+  PRIVATE: 1,
+  SHARED_PRIVATE: 2,
+};
+
+export const getPackageTypeMeta = (type) => {
+  const num = Number(type);
+  switch (num) {
+    case PACKAGE_TYPES.PRIVATE:
+      return {
+        type: 1,
+        key: 'Private',
+        label: 'خاصة بكابتن',
+        subLabel: 'تدريب فردي مخصص (PT)',
+        badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+        textColor: 'text-amber-400',
+      };
+    case PACKAGE_TYPES.SHARED_PRIVATE:
+      return {
+        type: 2,
+        key: 'SharedPrivate',
+        label: 'خاصة مشتركة',
+        subLabel: 'تدريب خاص مشترك بين كباتن الجيم',
+        badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+        textColor: 'text-purple-400',
+      };
+    case PACKAGE_TYPES.REGULAR:
+    default:
+      return {
+        type: 0,
+        key: 'Regular',
+        label: 'عادية / عامة',
+        subLabel: 'تدريب عام وتدريب حر لكافة الأعضاء',
+        badgeColor: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+        textColor: 'text-sky-400',
+      };
+  }
+};
+
 export const packageService = {
   /**
    * GET /api/Packages (Public / Customer Plans)
-   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
+   * @param {{ types?: number|number[], pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
-  async getPackages({ pageNumber = 1, pageSize = 12, search = '', sortBy = '', signal } = {}) {
+  async getPackages({ types = undefined, pageNumber = 1, pageSize = 12, search = '', sortBy = '', signal } = {}) {
     const query = new URLSearchParams();
+    if (types !== undefined && types !== null && types !== '') {
+      if (Array.isArray(types)) {
+        types.forEach((t) => query.append('Types', String(t)));
+      } else {
+        query.append('Types', String(types));
+      }
+    }
     if (pageNumber) query.append('PageNumber', pageNumber);
     if (pageSize) query.append('PageSize', pageSize);
     if (search && search.trim()) query.append('Search', search.trim());
@@ -1025,7 +1003,7 @@ export const packageService = {
           data: payload.data,
           totalCount: payload.totalCount ?? payload.data.length,
           currentPage: payload.currentPage ?? pageNumber,
-          totalPages: payload.totalPages ?? Math.ceil(payload.totalCount / pageSize),
+          totalPages: payload.totalPages ?? Math.ceil((payload.totalCount ?? payload.data.length) / pageSize),
           pageSize: payload.pageSize ?? pageSize,
         };
       }
@@ -1054,10 +1032,32 @@ export const packageService = {
 
   /**
    * GET /api/Packages/management (Admin / Manager Table)
-   * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
+   * @param {{ types?: number|number[], trainerId?: number, isActive?: boolean, pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
-  async getManagementPackages({ pageNumber = 1, pageSize = 10, search = '', sortBy = '', signal } = {}) {
+  async getManagementPackages({
+    types = undefined,
+    trainerId = undefined,
+    isActive = undefined,
+    pageNumber = 1,
+    pageSize = 10,
+    search = '',
+    sortBy = '',
+    signal,
+  } = {}) {
     const query = new URLSearchParams();
+    if (types !== undefined && types !== null && types !== '') {
+      if (Array.isArray(types)) {
+        types.forEach((t) => query.append('Types', String(t)));
+      } else {
+        query.append('Types', String(types));
+      }
+    }
+    if (trainerId !== undefined && trainerId !== null && trainerId !== '') {
+      query.append('TrainerId', String(trainerId));
+    }
+    if (typeof isActive === 'boolean') {
+      query.append('IsActive', String(isActive));
+    }
     if (pageNumber) query.append('PageNumber', pageNumber);
     if (pageSize) query.append('PageSize', pageSize);
     if (search && search.trim()) query.append('Search', search.trim());
@@ -1117,15 +1117,18 @@ export const packageService = {
 
   /**
    * POST /api/Packages
-   * Body: { name, price, duration, description, isActive }
+   * Body: { name, price, duration, description, isActive, type, trainerId }
    */
-  async createPackage({ name, price, duration, description, isActive = true }) {
+  async createPackage({ name, price, duration, description, isActive = true, type = 0, trainerId = null }) {
+    const pkgType = Number(type) || 0;
     const payload = {
       name: String(name || '').trim(),
       price: Number(price) || 0,
       duration: Number(duration) || 30,
       description: String(description || '').trim(),
       isActive: Boolean(isActive),
+      type: pkgType,
+      trainerId: pkgType === PACKAGE_TYPES.PRIVATE && trainerId ? Number(trainerId) : null,
     };
 
     const response = await apiClient.post('/api/Packages', payload);
@@ -1134,15 +1137,18 @@ export const packageService = {
 
   /**
    * PATCH /api/Packages/{id} (with fallback to PUT /api/Packages/{id})
-   * Body: { name, price, duration, description, isActive }
+   * Body: { name, price, duration, description, isActive, type, trainerId }
    */
-  async updatePackage(id, { name, price, duration, description, isActive }) {
+  async updatePackage(id, { name, price, duration, description, isActive, type = 0, trainerId = null }) {
+    const pkgType = Number(type) || 0;
     const payload = {
       name: String(name || '').trim(),
       price: Number(price) || 0,
       duration: Number(duration) || 30,
       description: String(description || '').trim(),
       isActive: Boolean(isActive),
+      type: pkgType,
+      trainerId: pkgType === PACKAGE_TYPES.PRIVATE && trainerId ? Number(trainerId) : null,
     };
 
     try {
@@ -1158,7 +1164,7 @@ export const packageService = {
   },
 
   /**
-    * Toggle Package Active Status
+   * Toggle Package Active Status
    * @param {number|string} id
    * @param {object} currentPackage
    */
@@ -1172,10 +1178,10 @@ export const packageService = {
 
   /**
    * POST /api/Subscriptions
-   * Body: { customerId, packageId, paymentMethod, notes }
+   * Body: { customerId, packageId, trainerId, paymentMethod, notes }
    */
-  async subscribe({ customerId, packageId, paymentMethod = 0, notes = '', customer = null, packageItem = null }) {
-    return await subscriptionService.createSubscription({ customerId, packageId, paymentMethod, notes, customer, packageItem });
+  async subscribe({ customerId, packageId, trainerId = null, paymentMethod = 0, notes = '', customer = null, packageItem = null }) {
+    return await subscriptionService.createSubscription({ customerId, packageId, trainerId, paymentMethod, notes, customer, packageItem });
   },
 };
 
@@ -1208,12 +1214,13 @@ export const saveStoredSubscription = (sub) => {
 export const subscriptionService = {
   /**
    * POST /api/Subscriptions
-   * @param {{ customerId: number, packageId: number, paymentMethod: number, notes?: string, customer?: object, packageItem?: object }} params
+   * @param {{ customerId: number, packageId: number, trainerId?: number|null, paymentMethod: number, notes?: string, customer?: object, packageItem?: object, trainer?: object }} params
    */
-  async createSubscription({ customerId, packageId, paymentMethod = 0, notes = '', customer = null, packageItem = null }) {
+  async createSubscription({ customerId, packageId, trainerId = null, paymentMethod = 0, notes = '', customer = null, packageItem = null, trainer = null }) {
     const payload = {
       customerId: Number(customerId),
       packageId: Number(packageId),
+      trainerId: trainerId ? Number(trainerId) : null,
       paymentMethod: Number(paymentMethod),
       notes: String(notes || '').trim(),
     };
@@ -1233,6 +1240,8 @@ export const subscriptionService = {
         packageName: packageItem?.name || `باقة #${payload.packageId}`,
         packagePrice: Number(packageItem?.price) || 0,
         packageDuration: durationDays,
+        trainerId: payload.trainerId,
+        trainerName: trainer?.name || (payload.trainerId ? `كابتن #${payload.trainerId}` : null),
         paymentMethod: payload.paymentMethod,
         notes: payload.notes,
         createdAt: new Date().toISOString(),
@@ -1261,10 +1270,16 @@ export const subscriptionService = {
         errorMsg = data.message;
       } else if (data?.title) {
         errorMsg = data.title;
+      } else if (data?.detail) {
+        errorMsg = data.detail;
       } else if (data?.errors) {
-        const firstKey = Object.keys(data.errors)[0];
-        if (firstKey && data.errors[firstKey]?.length > 0) {
-          errorMsg = data.errors[firstKey][0];
+        if (Array.isArray(data.errors)) {
+          errorMsg = data.errors.map((e) => e.description || e.code).join('; ');
+        } else {
+          const firstKey = Object.keys(data.errors)[0];
+          if (firstKey && data.errors[firstKey]?.length > 0) {
+            errorMsg = data.errors[firstKey][0];
+          }
         }
       }
 
@@ -1293,11 +1308,11 @@ export const subscriptionService = {
 
 /**
  * Trainers Service Module
- * Handles GET /api/Trainers with pagination, search, and dynamic athletic attributes.
+ * Handles GET /api/Trainers, GET /api/Trainers/management, PATCH /api/Trainers/{id}, and GET /api/Trainers/me
  */
 export const trainerService = {
   /**
-   * GET /api/Trainers
+   * GET /api/Trainers (Public showcase list)
    * @param {{ pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
   async getTrainers({ pageNumber = 1, pageSize = 8, search = '', sortBy = '', signal } = {}) {
@@ -1346,6 +1361,129 @@ export const trainerService = {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
       throw err;
     }
+  },
+
+  /**
+   * Helper to fetch full list of trainers for dropdown selections
+   */
+  async getAllTrainers({ signal } = {}) {
+    try {
+      const res = await this.getTrainers({ pageSize: 100, signal });
+      return res.data || [];
+    } catch (err) {
+      console.warn('Failed to load all trainers for dropdown:', err);
+      return [];
+    }
+  },
+
+  /**
+   * GET /api/Trainers/management (Admin management table)
+   * Query: { IsActive, PageNumber, PageSize, Search, SortBy }
+   */
+  async getManagementTrainers({
+    isActive = undefined,
+    pageNumber = 1,
+    pageSize = 10,
+    search = '',
+    sortBy = '',
+    signal,
+  } = {}) {
+    const query = new URLSearchParams();
+    if (typeof isActive === 'boolean') {
+      query.append('IsActive', String(isActive));
+    }
+    if (pageNumber) query.append('PageNumber', String(pageNumber));
+    if (pageSize) query.append('PageSize', String(pageSize));
+    if (search && search.trim()) query.append('Search', search.trim());
+    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
+
+    try {
+      const response = await apiClient.get(`/api/Trainers/management?${query.toString()}`, { signal });
+      const payload = response.data;
+
+      if (payload && Array.isArray(payload.data)) {
+        return {
+          data: payload.data,
+          totalCount: payload.totalCount ?? payload.data.length,
+          currentPage: payload.currentPage ?? pageNumber,
+          totalPages: payload.totalPages ?? Math.ceil((payload.totalCount ?? 1) / pageSize),
+          pageSize: payload.pageSize ?? pageSize,
+          hasPreviousPage: Boolean(payload.hasPreviousPage),
+          hasNextPage: Boolean(payload.hasNextPage),
+        };
+      }
+      if (Array.isArray(payload)) {
+        return {
+          data: payload,
+          totalCount: payload.length,
+          currentPage: pageNumber,
+          totalPages: Math.ceil(payload.length / pageSize),
+          pageSize,
+          hasPreviousPage: pageNumber > 1,
+          hasNextPage: false,
+        };
+      }
+
+      return {
+        data: [],
+        totalCount: 0,
+        currentPage: pageNumber,
+        totalPages: 0,
+        pageSize,
+        hasPreviousPage: false,
+        hasNextPage: false,
+      };
+    } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') throw err;
+      throw err;
+    }
+  },
+
+  /**
+   * GET /api/Trainers/{id}
+   */
+  async getTrainerById(id) {
+    const response = await apiClient.get(`/api/Trainers/${id}`);
+    return response.data;
+  },
+
+  /**
+   * PATCH /api/Trainers/{id}
+   * Body: { name, phoneNumber, yearsOfExperience, salary, isActive }
+   */
+  async updateTrainer(id, { name, phoneNumber, yearsOfExperience, salary, isActive }) {
+    const payload = {
+      name: String(name || '').trim(),
+      phoneNumber: String(phoneNumber || '').trim(),
+      yearsOfExperience: Number(yearsOfExperience) || 0,
+      salary: Number(salary) || 0,
+      isActive: Boolean(isActive),
+    };
+
+    const response = await apiClient.patch(`/api/Trainers/${id}`, payload);
+    return response.data;
+  },
+
+  /**
+   * Toggle Trainer active status
+   */
+  async toggleTrainerStatus(id, currentTrainer) {
+    const nextStatus = !Boolean(currentTrainer.isTrainerActive ?? currentTrainer.isActive);
+    return await this.updateTrainer(id, {
+      name: currentTrainer.name,
+      phoneNumber: currentTrainer.phoneNumber,
+      yearsOfExperience: currentTrainer.yearsOfExperience,
+      salary: currentTrainer.salary,
+      isActive: nextStatus,
+    });
+  },
+
+  /**
+   * GET /api/Trainers/me (Profile of currently logged-in coach)
+   */
+  async getTrainerMe({ signal } = {}) {
+    const response = await apiClient.get('/api/Trainers/me', { signal });
+    return response.data;
   },
 };
 

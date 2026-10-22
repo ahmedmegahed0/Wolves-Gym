@@ -11,15 +11,24 @@ import {
   FileText, 
   Power,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Users,
+  UserCheck,
+  Shield,
+  Layers
 } from 'lucide-react';
-import { packageService } from '../../services/apiClient';
+import { packageService, trainerService, PACKAGE_TYPES, getPackageTypeMeta } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 
 /**
  * PackageFormModal Component
  * Handles creating a new gym package (POST /api/Packages)
- * and editing an existing package (PATCH/PUT /api/Packages/{id}).
+ * and editing an existing package (PATCH /api/Packages/{id}).
+ * 
+ * Supports Package Types:
+ * - 0: Regular (عادية / عامة) -> TrainerId: null
+ * - 1: Private (خاصة بكابتن محدد) -> TrainerId: mandatory from GET /api/Trainers
+ * - 2: SharedPrivate (خاصة مشتركة بين كباتن الجيم) -> TrainerId: null
  */
 export const PackageFormModal = ({
   isOpen,
@@ -37,8 +46,12 @@ export const PackageFormModal = ({
     duration: 30,
     description: '',
     isActive: true,
+    type: PACKAGE_TYPES.REGULAR,
+    trainerId: null,
   });
 
+  const [trainers, setTrainers] = useState([]);
+  const [loadingTrainers, setLoadingTrainers] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -53,15 +66,42 @@ export const PackageFormModal = ({
   // Quick chips for popular prices
   const PRICE_PRESETS = [650, 1200, 1750, 3200, 5800];
 
+  // Fetch trainers for Private Package selection
+  useEffect(() => {
+    let isMounted = true;
+    if (isOpen) {
+      setLoadingTrainers(true);
+      trainerService
+        .getAllTrainers()
+        .then((list) => {
+          if (isMounted) {
+            setTrainers(Array.isArray(list) ? list : []);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load trainers for package modal:', err);
+        })
+        .finally(() => {
+          if (isMounted) setLoadingTrainers(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       if (packageToEdit) {
+        const initialType = Number(packageToEdit.type ?? PACKAGE_TYPES.REGULAR);
         setFormData({
           name: packageToEdit.name || '',
           price: packageToEdit.price !== undefined ? String(packageToEdit.price) : '',
           duration: packageToEdit.duration || 30,
           description: packageToEdit.description || '',
           isActive: packageToEdit.isActive !== false,
+          type: initialType,
+          trainerId: initialType === PACKAGE_TYPES.PRIVATE ? (packageToEdit.trainerId ?? null) : null,
         });
       } else {
         setFormData({
@@ -70,11 +110,31 @@ export const PackageFormModal = ({
           duration: 30,
           description: 'دخول غير محدود لصالة التدريب\nاستخدام اللوكرات وغرفة التبديل\nمتابعة دورية وقياس InBody',
           isActive: true,
+          type: PACKAGE_TYPES.REGULAR,
+          trainerId: null,
         });
       }
       setErrors({});
     }
   }, [isOpen, packageToEdit]);
+
+  // Handle Type Change
+  const handleTypeChange = (newType) => {
+    setFormData((prev) => ({
+      ...prev,
+      type: newType,
+      // If switching away from Private, reset trainerId to null
+      trainerId: newType === PACKAGE_TYPES.PRIVATE ? prev.trainerId : null,
+    }));
+    // Clear trainer error if switching away from Private
+    if (newType !== PACKAGE_TYPES.PRIVATE && errors.trainerId) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.trainerId;
+        return next;
+      });
+    }
+  };
 
   const validate = () => {
     const errs = {};
@@ -89,6 +149,14 @@ export const PackageFormModal = ({
     if (!formData.duration || isNaN(numDuration) || numDuration < 1) {
       errs.duration = 'مدة الاشتراك يجب أن تكون 1 يوم على الأقل';
     }
+
+    // Mandatory trainer for Private Package (type 1)
+    if (Number(formData.type) === PACKAGE_TYPES.PRIVATE) {
+      if (!formData.trainerId) {
+        errs.trainerId = 'برجاء اختيار الكابتن المخصص لهذه الباقة الخاصة';
+      }
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -99,12 +167,15 @@ export const PackageFormModal = ({
 
     setLoading(true);
     try {
+      const pkgType = Number(formData.type);
       const payload = {
         name: formData.name.trim(),
         price: Number(formData.price),
         duration: Number(formData.duration),
         description: formData.description.trim(),
         isActive: Boolean(formData.isActive),
+        type: pkgType,
+        trainerId: pkgType === PACKAGE_TYPES.PRIVATE && formData.trainerId ? Number(formData.trainerId) : null,
       };
 
       if (isEditing) {
@@ -137,7 +208,7 @@ export const PackageFormModal = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-md sm:max-w-xl mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#121216] via-[#0d0d10] to-black rounded-3xl border border-amber-500/30 p-5 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.2)] my-auto"
+          className="relative w-full max-w-md sm:max-w-xl mx-4 max-h-[92vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#121216] via-[#0d0d10] to-black rounded-3xl border border-amber-500/30 p-5 sm:p-7 shadow-[0_0_50px_rgba(245,158,11,0.2)] my-auto font-cairo"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 mb-5 border-b border-amber-500/15">
@@ -150,7 +221,7 @@ export const PackageFormModal = ({
                   {isEditing ? 'تعديل باقة التدريب' : 'إضافة باقة رياضية جديدة'}
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  {isEditing ? `تحديث تفاصيل الباقة #${packageToEdit.id}` : 'حدد اسم وسعر ومدة ومميزات الباقة للمشتركين'}
+                  {isEditing ? `تحديث تفاصيل الباقة #${packageToEdit.id}` : 'حدد نوع وسعر ومدة ومميزات الباقة للمشتركين'}
                 </p>
               </div>
             </div>
@@ -167,6 +238,132 @@ export const PackageFormModal = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* 1. Package Type Selection (Enum: 0 Regular, 1 Private, 2 SharedPrivate) */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-300 mb-2 flex items-center justify-between">
+                <span>نوع الباقة التدريبية <span className="text-amber-400">*</span></span>
+                <span className="text-[10px] text-amber-400/80 font-mono">Package Type</span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* 0: Regular */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeChange(PACKAGE_TYPES.REGULAR)}
+                  className={`p-3 rounded-2xl border text-right transition-all flex flex-col justify-between cursor-pointer ${
+                    formData.type === PACKAGE_TYPES.REGULAR
+                      ? 'bg-sky-500/15 border-sky-500/60 text-sky-300 shadow-[0_0_15px_rgba(14,165,233,0.2)]'
+                      : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs font-black text-white">عادية / عامة</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono">0</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 leading-tight">
+                    تدريب حر لكافة الأعضاء بدون كابتن خاص
+                  </p>
+                </button>
+
+                {/* 1: Private */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeChange(PACKAGE_TYPES.PRIVATE)}
+                  className={`p-3 rounded-2xl border text-right transition-all flex flex-col justify-between cursor-pointer ${
+                    formData.type === PACKAGE_TYPES.PRIVATE
+                      ? 'bg-amber-500/20 border-amber-500/70 text-amber-300 shadow-gold-glow'
+                      : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs font-black text-white">خاصة بكابتن</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono">1</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 leading-tight">
+                    تدريب فردي (PT) مخصص مع كابتن محدد
+                  </p>
+                </button>
+
+                {/* 2: SharedPrivate */}
+                <button
+                  type="button"
+                  onClick={() => handleTypeChange(PACKAGE_TYPES.SHARED_PRIVATE)}
+                  className={`p-3 rounded-2xl border text-right transition-all flex flex-col justify-between cursor-pointer ${
+                    formData.type === PACKAGE_TYPES.SHARED_PRIVATE
+                      ? 'bg-purple-500/20 border-purple-500/70 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.25)]'
+                      : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs font-black text-white">خاصة مشتركة</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono">2</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 leading-tight">
+                    خاصة مشتركة، يختار العضو كابتنه عند الاشتراك
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Conditional Trainer Selection (Shown ONLY when type === 1 Private) */}
+            <AnimatePresence>
+              {formData.type === PACKAGE_TYPES.PRIVATE && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-black text-amber-300 flex items-center gap-1.5">
+                        <UserCheck className="w-4 h-4 text-amber-400" />
+                        <span>الكابتن المسؤول عن الباقة <span className="text-amber-400">*</span></span>
+                      </label>
+                      <span className="text-[10px] font-mono text-amber-400/80">TrainerId (مطلوب)</span>
+                    </div>
+
+                    {loadingTrainers ? (
+                      <div className="p-3 bg-zinc-900/80 rounded-xl text-center text-xs text-zinc-400 flex items-center justify-center gap-2">
+                        <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                        <span>جاري تحميل قائمة الكباتن...</span>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.trainerId || ''}
+                        onChange={(e) => setFormData({ ...formData, trainerId: e.target.value ? Number(e.target.value) : null })}
+                        className={`w-full px-4 py-2.5 rounded-xl bg-zinc-900 border text-xs sm:text-sm text-white focus:outline-none transition-all cursor-pointer ${
+                          errors.trainerId ? 'border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-amber-500/40 focus:border-amber-400'
+                        }`}
+                      >
+                        <option value="" className="bg-zinc-900 text-zinc-400">
+                          -- اختر الكابتن المخصص للباقة --
+                        </option>
+                        {trainers.map((t) => (
+                          <option key={t.id || t.trainerId} value={t.id || t.trainerId} className="bg-zinc-900 text-white">
+                            {t.name} (خبرة {t.yearsOfExperience || 1} سنوات) {t.phoneNumber ? ` - ${t.phoneNumber}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {errors.trainerId && (
+                      <p className="text-[11px] text-rose-400 flex items-center gap-1 font-bold">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{errors.trainerId}</span>
+                      </p>
+                    )}
+
+                    <p className="text-[10px] text-zinc-400 leading-relaxed">
+                      💡 ملحوظة: في الباقة الخاصة بكابتن (Private)، يتم ربط الباقة مباشرة بكابتن الصالة، وسيقوم النظام بتسجيله تلقائيًا عند اشتراك العضو.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Package Name */}
             <div>
               <label className="block text-xs font-bold text-zinc-300 mb-1.5">
@@ -176,7 +373,7 @@ export const PackageFormModal = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="مثال: اشتراك الذئب الذهبي - 3 شهور"
+                placeholder="مثال: اشتراك الذئب الذهبي - تدريب خاص"
                 className={`w-full px-4 py-3 rounded-xl bg-zinc-900/90 border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all ${
                   errors.name ? 'border-rose-500 focus:ring-1 focus:ring-rose-500' : 'border-zinc-800 focus:border-amber-500/60'
                 }`}
@@ -288,7 +485,7 @@ export const PackageFormModal = ({
                 <span className="text-[10px] text-zinc-500">اكتب كل ميزة في سطر منفصل</span>
               </label>
               <textarea
-                rows="4"
+                rows="3"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="دخول غير محدود لصالة التدريب&#10;استخدام اللوكرات اليومية وغرفة التبديل&#10;جلسة تقييم بدني مجانية (InBody)"
@@ -353,8 +550,8 @@ export const PackageFormModal = ({
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" />
-                    <span>{isEditing ? 'حفظ التعديلات' : 'إنشاء الباقة الآن'}</span>
+                    <Check className="w-4 h-4 stroke-[3]" />
+                    <span>{isEditing ? 'حفظ تعديلات الباقة' : 'إنشاء وتفعيل الباقة الآن'}</span>
                   </>
                 )}
               </button>

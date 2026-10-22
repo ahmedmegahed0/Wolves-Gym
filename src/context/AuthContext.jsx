@@ -338,6 +338,7 @@ export const AuthProvider = ({ children }) => {
         changePassword: handleChangePassword,
         googleLogin: handleGoogleLogin,
         logout: handleLogout,
+        redirectUserByRole,
       }}
     >
       {children}

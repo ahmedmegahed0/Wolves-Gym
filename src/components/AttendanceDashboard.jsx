@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -28,7 +28,8 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Plus,
-  Home
+  Home,
+  Dumbbell
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -41,6 +42,7 @@ import CustomerProfileCard from './customers/CustomerProfileCard';
 import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
+import TrainersSection from './trainers/TrainersSection';
 import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
@@ -285,6 +287,12 @@ export const AttendanceDashboard = ({ initialSection }) => {
       id: 'packages',
       label: 'باقات واشتراكات',
       icon: Crown,
+      badge: null,
+    },
+    {
+      id: 'trainers',
+      label: 'كتيبة المدربين',
+      icon: Dumbbell,
       badge: null,
     },
     {
@@ -1137,6 +1145,24 @@ export const AttendanceDashboard = ({ initialSection }) => {
               >
                 <CustomersList
                   onOpenNewSubscription={handleOpenNewSubscription}
+                />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 6: TRAINERS SHOWCASE & MANAGEMENT (كتيبة المدربين) */}
+            {/* ======================================================== */}
+            {mainTab === 'trainers' && (
+              <motion.div
+                key="trainers-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TrainersSection
+                  isEmbedded={true}
+                  onSelectTrainer={(trainer) => handleOpenNewSubscription(null, null)}
                 />
               </motion.div>
             )}

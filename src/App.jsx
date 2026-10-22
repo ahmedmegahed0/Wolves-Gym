@@ -52,7 +52,7 @@ function App() {
               <Route
                 path="/dashboard/reception"
                 element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'SuperAdmin', 'Manager', 'Trainer']}>
+                  <ProtectedRoute allowedRoles={['Receptionist', 'SuperAdmin', 'Manager']}>
                     <AttendanceDashboard />
                   </ProtectedRoute>
                 }

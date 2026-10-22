@@ -20,24 +20,41 @@ import {
   TrendingUp,
   AlertCircle,
   Eye,
-  X
+  X,
+  Filter,
+  UserCheck,
+  Users
 } from 'lucide-react';
-import { packageService } from '../../services/apiClient';
+import { 
+  packageService, 
+  trainerService, 
+  PACKAGE_TYPES, 
+  getPackageTypeMeta 
+} from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 import PackageFormModal from './PackageFormModal';
+import useDebounce from '../../hooks/useDebounce';
 
 /**
  * PackagesAdminManagement Component
  * Comprehensive management dashboard and data table for SuperAdmin and Manager
- * Handles GET /api/Packages/management, status toggles, edits, and creation.
+ * Handles GET /api/Packages/management with full query parameters:
+ * Types, TrainerId, IsActive, PageNumber, PageSize, Search, SortBy
  */
 export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false, onOpenNewSubscription = null }) => {
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [packages, setPackages] = useState([]);
+  const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Filters state
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 350);
+  const [selectedType, setSelectedType] = useState('all'); // 'all' | '0' | '1' | '2'
+  const [selectedTrainerId, setSelectedTrainerId] = useState('all'); // 'all' | number
+  const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
   const [sortBy, setSortBy] = useState('');
   
   // Pagination
@@ -52,14 +69,48 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
   const [togglingId, setTogglingId] = useState(null);
   const [selectedDetailsPackage, setSelectedDetailsPackage] = useState(null);
 
+  // Load trainers once for the filter dropdown
+  useEffect(() => {
+    let isMounted = true;
+    trainerService
+      .getAllTrainers()
+      .then((data) => {
+        if (isMounted) setTrainers(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => console.warn('Failed to load trainers for filter dropdown:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Fetch Management Packages
-  const fetchPackages = useCallback(async () => {
+  const fetchPackages = useCallback(async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    else setLoading(true);
+
     try {
-      setLoading(true);
+      // Build query arguments
+      let typesParam = undefined;
+      if (selectedType !== 'all') {
+        typesParam = Number(selectedType);
+      }
+
+      let trainerIdParam = undefined;
+      if (selectedTrainerId !== 'all') {
+        trainerIdParam = Number(selectedTrainerId);
+      }
+
+      let isActiveParam = undefined;
+      if (selectedStatus === 'active') isActiveParam = true;
+      else if (selectedStatus === 'inactive') isActiveParam = false;
+
       const res = await packageService.getManagementPackages({
+        types: typesParam,
+        trainerId: trainerIdParam,
+        isActive: isActiveParam,
         pageNumber,
         pageSize,
-        search,
+        search: debouncedSearch.trim(),
         sortBy,
       });
 
@@ -73,18 +124,14 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, search, sortBy]);
+  }, [pageNumber, pageSize, debouncedSearch, selectedType, selectedTrainerId, selectedStatus, sortBy, toastError]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPackages();
-    }, 200);
-    return () => clearTimeout(timer);
+    fetchPackages();
   }, [fetchPackages]);
 
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchPackages();
+    fetchPackages(true);
   };
 
   // Toggle active status
@@ -117,15 +164,41 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
     setIsFormModalOpen(true);
   };
 
+  // Reset pageNumber on any filter change
+  const handleFilterChange = (setter, value) => {
+    setter(value);
+    setPageNumber(1);
+  };
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearch('');
+    setSelectedType('all');
+    setSelectedTrainerId('all');
+    setSelectedStatus('all');
+    setSortBy('');
+    setPageNumber(1);
+  };
+
+  // Helper to find trainer name
+  const getTrainerName = (trainerId) => {
+    if (!trainerId) return null;
+    const found = trainers.find((t) => Number(t.id || t.trainerId) === Number(trainerId));
+    return found ? found.name : `كابتن #${trainerId}`;
+  };
+
   // Calculate Metrics
   const activeCount = packages.filter((p) => p.isActive !== false).length;
   const inactiveCount = packages.filter((p) => p.isActive === false).length;
+  const privateCount = packages.filter((p) => Number(p.type) === PACKAGE_TYPES.PRIVATE).length;
   const avgPrice = packages.length > 0 
     ? Math.round(packages.reduce((sum, p) => sum + (Number(p.price) || 0), 0) / packages.length)
     : 0;
 
+  const hasActiveFilters = search || selectedType !== 'all' || selectedTrainerId !== 'all' || selectedStatus !== 'all' || sortBy;
+
   return (
-    <div dir="rtl" className="w-full space-y-6">
+    <div dir="rtl" className="w-full space-y-6 font-cairo">
       {/* Header & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-amber-500/15">
         <div>
@@ -139,7 +212,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             <span>لوحة إدارة باقات واشتراكات الجيم</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            تحكم كامل في إنشاء وتعديل وتفعيل خطط التدريب والأسعار والمدد الزمنية
+            تحكم كامل في إنشاء وتعديل وفلترة وتفعيل خطط التدريب والأسعار والكباتن
           </p>
         </div>
 
@@ -171,7 +244,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             onClick={handleOpenCreate}
             className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>إضافة باقة جديدة</span>
           </button>
         </div>
@@ -201,74 +274,152 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
           </div>
         </div>
 
-        {/* Inactive Packages */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-rose-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
-            <XCircle className="w-5 h-5" />
+        {/* Private Packages */}
+        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+            <UserCheck className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">باقات متوقفة</span>
-            <span className="text-xl sm:text-2xl font-black text-rose-400 font-mono">{inactiveCount}</span>
+            <span className="text-[11px] font-bold text-zinc-400 block truncate">باقات كباتن خاصة</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-300 font-mono">{privateCount}</span>
           </div>
         </div>
 
         {/* Average Price */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-yellow-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <span className="text-[11px] font-bold text-zinc-400 block truncate">متوسط الأسعار</span>
-            <span className="text-lg sm:text-xl font-black text-amber-300 font-mono">
+            <span className="text-lg sm:text-xl font-black text-yellow-300 font-mono">
               {avgPrice.toLocaleString('ar-EG')} <span className="text-[10px] text-zinc-400 font-normal">ج.م</span>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950/90 border border-amber-500/15 rounded-2xl p-3">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPageNumber(1); }}
-            placeholder="بحث عن باقة باسم أو تفاصيل..."
-            className="w-full pr-10 pl-8 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+      {/* Comprehensive Filter Bar (Requirement 2) */}
+      <div className="bg-zinc-950/90 border border-amber-500/20 rounded-2xl p-4 space-y-3 shadow-lg">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          
+          {/* 1. Search Box */}
+          <div className="relative flex-1">
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleFilterChange(setSearch, e.target.value)}
+              placeholder="بحث باسم الباقة أو الوصف أو المدة..."
+              className="w-full pr-10 pl-8 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 transition-colors"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => handleFilterChange(setSearch, '')}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* 2. Top Dropdown Filters */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            {/* Filter 1: Package Type (Types query param) */}
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
+              <span className="text-[10px] text-zinc-500 font-bold shrink-0">النوع:</span>
+              <select
+                value={selectedType}
+                onChange={(e) => handleFilterChange(setSelectedType, e.target.value)}
+                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+              >
+                <option value="all" className="bg-zinc-900 text-white">كل الأنواع</option>
+                <option value="0" className="bg-zinc-900 text-sky-400">عادية / عامة (0)</option>
+                <option value="1" className="bg-zinc-900 text-amber-400">خاصة بكابتن (1)</option>
+                <option value="2" className="bg-zinc-900 text-purple-400">خاصة مشتركة (2)</option>
+              </select>
+            </div>
+
+            {/* Filter 2: Trainer Dropdown (TrainerId query param) */}
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
+              <span className="text-[10px] text-zinc-500 font-bold shrink-0">الكابتن:</span>
+              <select
+                value={selectedTrainerId}
+                onChange={(e) => handleFilterChange(setSelectedTrainerId, e.target.value)}
+                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer max-w-[140px] truncate"
+              >
+                <option value="all" className="bg-zinc-900 text-white">كل الكباتن</option>
+                {trainers.map((t) => (
+                  <option key={t.id || t.trainerId} value={t.id || t.trainerId} className="bg-zinc-900 text-white">
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter 3: Active Status (IsActive query param) */}
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
+              <span className="text-[10px] text-zinc-500 font-bold shrink-0">الحالة:</span>
+              <select
+                value={selectedStatus}
+                onChange={(e) => handleFilterChange(setSelectedStatus, e.target.value)}
+                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+              >
+                <option value="all" className="bg-zinc-900 text-white">كل الحالات</option>
+                <option value="active" className="bg-zinc-900 text-emerald-400">نشطة فقط</option>
+                <option value="inactive" className="bg-zinc-900 text-rose-400">معطلة فقط</option>
+              </select>
+            </div>
+
+            {/* SortBy Filter */}
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
+              <ArrowUpDown className="w-3 h-3 text-amber-400 shrink-0" />
+              <select
+                value={sortBy}
+                onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
+                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+              >
+                <option value="" className="bg-zinc-900 text-zinc-300">الترتيب الافتراضي</option>
+                <option value="price_desc" className="bg-zinc-900 text-white">السعر: الأعلى أولاً</option>
+                <option value="price_asc" className="bg-zinc-900 text-white">السعر: الأقل أولاً</option>
+                <option value="duration_desc" className="bg-zinc-900 text-white">المدة: الأطول</option>
+                <option value="duration_asc" className="bg-zinc-900 text-white">المدة: الأقصر</option>
+              </select>
+            </div>
+
+            {/* Page Size & Refresh */}
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPageNumber(1); }}
+              className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500/40 cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <option value="5">5 / صفحة</option>
+              <option value="10">10 / صفحة</option>
+              <option value="20">20 / صفحة</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 rounded-xl bg-zinc-900 text-amber-400 border border-zinc-800 hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="تحديث البيانات من السيرفر"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
-          )}
-        </div>
 
-        {/* Refresh & Page Size */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <select
-            value={pageSize}
-            onChange={(e) => { setPageSize(Number(e.target.value)); setPageNumber(1); }}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-amber-500/40 cursor-pointer"
-          >
-            <option value="5">5 باقات / صفحة</option>
-            <option value="10">10 باقات / صفحة</option>
-            <option value="20">20 باقة / صفحة</option>
-          </select>
-
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2 rounded-xl bg-zinc-900 text-amber-400 border border-zinc-800 hover:bg-zinc-800 transition-colors cursor-pointer"
-            title="تحديث البيانات"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-2.5 py-2 rounded-xl bg-zinc-900 text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 text-xs font-bold transition-all cursor-pointer"
+                title="إعادة ضبط الفلاتر"
+              >
+                مسح الفلاتر
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -281,11 +432,13 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               <tr>
                 <th className="px-5 py-3.5">#ID</th>
                 <th className="px-5 py-3.5">اسم الباقة</th>
+                <th className="px-5 py-3.5">نوع الباقة</th>
+                <th className="px-5 py-3.5">الكابتن المخصص</th>
                 <th className="px-5 py-3.5">السعر</th>
                 <th className="px-5 py-3.5">المدة</th>
                 <th className="px-5 py-3.5">المميزات</th>
                 <th className="px-5 py-3.5 text-center">الحالة</th>
-                <th className="px-5 py-3.5 text-left">إجراءات سريعة</th>
+                <th className="px-5 py-3.5 text-left">إجراءات</th>
               </tr>
             </thead>
 
@@ -293,28 +446,40 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               {loading && packages.length === 0 ? (
                 [1, 2, 3, 4, 5].map((i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-4 w-10 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-8 bg-zinc-800 rounded" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-32 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-20 bg-zinc-800 rounded-full" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-24 bg-zinc-800 rounded" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-16 bg-zinc-800 rounded" /></td>
-                    <td className="px-5 py-4"><div className="h-4 w-20 bg-zinc-800 rounded" /></td>
-                    <td className="px-5 py-4"><div className="h-4 w-40 bg-zinc-800/60 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-16 bg-zinc-800 rounded" /></td>
+                    <td className="px-5 py-4"><div className="h-4 w-36 bg-zinc-800/60 rounded" /></td>
                     <td className="px-5 py-4 text-center"><div className="h-6 w-14 bg-zinc-800 rounded-full mx-auto" /></td>
-                    <td className="px-5 py-4 text-left"><div className="h-7 w-24 bg-zinc-800 rounded-xl mr-auto" /></td>
+                    <td className="px-5 py-4 text-left"><div className="h-7 w-20 bg-zinc-800 rounded-xl mr-auto" /></td>
                   </tr>
                 ))
               ) : packages.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-16 text-center">
+                  <td colSpan="9" className="px-5 py-16 text-center">
                     <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3 shadow-gold-glow">
                       <Crown className="w-7 h-7" />
                     </div>
                     <h3 className="text-sm sm:text-base font-black text-white mb-1">
-                      {search ? 'لا توجد باقات تطابق البحث' : 'لا توجد باقات مسجلة في النظام بعد!'}
+                      {hasActiveFilters ? 'لا توجد باقات تطابق الفلاتر المحددة' : 'لا توجد باقات مسجلة في النظام بعد!'}
                     </h3>
                     <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-4">
-                      {search ? 'جرّب كتابة كلمات بحث أخرى أو مسح حقل البحث.' : 'ابدأ بإنشاء أول باقة اشتراك رياضية لصالة WOLVES لتظهر للأعضاء.'}
+                      {hasActiveFilters
+                        ? 'جرّب تغيير فلاتر النوع أو الكابتن أو الحالة أو مسح حقل البحث.'
+                        : 'ابدأ بإنشاء أول باقة اشتراك رياضية لصالة WOLVES لتظهر للأعضاء.'}
                     </p>
-                    {!search && (
+                    {hasActiveFilters ? (
+                      <button
+                        type="button"
+                        onClick={handleResetFilters}
+                        className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-amber-500/40 text-xs font-bold text-zinc-200 transition-all cursor-pointer"
+                      >
+                        مسح كافة الفلاتر
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         onClick={handleOpenCreate}
@@ -329,6 +494,9 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               ) : (
                 packages.map((pkg) => {
                   const isToggling = togglingId === pkg.id;
+                  const typeMeta = getPackageTypeMeta(pkg.type);
+                  const trainerName = getTrainerName(pkg.trainerId);
+
                   return (
                     <tr
                       key={pkg.id}
@@ -349,6 +517,33 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                             </span>
                           )}
                         </div>
+                      </td>
+
+                      {/* Type Badge */}
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${typeMeta.badgeColor}`}>
+                          <span>{typeMeta.label}</span>
+                        </span>
+                      </td>
+
+                      {/* Assigned Trainer */}
+                      <td className="px-5 py-4 text-xs">
+                        {Number(pkg.type) === PACKAGE_TYPES.PRIVATE ? (
+                          trainerName ? (
+                            <span className="inline-flex items-center gap-1 text-amber-400 font-bold">
+                              <UserCheck className="w-3.5 h-3.5" />
+                              <span>{trainerName}</span>
+                            </span>
+                          ) : (
+                            <span className="text-zinc-500">غير محدد (#{pkg.trainerId})</span>
+                          )
+                        ) : Number(pkg.type) === PACKAGE_TYPES.SHARED_PRIVATE ? (
+                          <span className="text-purple-400/90 text-[11px] font-semibold">
+                            مشتركة (يحدده العضو)
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500 text-[11px]">بدون كابتن خاص</span>
+                        )}
                       </td>
 
                       {/* Price */}
@@ -410,7 +605,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                             type="button"
                             onClick={() => handleOpenEdit(pkg)}
                             className="p-2 rounded-xl bg-zinc-900 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 border border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer"
-                            title="تعديل بيانات الباقة"
+                            title="تعديل بيانات الباقة (PATCH)"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -443,11 +638,14 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             </div>
           ) : packages.length === 0 ? (
             <div className="py-10 text-center text-zinc-500 text-xs">
-              لا توجد باقات حالياً. انقر على "+ إضافة باقة جديدة".
+              {hasActiveFilters ? 'لا توجد باقات تطابق الفلاتر المحددة.' : 'لا توجد باقات حالياً. انقر على "+ إضافة باقة جديدة".'}
             </div>
           ) : (
             packages.map((pkg) => {
               const isToggling = togglingId === pkg.id;
+              const typeMeta = getPackageTypeMeta(pkg.type);
+              const trainerName = getTrainerName(pkg.trainerId);
+
               return (
                 <div key={pkg.id} className="bg-black/60 rounded-2xl p-4 border border-zinc-800/80 space-y-3">
                   <div className="flex items-center justify-between">
@@ -467,6 +665,18 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                       <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-400' : 'bg-rose-400'}`} />
                       <span>{pkg.isActive !== false ? 'نشط' : 'متوقف'}</span>
                     </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${typeMeta.badgeColor}`}>
+                      {typeMeta.label}
+                    </span>
+                    {trainerName && (
+                      <span className="text-[11px] text-amber-400 font-bold flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" />
+                        <span>{trainerName}</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between text-xs bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/50">
@@ -563,7 +773,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
         </div>
       </div>
 
-      {/* Package Form Modal (Add / Edit) */}
+      {/* Package Form Modal (Add / Edit with PATCH) */}
       <PackageFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
@@ -595,11 +805,25 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">{selectedDetailsPackage.name}</h3>
-                  <span className="text-xs text-zinc-400 font-mono">
-                    {selectedDetailsPackage.duration} يوماً • {Number(selectedDetailsPackage.price).toLocaleString('ar-EG')} ج.م
-                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getPackageTypeMeta(selectedDetailsPackage.type).badgeColor}`}>
+                      {getPackageTypeMeta(selectedDetailsPackage.type).label}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-mono">
+                      {selectedDetailsPackage.duration} يوماً • {Number(selectedDetailsPackage.price).toLocaleString('ar-EG')} ج.م
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {Number(selectedDetailsPackage.type) === PACKAGE_TYPES.PRIVATE && selectedDetailsPackage.trainerId && (
+                <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2 text-xs text-amber-300">
+                  <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    الكابتن المخصص: <strong className="text-white">{getTrainerName(selectedDetailsPackage.trainerId) || `كابتن #${selectedDetailsPackage.trainerId}`}</strong>
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-3 py-3 border-y border-zinc-800 text-xs">
                 <div>
@@ -625,7 +849,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                     setSelectedDetailsPackage(null);
                     handleOpenEdit(toEdit);
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>تعديل الباقة</span>
@@ -633,7 +857,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                 <button
                   type="button"
                   onClick={() => setSelectedDetailsPackage(null)}
-                  className="px-4 py-2.5 rounded-xl bg-zinc-900 text-zinc-400 text-xs font-bold hover:bg-zinc-800"
+                  className="px-4 py-2.5 rounded-xl bg-zinc-900 text-zinc-400 text-xs font-bold hover:bg-zinc-800 cursor-pointer"
                 >
                   إغلاق
                 </button>

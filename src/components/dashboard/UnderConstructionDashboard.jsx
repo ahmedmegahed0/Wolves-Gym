@@ -23,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getRoleMeta } from '../../services/apiClient';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 import ChangePasswordModal from '../auth/ChangePasswordModal';
+import TrainerMeProfile from '../trainers/TrainerMeProfile';
 
 export const UnderConstructionDashboard = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ export const UnderConstructionDashboard = () => {
     setIsChangePasswordModalOpen
   } = useAuth();
   const roleMeta = getRoleMeta(user?.role);
+  const canAccessReception = ['Receptionist', 'SuperAdmin', 'Manager'].includes(roleMeta.role);
 
   // Role-specific upcoming features teaser
   const getRoleFeatures = () => {
@@ -135,14 +137,16 @@ export const UnderConstructionDashboard = () => {
               <span>باقات واشتراكات</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/reception')}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
-            >
-              <span className="hidden sm:inline">لوحة الاستقبال</span>
-              <span className="sm:hidden">الاستقبال</span>
-            </button>
+            {canAccessReception && (
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/reception')}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all"
+              >
+                <span className="hidden sm:inline">لوحة الاستقبال</span>
+                <span className="sm:hidden">الاستقبال</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -159,6 +163,11 @@ export const UnderConstructionDashboard = () => {
 
       {/* Main Body */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 flex items-center justify-center relative z-10">
+        {roleMeta.role === 'Trainer' ? (
+          <div className="w-full py-4">
+            <TrainerMeProfile />
+          </div>
+        ) : (
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -241,6 +250,7 @@ export const UnderConstructionDashboard = () => {
             </button>
           </div>
         </motion.div>
+        )}
       </main>
 
       {/* Change Password Modal */}

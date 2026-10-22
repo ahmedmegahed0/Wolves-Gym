@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { usersService } from '../../services/usersService';
-import { getRoleMeta } from '../../services/apiClient';
+import { getRoleMeta, trainerService } from '../../services/apiClient';
 
 /**
  * UserProfileSettingsModal
@@ -45,8 +45,25 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
         phoneNumber: user.phoneNumber || '',
       });
       setErrors({});
+
+      // If user is a trainer and phoneNumber is missing, sync from /api/Trainers/me
+      if (user.role === 'Trainer' && !user.phoneNumber) {
+        trainerService
+          .getTrainerMe()
+          .then((t) => {
+            if (t?.phoneNumber) {
+              setFormData((prev) => ({
+                ...prev,
+                name: prev.name || t.name || '',
+                phoneNumber: t.phoneNumber || prev.phoneNumber,
+              }));
+              updateCurrentUser({ phoneNumber: t.phoneNumber });
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, updateCurrentUser]);
 
   const validate = () => {
     const errs = {};
@@ -98,6 +115,13 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
       if (onClose) onClose();
     } catch (err) {
       console.error('Failed to update profile:', err);
+      const isConflict = err.status === 409 || err.message?.includes('مسجل بالفعل') || err.message?.includes('Conflict') || err.message?.includes('رقم الهاتف');
+      if (isConflict) {
+        setErrors((prev) => ({
+          ...prev,
+          phoneNumber: 'رقم الهاتف مسجل بالفعل لحساب مستخدم آخر بالصالة. أدخل رقماً آخر.',
+        }));
+      }
       toastError('فشل تحديث البيانات', err.message || 'حدث خطأ أثناء تعديل بيانات الحساب.');
     } finally {
       setLoading(false);

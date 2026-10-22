@@ -92,11 +92,18 @@ export const usersService = {
       const data = err.response?.data;
       let errorMsg = 'تعذر تحديث البيانات الشخصية.';
 
-      if (typeof data === 'string') {
+      if (status === 409) {
+        errorMsg = data?.detail || data?.message || 'رقم الهاتف مسجل بالفعل لحساب مستخدم آخر في الجيم. يرجى إدخال رقم هاتف مختلف.';
+      } else if (typeof data === 'string') {
         errorMsg = data;
+      } else if (data?.detail) {
+        errorMsg = data.detail;
       } else if (data?.message) {
         errorMsg = data.message;
-      } else if (data?.title) {
+      } else if (data?.errors && typeof data.errors === 'object') {
+        const firstErr = Object.values(data.errors).flat()[0];
+        errorMsg = firstErr || 'بيانات غير صحيحة';
+      } else if (data?.title && data.title !== 'Conflict') {
         errorMsg = data.title;
       }
 

@@ -13,6 +13,8 @@ import {
   Star
 } from 'lucide-react';
 
+import { getPackageTypeMeta } from '../../services/apiClient';
+
 /**
  * PackageCard Component
  * Displays a luxury gym pricing card with pricing, duration badge, features list, and CTA button.
@@ -36,7 +38,10 @@ export const PackageCard = ({
     description = '',
     isActive = true,
     isPopular = false,
+    type = 0,
   } = packageItem;
+
+  const typeMeta = getPackageTypeMeta(type);
 
   // Split description by newlines or commas into clean feature bullets
   const features = description
@@ -85,12 +90,16 @@ export const PackageCard = ({
       )}
 
       <div>
-        {/* Header: Duration Badge & Status */}
-        <div className="flex items-center justify-between gap-2 mb-4 pt-1">
-          <div className="flex items-center gap-2">
+        {/* Header: Duration Badge, Type Badge & Status */}
+        <div className="flex items-center justify-between gap-2 mb-4 pt-1 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
               <Clock className="w-3.5 h-3.5" />
               <span>{getDurationLabel(duration)}</span>
+            </span>
+
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${typeMeta.badgeColor}`}>
+              <span>{typeMeta.label}</span>
             </span>
           </div>
 
@@ -102,7 +111,7 @@ export const PackageCard = ({
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-            {isActive ? 'متاح للاشتراك' : 'متوقف مؤقتاً'}
+            <span>{isActive ? 'متاح للاشتراك' : 'متوقف مؤقتاً'}</span>
           </span>
         </div>
 
