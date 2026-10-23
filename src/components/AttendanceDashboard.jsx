@@ -29,7 +29,8 @@ import {
   PanelRightOpen,
   Plus,
   Home,
-  Dumbbell
+  Dumbbell,
+  Target
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -43,6 +44,7 @@ import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
 import TrainersSection from './trainers/TrainersSection';
+import KpisManagement from './kpis/KpisManagement';
 import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
@@ -101,6 +103,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
     if (location.pathname === '/customers') return 'customers';
     if (location.pathname.includes('/lockers')) return 'lockers';
     if (location.pathname.includes('/packages')) return 'packages';
+    if (location.pathname.includes('/kpis')) return 'kpis';
     if (location.pathname.includes('/attendance')) return 'attendance';
     return 'cards';
   });
@@ -295,6 +298,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
       icon: Dumbbell,
       badge: null,
     },
+    ...(isManager || isSuperAdmin ? [
+      {
+        id: 'kpis',
+        label: 'مؤشرات الأداء (KPIs)',
+        icon: Target,
+        badge: 'إدارة',
+        badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+      }
+    ] : []),
     {
       id: 'customers',
       label: 'إدارة الوحوش',
@@ -1164,6 +1176,21 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   isEmbedded={true}
                   onSelectTrainer={(trainer) => handleOpenNewSubscription(null, null)}
                 />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 7: KPIS MODULE (مؤشرات الأداء وتقييم المدربين)         */}
+            {/* ======================================================== */}
+            {mainTab === 'kpis' && (
+              <motion.div
+                key="kpis-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <KpisManagement isEmbedded={true} />
               </motion.div>
             )}
 

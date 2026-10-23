@@ -17,10 +17,14 @@ import {
   ShieldCheck, 
   AlertCircle,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 import { customerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import CustomerBehaviorNotesTab from './CustomerBehaviorNotesTab';
+import CustomerAttendanceCalendar from './CustomerAttendanceCalendar';
 
 export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated }) => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -38,10 +42,12 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
     injuries: '',
     chronicDiseases: '',
     notes: '',
+    approvalStatus: 0,
   });
 
-  const [activeSection, setActiveSection] = useState('basic'); // 'basic', 'physical', 'health'
+  const [activeSection, setActiveSection] = useState('basic'); // 'basic', 'physical', 'health', 'notes', 'attendance'
   const [loading, setLoading] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -59,12 +65,44 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
         injuries: customer.injuries ?? customer.Injuries ?? '',
         chronicDiseases: customer.chronicDiseases ?? customer.ChronicDiseases ?? '',
         notes: customer.notes ?? customer.Notes ?? '',
+        approvalStatus: customer.approvalStatus ?? customer.ApprovalStatus ?? 0,
       });
       setErrors({});
     }
   }, [customer]);
 
   if (!isOpen || !customer) return null;
+
+  const targetId = customer.id ?? customer.customerId ?? customer.Id;
+
+  // Handle direct approval status update
+  const handleApprovalStatusChange = async (newStatus) => {
+    try {
+      setUpdatingStatus(true);
+      await customerService.changeApprovalStatus(targetId, { status: newStatus });
+      setFormData(prev => ({ ...prev, approvalStatus: newStatus }));
+      const statusLabels = {
+        0: 'قيد الانتظار (معلق)',
+        1: 'معتمد (نشط)',
+        2: 'مرفوض / موقوف'
+      };
+      toastSuccess(
+        'تم تحديث حالة الاعتماد',
+        `تم تغيير حالة العضو إلى: ${statusLabels[newStatus] || newStatus}`
+      );
+      if (onCustomerUpdated) {
+        onCustomerUpdated({ ...customer, ...formData, approvalStatus: newStatus, id: targetId });
+      }
+    } catch (err) {
+      console.error('Failed to change approval status:', err);
+      toastError(
+        'فشل تغيير حالة الاعتماد',
+        err.friendlyMessage || 'حدث خطأ أثناء تعديل حالة الاعتماد.'
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   // Calculate BMI on the fly
   const heightMeters = Number(formData.height) / 100;
@@ -116,7 +154,6 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
     if (!validate()) return;
 
     setLoading(true);
-    const targetId = customer.id ?? customer.customerId ?? customer.Id;
 
     try {
       await customerService.updateCustomer(targetId, formData);
@@ -146,7 +183,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
           initial={{ opacity: 0, scale: 0.94, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 20 }}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 max-w-xl lg:max-w-2xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 max-w-2xl lg:max-w-4xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh]"
         >
           {/* Top Gold Accent Line */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
@@ -159,13 +196,13 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
               </div>
               <div>
                 <h3 className="text-sm sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                  تعديل بيانات الوحش
+                  ملف وتعديل الوحش
                   <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-lg">
-                    #{customer.id}
+                    #{targetId}
                   </span>
                 </h3>
                 <p className="text-[10px] sm:text-xs text-zinc-400">
-                  تحديث البيانات الأساسية والقياسات والملف الرياضي
+                  تحديث البيانات، حالة الاعتماد، ملاحظات السلوك، وسجل الحضور
                 </p>
               </div>
             </div>
@@ -178,11 +215,11 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
           </div>
 
           {/* Navigation Section Tabs */}
-          <div className="flex rounded-xl sm:rounded-2xl bg-black/60 p-1 border border-zinc-800 my-2.5 sm:my-4 gap-1">
+          <div className="grid grid-cols-5 rounded-xl sm:rounded-2xl bg-black/60 p-1 border border-zinc-800 my-2.5 sm:my-3.5 gap-1 overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveSection('basic')}
-              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'basic'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
@@ -195,7 +232,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
             <button
               type="button"
               onClick={() => setActiveSection('physical')}
-              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'physical'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
@@ -208,18 +245,44 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
             <button
               type="button"
               onClick={() => setActiveSection('health')}
-              className={`flex-1 py-1.5 sm:py-2.5 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
                 activeSection === 'health'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
               <HeartPulse className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">الصحي والرياضي</span>
+              <span className="truncate">الصحي</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('notes')}
+              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+                activeSection === 'notes'
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">السلوك</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('attendance')}
+              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
+                activeSection === 'attendance'
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">الحضور</span>
             </button>
           </div>
 
-          {/* Form Body with Smooth Transitions */}
+          {/* Form Body / Content with Smooth Transitions */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 px-1 py-1 gold-scrollbar">
             {/* 1. BASIC INFO SECTION */}
             {activeSection === 'basic' && (
@@ -307,6 +370,64 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
                     {errors.code && (
                       <p className="text-[11px] text-rose-400 mt-1">{errors.code}</p>
                     )}
+                  </div>
+                </div>
+
+                {/* Approval Status Selector */}
+                <div className="bg-zinc-900/90 rounded-2xl p-3.5 border border-amber-500/20">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-black text-white">حالة اعتماد المشترك (Approval Status):</span>
+                    </div>
+                    {updatingStatus && (
+                      <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono">
+                        <Loader2 className="w-3 h-3 animate-spin" /> جاري التحديث...
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      disabled={updatingStatus}
+                      onClick={() => handleApprovalStatusChange(0)}
+                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                        Number(formData.approvalStatus) === 0
+                          ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-black shadow-gold-glow'
+                          : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold">قيد الانتظار</div>
+                      <div className="text-[9px] text-zinc-500 font-mono mt-0.5">معلق (0)</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={updatingStatus}
+                      onClick={() => handleApprovalStatusChange(1)}
+                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                        Number(formData.approvalStatus) === 1
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                          : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold">معتمد ونشط</div>
+                      <div className="text-[9px] text-emerald-500/70 font-mono mt-0.5">مقبول (1)</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={updatingStatus}
+                      onClick={() => handleApprovalStatusChange(2)}
+                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                        Number(formData.approvalStatus) === 2
+                          ? 'bg-rose-500/20 border-rose-500 text-rose-400 font-black shadow-[0_0_15px_rgba(244,63,94,0.3)]'
+                          : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold">مرفوض / موقوف</div>
+                      <div className="text-[9px] text-rose-500/70 font-mono mt-0.5">غير مؤهل (2)</div>
+                    </button>
                   </div>
                 </div>
 
@@ -538,34 +659,76 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
               </motion.div>
             )}
 
-            {/* Modal Actions */}
-            <div className="pt-3 border-t border-zinc-800/80 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="w-full sm:w-auto px-4 py-2.5 sm:py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold transition-colors text-center"
+            {/* 4. BEHAVIOR NOTES TAB */}
+            {activeSection === 'notes' && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="py-1"
               >
-                إلغاء
-              </button>
+                <CustomerBehaviorNotesTab
+                  customerId={targetId}
+                  customerName={formData.name}
+                />
+              </motion.div>
+            )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-[1.02] sm:hover:scale-105 active:scale-95 disabled:opacity-50"
+            {/* 5. ATTENDANCE CALENDAR TAB */}
+            {activeSection === 'attendance' && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="py-1"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
-                    <span>جاري حفظ التعديلات...</span>
-                  </>
+                <CustomerAttendanceCalendar
+                  customerId={targetId}
+                  customerName={formData.name}
+                />
+              </motion.div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-zinc-800/80 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
+              <div className="text-[11px] text-zinc-500">
+                {activeSection === 'notes' || activeSection === 'attendance' ? (
+                  <span>يتم حفظ وتحديث الملاحظات والحضور مباشرة وفورياً مع السيرفر.</span>
                 ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-black" />
-                    <span>حفظ التعديلات</span>
-                  </>
+                  <span>تأكد من مراجعة القياسات والبيانات قبل الحفظ النهائي.</span>
                 )}
-              </button>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={loading}
+                  className="px-4 py-2 sm:py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold transition-colors text-center"
+                >
+                  إغلاق
+                </button>
+
+                {(activeSection === 'basic' || activeSection === 'physical' || activeSection === 'health') && (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        <span>جاري الحفظ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                        <span>حفظ التعديلات</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </motion.div>

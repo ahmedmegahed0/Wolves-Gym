@@ -14,18 +14,23 @@ import {
   CheckCircle2, 
   XCircle, 
   ChevronRight, 
-  ChevronLeft, 
-  Sparkles, 
-  ShieldCheck, 
   AlertCircle, 
   X, 
   Check, 
   Eye, 
-  UserCheck
+  UserCheck,
+  UserPlus,
+  Target,
+  BarChart2
 } from 'lucide-react';
 import { trainerService } from '../../services/apiClient';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import useDebounce from '../../hooks/useDebounce';
+import CreateTrainerModal from './CreateTrainerModal';
+import TrainerKpiEvaluationModal from './TrainerKpiEvaluationModal';
+import TrainerCustomersList from './TrainerCustomersList';
+import TrainerKpiReports from './TrainerKpiReports';
 
 /**
  * EditTrainerModal Component
@@ -312,7 +317,11 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
  * Filters: IsActive, Search, Pagination
  */
 export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
+  const { user } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
+
+  const userRole = user?.role || '';
+  const isOperationManagerOrAdmin = ['Manager', 'SuperAdmin', 'OperationManager', 'OperationsManager'].includes(userRole);
 
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -330,9 +339,21 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modal edit state
+  // Modals state
   const [trainerToEdit, setTrainerToEdit] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const [trainerForEvaluation, setTrainerForEvaluation] = useState(null);
+  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+
+  const [trainerForCustomers, setTrainerForCustomers] = useState(null);
+  const [isCustomersModalOpen, setIsCustomersModalOpen] = useState(false);
+
+  const [trainerForReports, setTrainerForReports] = useState(null);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
+
   const [togglingId, setTogglingId] = useState(null);
 
   // Fetch Management Trainers
@@ -421,15 +442,27 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
           </p>
         </div>
 
-        {onSwitchToCards && (
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Add Trainer Button */}
           <button
             type="button"
-            onClick={onSwitchToCards}
-            className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
-            عرض كروت الكباتن الرياضية
+            <UserPlus className="w-4 h-4 text-black" />
+            <span>+ إضافة كابتن جديد</span>
           </button>
-        )}
+
+          {onSwitchToCards && (
+            <button
+              type="button"
+              onClick={onSwitchToCards}
+              className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+            >
+              عرض كروت الكباتن الرياضية
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Metric Cards */}
@@ -641,6 +674,48 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                       {/* Actions */}
                       <td className="px-5 py-4 text-left">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* View Trainer Customers */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrainerForCustomers(t);
+                              setIsCustomersModalOpen(true);
+                            }}
+                            className="p-2 rounded-xl bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800 transition-all cursor-pointer"
+                            title="عرض قائمة اللاعبين المشتركين مع هذا الكابتن"
+                          >
+                            <Users className="w-3.5 h-3.5 text-amber-400" />
+                          </button>
+
+                          {/* View KPI Reports */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrainerForReports(t);
+                              setIsReportsModalOpen(true);
+                            }}
+                            className="p-2 rounded-xl bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800 transition-all cursor-pointer"
+                            title="سجل تقارير وتقييمات الكابتن"
+                          >
+                            <BarChart2 className="w-3.5 h-3.5 text-amber-400" />
+                          </button>
+
+                          {/* Evaluate KPIs (Operation Manager / Admin only) */}
+                          {isOperationManagerOrAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTrainerForEvaluation(t);
+                                setIsEvaluationModalOpen(true);
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              title="تسجيل تقييم أداء جديد (KPIs) - مخصص لمدير العمليات"
+                            >
+                              <Target className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">تقييم KPIs</span>
+                            </button>
+                          )}
+
                           {/* Toggle Status */}
                           <button
                             type="button"
@@ -713,24 +788,63 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  {/* Mobile Actions Grid */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
                     <button
                       type="button"
-                      disabled={isToggling}
-                      onClick={() => handleToggleStatus(t)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300"
+                      onClick={() => {
+                        setTrainerForCustomers(t);
+                        setIsCustomersModalOpen(true);
+                      }}
+                      className="py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px] font-bold flex items-center justify-center gap-1"
                     >
-                      <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                      <span>{isActive ? 'تعطيل' : 'تفعيل'}</span>
+                      <Users className="w-3.5 h-3.5 text-amber-400" />
+                      <span>المتدربين</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTrainerForReports(t);
+                        setIsReportsModalOpen(true);
+                      }}
+                      className="py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px] font-bold flex items-center justify-center gap-1"
+                    >
+                      <BarChart2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>التقارير</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(t)}
-                      className="flex-1 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5"
+                      className="py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[11px] font-bold flex items-center justify-center gap-1"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>تعديل</span>
+                    </button>
+
+                    {isOperationManagerOrAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTrainerForEvaluation(t);
+                          setIsEvaluationModalOpen(true);
+                        }}
+                        className="col-span-2 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-gold-glow"
+                      >
+                        <Target className="w-3.5 h-3.5" />
+                        <span>تقييم أداء الكابتن (KPIs)</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={isToggling}
+                      onClick={() => handleToggleStatus(t)}
+                      className={`${isOperationManagerOrAdmin ? 'col-span-1' : 'col-span-3'} py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300`}
+                    >
+                      <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
+                      <span>{isActive ? 'تعطيل' : 'تفعيل'}</span>
                     </button>
                   </div>
                 </div>
@@ -777,6 +891,45 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
         onClose={() => setIsEditModalOpen(false)}
         trainer={trainerToEdit}
         onSuccess={fetchTrainers}
+      />
+
+      {/* Create Trainer Modal (POST /api/Trainers) */}
+      <CreateTrainerModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchTrainers}
+      />
+
+      {/* KPI Evaluation Modal (POST /api/Trainers/{id}/kpi-evaluations) */}
+      <TrainerKpiEvaluationModal
+        isOpen={isEvaluationModalOpen}
+        onClose={() => {
+          setIsEvaluationModalOpen(false);
+          setTrainerForEvaluation(null);
+        }}
+        trainer={trainerForEvaluation}
+        onSuccess={fetchTrainers}
+      />
+
+      {/* Trainer Customers Modal (GET /api/Trainers/{id}/customers) */}
+      <TrainerCustomersList
+        isOpen={isCustomersModalOpen}
+        onClose={() => {
+          setIsCustomersModalOpen(false);
+          setTrainerForCustomers(null);
+        }}
+        trainerId={trainerForCustomers?.id || trainerForCustomers?.trainerId}
+        trainerName={trainerForCustomers?.name}
+      />
+
+      {/* Trainer KPI Reports Modal (GET /api/Trainers/{id}/kpi-evaluations and /daily) */}
+      <TrainerKpiReports
+        isOpen={isReportsModalOpen}
+        onClose={() => {
+          setIsReportsModalOpen(false);
+          setTrainerForReports(null);
+        }}
+        trainer={trainerForReports}
       />
     </div>
   );

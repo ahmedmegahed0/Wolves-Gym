@@ -35,10 +35,10 @@ import wolfLogo from '../../assets/logo.png';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { customerService, attendanceService } from '../../services/apiClient';
-import ChangePasswordModal from '../auth/ChangePasswordModal';
 import PackagesPricingGrid from '../packages/PackagesPricingGrid';
 import TrainersSection from '../trainers/TrainersSection';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
+import CustomerAttendanceCalendar from './CustomerAttendanceCalendar';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -518,12 +518,12 @@ export const CustomerDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Responsive Navigation Tabs for Customer: Profile & Pass vs Packages vs Trainers */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 w-full max-w-xl">
+            {/* Responsive Navigation Tabs for Customer: Profile & Pass vs Attendance vs Packages vs Trainers */}
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 w-full max-w-2xl">
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'overview'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
@@ -535,8 +535,21 @@ export const CustomerDashboard = () => {
 
               <button
                 type="button"
+                onClick={() => setActiveTab('calendar')}
+                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                  activeTab === 'calendar'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">سجل الحضور</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab('packages')}
-                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'packages'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
@@ -549,7 +562,7 @@ export const CustomerDashboard = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('trainers')}
-                className={`py-2 px-2 sm:px-3.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'trainers'
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
@@ -560,7 +573,20 @@ export const CustomerDashboard = () => {
               </button>
             </div>
 
-            {activeTab === 'packages' ? (
+            {activeTab === 'calendar' ? (
+              <motion.div
+                key="customer-calendar-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="pt-2 max-w-4xl mx-auto"
+              >
+                <CustomerAttendanceCalendar
+                  customerId={profile?.id || profile?.customerId || user?.id}
+                  customerName={profile?.name || user?.name}
+                />
+              </motion.div>
+            ) : activeTab === 'packages' ? (
               <motion.div
                 key="customer-packages-tab"
                 initial={{ opacity: 0, y: 10 }}

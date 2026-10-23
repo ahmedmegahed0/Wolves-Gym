@@ -15,7 +15,8 @@ import {
   Crown,
   Key,
   User,
-  Home
+  Home,
+  Target
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';
@@ -23,7 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getRoleMeta } from '../../services/apiClient';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 import ChangePasswordModal from '../auth/ChangePasswordModal';
-import TrainerMeProfile from '../trainers/TrainerMeProfile';
+import TrainerMeDashboard from '../trainers/TrainerMeDashboard';
 
 export const UnderConstructionDashboard = () => {
   const navigate = useNavigate();
@@ -137,6 +138,19 @@ export const UnderConstructionDashboard = () => {
               <span>باقات واشتراكات</span>
             </button>
 
+            {['Manager', 'SuperAdmin'].includes(roleMeta.role) && (
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/kpis')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black text-black bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl shadow-gold-glow transition-all cursor-pointer"
+                title="لوحة إدارة مؤشرات الأداء وتقييم المدربين"
+              >
+                <Target className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span className="hidden sm:inline">مؤشرات الأداء (KPIs)</span>
+                <span className="sm:hidden">KPIs</span>
+              </button>
+            )}
+
             {canAccessReception && (
               <button
                 type="button"
@@ -162,10 +176,10 @@ export const UnderConstructionDashboard = () => {
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 flex items-center justify-center relative z-10">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex items-center justify-center relative z-10">
         {roleMeta.role === 'Trainer' ? (
-          <div className="w-full py-4">
-            <TrainerMeProfile />
+          <div className="w-full py-2">
+            <TrainerMeDashboard />
           </div>
         ) : (
         <motion.div
@@ -211,6 +225,38 @@ export const UnderConstructionDashboard = () => {
               لا تمتلك هذه الرتبة صلاحية استخدام شاشة الريسبشن واللوكرات. سيتم إشعارك فور اكتمال إطلاق وحداتك الإدارية.
             </span>
           </div>
+
+          {/* Active Released Module: KPIs Module for Manager & SuperAdmin */}
+          {['Manager', 'SuperAdmin'].includes(roleMeta.role) && (
+            <div className="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-zinc-900 to-black border border-amber-500/40 shadow-gold-glow flex flex-col sm:flex-row items-center justify-between gap-4 text-right">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-gold-glow">
+                  <Target className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 mb-1">
+                    <Sparkles className="w-3 h-3" />
+                    <span>موديول متاح وجاهز للاستخدام الآن</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white">
+                    مؤشرات الأداء وتقييم المدربين (KPIs Module)
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    إدارة مؤشرات الأداء، إضافة معايير جديدة، وتعديل حالات التفعيل مباشرة من خلال الـ API.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/kpis')}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+              >
+                <span>فتح لوحة مؤشرات الأداء</span>
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Upcoming Modules Teaser */}
           <div className="text-right mb-8">

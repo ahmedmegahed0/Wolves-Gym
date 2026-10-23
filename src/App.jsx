@@ -11,6 +11,7 @@ import UnderConstructionDashboard from './components/dashboard/UnderConstruction
 import LandingPage from './components/landing/LandingPage';
 import AuthContainer from './components/auth/AuthContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import KpisManagement from './components/kpis/KpisManagement';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { normalizeRole } from './services/apiClient';
@@ -92,6 +93,19 @@ function App() {
                 }
               />
               <Route path="/dashboard/trainers" element={<Navigate to="/trainers" replace />} />
+
+              {/* KPIs Management Module: Manager & SuperAdmin */}
+              <Route
+                path="/dashboard/kpis"
+                element={
+                  <ProtectedRoute allowedRoles={['Manager', 'SuperAdmin']}>
+                    <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
+                      <KpisManagement />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/kpis" element={<Navigate to="/dashboard/kpis" replace />} />
 
               {/* Requirement 2 & 3: Customer Portal */}
               <Route

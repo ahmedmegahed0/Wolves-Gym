@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { trainersService } from './trainersService';
 
 // Base URL for Wolves Backend API
 export const API_BASE_URL = 'https://wolves.runasp.net';
@@ -47,7 +48,14 @@ export const getRefreshToken = () => {
 export const normalizeRole = (roleStr = '') => {
   const r = String(roleStr || '').toLowerCase().trim();
   if (r === 'superadmin' || r === 'super_admin' || r === 'admin') return 'SuperAdmin';
-  if (r === 'manager') return 'Manager';
+  if (
+    r === 'manager' || 
+    r === 'operationmanager' || 
+    r === 'operation_manager' || 
+    r === 'operationsmanager' || 
+    r === 'operations_manager' || 
+    r === 'operations'
+  ) return 'Manager';
   if (r === 'receptionist' || r === 'reception') return 'Receptionist';
   if (r === 'trainer' || r === 'coach') return 'Trainer';
   if (r === 'gator' || r === 'gate' || r === 'gatekeeper') return 'Gator';
@@ -822,6 +830,86 @@ export const customerService = {
   },
 
   /**
+   * GET /api/customers/{id}
+   */
+  async getCustomerById(id, { signal } = {}) {
+    const cleanId = Number(id);
+    const response = await apiClient.get(`/api/customers/${cleanId}`, { signal });
+    return response.data;
+  },
+
+  /**
+   * Alias for updateApprovalStatus
+   */
+  async changeApprovalStatus(id, data) {
+    const cleanId = Number(id);
+    const statusVal = typeof data === 'object' && data !== null && data.status !== undefined 
+      ? Number(data.status) 
+      : Number(data);
+    return this.updateApprovalStatus(cleanId, statusVal);
+  },
+
+  /**
+   * POST /api/customers/{id}/behavior-notes
+   */
+  async addBehaviorNote(id, descriptionOrData) {
+    const cleanId = Number(id);
+    const description = typeof descriptionOrData === 'object' && descriptionOrData !== null 
+      ? String(descriptionOrData.description || '').trim() 
+      : String(descriptionOrData || '').trim();
+
+    const payload = { description };
+    const response = await apiClient.post(`/api/customers/${cleanId}/behavior-notes`, payload);
+    return response.data;
+  },
+
+  /**
+   * GET /api/customers/{id}/behavior-notes
+   */
+  async getCustomerBehaviorNotes(id, params = {}, { signal } = {}) {
+    const cleanId = Number(id);
+    const query = new URLSearchParams();
+
+    if (params.pageNumber || params.PageNumber) {
+      query.append('PageNumber', String(params.pageNumber || params.PageNumber));
+    }
+    if (params.pageSize || params.PageSize) {
+      query.append('PageSize', String(params.pageSize || params.PageSize));
+    }
+    if (params.search || params.Search) {
+      query.append('Search', String(params.search || params.Search).trim());
+    }
+    if (params.sortBy || params.SortBy) {
+      query.append('SortBy', String(params.sortBy || params.SortBy).trim());
+    }
+
+    const qs = query.toString();
+    const url = `/api/customers/${cleanId}/behavior-notes${qs ? `?${qs}` : ''}`;
+    const response = await apiClient.get(url, { signal });
+    return response.data;
+  },
+
+  /**
+   * GET /api/customers/{id}/attendances
+   */
+  async getCustomerAttendances(id, month, year, { signal } = {}) {
+    const cleanId = Number(id);
+    const query = new URLSearchParams();
+
+    if (month !== undefined && month !== null) {
+      query.append('Month', String(month));
+    }
+    if (year !== undefined && year !== null) {
+      query.append('Year', String(year));
+    }
+
+    const qs = query.toString();
+    const url = `/api/customers/${cleanId}/attendances${qs ? `?${qs}` : ''}`;
+    const response = await apiClient.get(url, { signal });
+    return response.data;
+  },
+
+  /**
    * GET /api/customers/me
    */
   async getCustomerMe() {
@@ -1485,9 +1573,54 @@ export const trainerService = {
     const response = await apiClient.get('/api/Trainers/me', { signal });
     return response.data;
   },
+
+  /**
+   * POST /api/Trainers (Create new trainer)
+   */
+  async createTrainer(data) {
+    return trainersService.createTrainer(data);
+  },
+
+  /**
+   * GET /api/Trainers/{id}/customers
+   */
+  async getTrainerCustomers(id, params) {
+    return trainersService.getTrainerCustomers(id, params);
+  },
+
+  /**
+   * POST /api/Trainers/{id}/kpi-evaluations
+   */
+  async submitTrainerKpiEvaluations(id, payload) {
+    return trainersService.submitTrainerKpiEvaluations(id, payload);
+  },
+
+  /**
+   * PUT /api/Trainers/{id}/kpi-evaluations
+   */
+  async updateTrainerKpiEvaluations(id, payload) {
+    return trainersService.updateTrainerKpiEvaluations(id, payload);
+  },
+
+  /**
+   * GET /api/Trainers/{id}/kpi-evaluations
+   */
+  async getTrainerKpiEvaluations(id, params) {
+    return trainersService.getTrainerKpiEvaluations(id, params);
+  },
+
+  /**
+   * GET /api/Trainers/{id}/kpi-evaluations/daily
+   */
+  async getTrainerDailyKpiEvaluations(id, params) {
+    return trainersService.getTrainerDailyKpiEvaluations(id, params);
+  },
 };
 
 export { usersService } from './usersService';
+export { kpisService, kpiService, extractKpiErrorMessage } from './kpisService';
+export { customersService } from './customersService';
+export { trainersService } from './trainersService';
 export default apiClient;
 
 
