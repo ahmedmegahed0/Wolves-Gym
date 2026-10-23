@@ -160,7 +160,10 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
       const updated = [...prev.filter((l) => l.id !== newLocker.id), newLocker];
       return updated.sort((a, b) => Number(a.number) - Number(b.number));
     });
+    // Immediately fetch full state from server to get backend isAvailable & id
+    fetchLockers();
   };
+
 
   // Edit Locker Success
   const handleLockerUpdated = (updatedLocker) => {
@@ -314,18 +317,18 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                 <KeyRound className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
                 <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  إدارة دواليب ولوكرات الجيم
-                  <span className="text-[10px] sm:text-xs font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                    LOCKER MATRIX
+                  إدارة اللوكرات
+                  <span className="text-[10px] sm:text-xs font-mono font-bold bg-white/5 text-zinc-400 border border-white/10 px-2 py-0.5 rounded-md">
+                    LOCKERS
                   </span>
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                  عرض شبكي بصري تفاعلي لمراقبة وتسكين دواليب صالة WOLVES
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  مراقبة وتوزيع دواليب الجيم
                 </p>
               </div>
             </div>
@@ -337,7 +340,7 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
               type="button"
               disabled={loading || refreshing}
               onClick={() => fetchLockers(true)}
-              className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 border border-zinc-800 hover:border-amber-500/30 transition-all flex items-center gap-2 text-xs font-bold disabled:opacity-50"
+              className="p-2.5 sm:p-3 rounded-xl bg-[#141417] hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 transition-all flex items-center gap-2 text-xs font-bold disabled:opacity-50"
               title="تحديث قائمة اللوكرات من السيرفر"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
@@ -347,97 +350,93 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs sm:text-sm font-black shadow-gold-glow transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black text-xs sm:text-sm font-semibold transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
-              <span>إضافة لوكر جديد</span>
+              <span>إضافة لوكر</span>
             </button>
           </div>
         </div>
 
-        {/* Top Summary Counters (كروت سريعة بالأعلى) */}
-        <section aria-label="إحصائيات اللوكرات" className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
+        {/* Top Summary Counters */}
+        <section aria-label="إحصائيات اللوكرات" className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {/* Counter 1: Total Lockers */}
-          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center gap-3 sm:gap-4 group">
-            <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
-              <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="bg-[#121215] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-white/10 flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 flex-shrink-0">
+              <Layers className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">
-                إجمالي اللوكرات
+              <div className="text-[11px] sm:text-xs font-medium text-zinc-400 truncate">
+                الإجمالي
               </div>
-              <div className="text-xl sm:text-3xl font-black text-white font-mono">
+              <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
                 {totalCount}
               </div>
-              <div className="text-[10px] text-zinc-500 font-bold truncate">دولاب بالسيستم</div>
             </div>
           </div>
 
           {/* Counter 2: Active / Ready Lockers */}
-          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex items-center gap-3 sm:gap-4 group">
-            <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="bg-[#121215] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-white/10 flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex-shrink-0">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">
-                اللوكرات النشطة
+              <div className="text-[11px] sm:text-xs font-medium text-zinc-400 truncate">
+                المتاح
               </div>
-              <div className="text-xl sm:text-3xl font-black text-emerald-400 font-mono">
-                {activeCount}
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono mt-0.5">
+                {availableCount}
               </div>
-              <div className="text-[10px] text-emerald-500/80 font-bold truncate">جاهزة للاستخدام</div>
             </div>
           </div>
 
           {/* Counter 3: Occupied Lockers */}
-          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center gap-3 sm:gap-4 group">
-            <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
-              <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="bg-[#121215] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-white/10 flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex-shrink-0">
+              <Lock className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">
-                مشغولة حالياً
+              <div className="text-[11px] sm:text-xs font-medium text-zinc-400 truncate">
+                المشغول
               </div>
-              <div className="text-xl sm:text-3xl font-black text-amber-300 font-mono">
+              <div className="text-xl sm:text-2xl font-black text-amber-300 font-mono mt-0.5">
                 {occupiedCount}
               </div>
-              <div className="text-[10px] text-amber-500/80 font-bold truncate">مع الوحوش بالتمرين</div>
             </div>
           </div>
 
           {/* Counter 4: Inactive / Maintenance Lockers */}
-          <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-rose-500/20 hover:border-rose-500/40 transition-all flex items-center gap-3 sm:gap-4 group">
-            <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
-              <Wrench className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="bg-[#121215] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-white/10 flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex-shrink-0">
+              <Wrench className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">
-                معطلة أو صيانة
+              <div className="text-[11px] sm:text-xs font-medium text-zinc-400 truncate">
+                الصيانة
               </div>
-              <div className="text-xl sm:text-3xl font-black text-rose-400 font-mono">
+              <div className="text-xl sm:text-2xl font-black text-rose-400 font-mono mt-0.5">
                 {inactiveCount}
               </div>
-              <div className="text-[10px] text-rose-500/80 font-bold truncate">خارج الخدمة</div>
             </div>
           </div>
         </section>
 
         {/* Filter Tabs & Search Controls */}
-        <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-amber-500/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="bg-[#121215] rounded-xl sm:rounded-2xl p-3 border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           
-          {/* Quick Filter Tabs (الكل / النشطة والمتاحة / المعطلة والصيانة) */}
+          {/* Quick Filter Tabs */}
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
             <button
               type="button"
               onClick={() => setFilterStatus('all')}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 filterStatus === 'all'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
-                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border border-white/5'
               }`}
             >
               <span>الكل</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 text-current">
+              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-current">
                 {totalCount}
               </span>
             </button>
@@ -445,15 +444,15 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
             <button
               type="button"
               onClick={() => setFilterStatus('active')}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 filterStatus === 'active'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
-                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border border-white/5'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-              <span>النشطة والمتاحة</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 text-current">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>النشطة</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-current">
                 {activeCount}
               </span>
             </button>
@@ -461,29 +460,29 @@ export const LockersDashboard = ({ isEmbedded = false, onNavigateBack }) => {
             <button
               type="button"
               onClick={() => setFilterStatus('inactive')}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                 filterStatus === 'inactive'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
-                  : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border border-white/5'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-rose-400" />
-              <span>المعطلة والصيانة</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 text-current">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+              <span>الصيانة</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-current">
                 {inactiveCount}
               </span>
             </button>
           </div>
 
           {/* Search Field */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث برقم اللوكر (مثال: 101)..."
-              className="w-full bg-black/60 text-white placeholder-zinc-500 text-xs rounded-xl pr-10 pl-3 py-2.5 border border-zinc-800 focus:outline-none focus:border-amber-400 font-mono transition-all"
+              placeholder="بحث برقم اللوكر..."
+              className="w-full bg-[#16161a] text-white placeholder-zinc-500 text-xs rounded-lg pr-9 pl-3 py-2 border border-white/10 focus:outline-none focus:border-amber-500/40 font-mono transition-colors"
             />
             {searchQuery && (
               <button

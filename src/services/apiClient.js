@@ -39,6 +39,46 @@ export const getRefreshToken = () => {
   );
 };
 
+// ============================================================================
+// SYSTEM ENUMS ALIGNED WITH C# BACKEND
+// ============================================================================
+
+export const USER_ROLES = {
+  TRAINER: 1,
+  MANAGER: 2,
+  GATOR: 3,
+  SUPERADMIN: 4,
+  CUSTOMER: 5,
+  RECEPTION: 6,
+};
+
+export const USER_TYPES = {
+  UNKNOWN: 0,
+  SUPERADMIN: 1,
+  EMPLOYEE: 3,
+  CUSTOMER: 4,
+};
+
+export const APPROVAL_STATUS = {
+  PENDING: 0,
+  APPROVED: 1,
+  REJECTED: 2,
+};
+
+export const PAYMENT_METHODS = {
+  CASH: 0,
+  MOBILE_WALLET: 1,
+  INSTAPAY: 2,
+  FAWRY: 3,
+  OTHER: 4,
+};
+
+export const SUBSCRIPTION_TYPES = {
+  REGULAR: 0,
+  PRIVATE: 1,
+};
+
+
 
 
 /**
@@ -49,13 +89,13 @@ export const normalizeRole = (roleStr = '') => {
   const r = String(roleStr || '').toLowerCase().trim();
   if (r === 'superadmin' || r === 'super_admin' || r === 'admin') return 'SuperAdmin';
   if (
-    r === 'manager' || 
     r === 'operationmanager' || 
     r === 'operation_manager' || 
     r === 'operationsmanager' || 
     r === 'operations_manager' || 
     r === 'operations'
-  ) return 'Manager';
+  ) return 'OperationManager';
+  if (r === 'manager') return 'Manager';
   if (r === 'receptionist' || r === 'reception') return 'Receptionist';
   if (r === 'trainer' || r === 'coach') return 'Trainer';
   if (r === 'gator' || r === 'gate' || r === 'gatekeeper') return 'Gator';
@@ -76,11 +116,29 @@ export const getRoleMeta = (role = '') => {
         badge: '👑 سوبر أدمن',
         textColor: 'text-amber-400',
         bg: 'bg-amber-500/10 border-amber-500/30',
-        canManageLockers: false,
-        canManageCustomers: false,
-        canCheckInCheckOut: false,
-        canApproveCustomers: false,
-        primaryPath: '/dashboard/under-construction',
+        canManageLockers: true,
+        canManageCustomers: true,
+        canCheckInCheckOut: true,
+        canApproveCustomers: true,
+        canManageKpis: true,
+        canEvaluateTrainers: true,
+        primaryPath: '/dashboard/reception',
+      };
+    case 'OperationManager':
+      return {
+        role: 'OperationManager',
+        label: 'مدير العمليات',
+        fullTitle: 'إدارة العمليات ومؤشرات الأداء',
+        badge: '⚡ مدير العمليات',
+        textColor: 'text-amber-400',
+        bg: 'bg-amber-500/10 border-amber-500/30',
+        canManageLockers: true,
+        canManageCustomers: true,
+        canCheckInCheckOut: true,
+        canApproveCustomers: true,
+        canManageKpis: true,
+        canEvaluateTrainers: true,
+        primaryPath: '/dashboard/operations',
       };
     case 'Manager':
       return {
@@ -90,11 +148,13 @@ export const getRoleMeta = (role = '') => {
         badge: '📋 مدير الجيم',
         textColor: 'text-amber-400',
         bg: 'bg-amber-500/10 border-amber-500/30',
-        canManageLockers: false,
-        canManageCustomers: false,
-        canCheckInCheckOut: false,
-        canApproveCustomers: false,
-        primaryPath: '/dashboard/under-construction',
+        canManageLockers: true,
+        canManageCustomers: true,
+        canCheckInCheckOut: true,
+        canApproveCustomers: true,
+        canManageKpis: true,
+        canEvaluateTrainers: true,
+        primaryPath: '/dashboard/reception',
       };
     case 'Receptionist':
       return {
@@ -108,6 +168,8 @@ export const getRoleMeta = (role = '') => {
         canManageCustomers: true,
         canCheckInCheckOut: true,
         canApproveCustomers: true,
+        canManageKpis: false,
+        canEvaluateTrainers: false,
         primaryPath: '/dashboard/reception',
       };
     case 'Trainer':
@@ -434,10 +496,11 @@ apiClient.interceptors.response.use(
       } else if (status === 403 && isDefaultGenericMessage) {
         friendlyMessage = 'حسابك معلق وفي انتظار تفعيل الإدارة (Pending Approval)، أو ليس لديك صلاحية للدخول.';
       } else if (status === 404 && isDefaultGenericMessage) {
-        friendlyMessage = 'اللوكر أو المورد المطلوب غير موجود بالسيستم.';
+        friendlyMessage = 'المورد أو العضو المطلوب غير موجود بالسيستم.';
       } else if (status === 409 && isDefaultGenericMessage) {
         friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
       }
+
     } else if (error.request) {
       friendlyMessage = 'تعذر الاتصال بسيرفر الجيم. يرجى التحقق من اتصال الإنترنت.';
     }
@@ -925,13 +988,44 @@ export const attendanceService = {
     return response.data;
   },
 
-  async checkIn({ code, lockerId }) {
+  async getAttendances({ isCurrentlyAttending, fromDate, pageNumber = 1, pageSize = 50, search = '', sortBy = '', signal } = {}) {
+    const params = new URLSearchParams();
+    if (typeof isCurrentlyAttending === 'boolean') {
+      params.append('IsCurrentlyAttending', String(isCurrentlyAttending));
+    }
+    if (fromDate) params.append('FromDate', fromDate);
+    if (pageNumber) params.append('PageNumber', String(pageNumber));
+    if (pageSize) params.append('PageSize', String(pageSize));
+    if (search && search.trim()) params.append('Search', search.trim());
+    if (sortBy && sortBy.trim()) params.append('SortBy', sortBy.trim());
+
+    try {
+      const response = await apiClient.get(`/api/Attendances?${params.toString()}`, { signal });
+      return response.data;
+    } catch {
+      return { data: [], totalCount: 0 };
+    }
+  },
+
+  async checkIn({ code, customerCode, lockerId, selectedLockerId }) {
+    const memberCode = (code || customerCode || '').trim();
+    const rawLockerId = lockerId ?? selectedLockerId;
     const payload = {
-      code: String(code).trim(),
-      lockerId: Number(lockerId),
+      code: String(memberCode).trim(),
+      lockerId: Number(rawLockerId),
     };
-    const response = await apiClient.post('/api/Attendances/check-in', payload);
-    return response.data || { success: true };
+    console.log('Check-in Payload:', payload);
+    try {
+      const response = await apiClient.post('/api/Attendances/check-in', payload);
+      return response.data || { success: true };
+    } catch (error) {
+      console.error('Check-in API error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        payload,
+      });
+      throw error;
+    }
   },
 
   async checkOut({ code }) {

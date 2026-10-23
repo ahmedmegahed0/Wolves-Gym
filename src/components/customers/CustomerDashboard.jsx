@@ -29,14 +29,17 @@ import {
   Info,
   Home,
   Menu,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { customerService, attendanceService } from '../../services/apiClient';
+import { customersService } from '../../services/customersService';
 import PackagesPricingGrid from '../packages/PackagesPricingGrid';
 import TrainersSection from '../trainers/TrainersSection';
+import ChangePasswordModal from '../auth/ChangePasswordModal';
 import UserProfileSettingsModal from '../profile/UserProfileSettingsModal';
 import CustomerAttendanceCalendar from './CustomerAttendanceCalendar';
 
@@ -58,6 +61,20 @@ export const CustomerDashboard = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'packages' | 'trainers'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.user-dropdown-container')) {
+        setUserMenuOpen(false);
+      }
+    };
+    if (userMenuOpen) {
+      document.addEventListener('click', handleOutsideClick);
+    }
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [userMenuOpen]);
 
   // Live gym occupancy
   const [occupancyData, setOccupancyData] = useState({
@@ -76,19 +93,24 @@ export const CustomerDashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Member Profile and Live Occupancy
+  // Fetch Member Profile, Live Occupancy, and Active Attendance/Locker
   const loadMemberData = async () => {
     if (typeof document !== 'undefined' && document.hidden) return;
     try {
-      const [profileRes, occupancyRes] = await Promise.allSettled([
+      const now = new Date();
+      const [profileRes, occupancyRes, activeGymAttRes] = await Promise.allSettled([
         customerService.getCustomerMe(),
         attendanceService.getCurrentOccupancy(),
+        attendanceService.getAttendances({ isCurrentlyAttending: true, pageSize: 100 }),
       ]);
+
+      let normalized = null;
 
       if (profileRes.status === 'fulfilled' && profileRes.value) {
         const raw = profileRes.value;
-        const normalized = {
+        normalized = {
           ...raw,
+          id: raw.id || raw.customerId || raw.Id,
           name: raw.name || raw.Name || user?.name || 'عضو الجيم',
           phoneNumber: raw.phoneNumber || raw.PhoneNumber || user?.phoneNumber || '',
           code: raw.code || raw.Code || user?.code || null,
@@ -103,21 +125,12 @@ export const CustomerDashboard = () => {
             ? Number(raw.approvalStatus) 
             : (raw.ApprovalStatus !== undefined ? Number(raw.ApprovalStatus) : 1),
           isActive: raw.isActive !== undefined ? Boolean(raw.isActive) : (raw.IsActive !== undefined ? Boolean(raw.IsActive) : true),
+          createdAt: raw.createdAt || raw.CreatedAt || null,
         };
         setProfile(normalized);
-        
-        // Check if member is currently inside (from active members in localStorage)
-        try {
-          const activeList = JSON.parse(localStorage.getItem('gym_active_members') || '[]');
-          const memberCode = normalized.code;
-          const inside = memberCode ? activeList.find((m) => m.code === memberCode) : null;
-          setActiveSession(inside || null);
-        } catch {
-          setActiveSession(null);
-        }
       } else {
-        // Fallback with real user auth data without fake measurements
-        setProfile({
+        normalized = {
+          id: user?.id,
           name: user?.name || 'عضو الجيم',
           phoneNumber: user?.phoneNumber || '',
           code: user?.code || null,
@@ -127,8 +140,83 @@ export const CustomerDashboard = () => {
           fatPercentage: null,
           approvalStatus: 1,
           isActive: true,
-        });
+          createdAt: user?.createdAt || null,
+        };
+        setProfile(normalized);
       }
+
+      // Check Real-Time Attendance & Locker Assignment
+      let currentSession = null;
+      const targetId = normalized?.id || user?.id;
+
+      // 1. Check member attendances for this month directly from backend API
+      if (targetId) {
+        try {
+          const myAttendances = await customersService.getCustomerAttendances(
+            targetId,
+            now.getMonth() + 1,
+            now.getFullYear()
+          );
+          const attList = Array.isArray(myAttendances?.attendances) ? myAttendances.attendances : [];
+          const activeItem = attList.find((a) => a.isCurrentlyAttending || !a.checkOutAt);
+          if (activeItem) {
+            currentSession = {
+              isInside: true,
+              checkInTime: activeItem.checkInAt,
+              lockerId: activeItem.lockerId,
+              lockerNumber: activeItem.lockerNumber || activeItem.lockerId,
+              attendanceCode: activeItem.attendanceCode || normalized.code,
+            };
+          }
+        } catch (myAttErr) {
+          console.warn('Could not fetch customer personal attendances for active session:', myAttErr);
+        }
+      }
+
+      // 2. Cross-check with general active attendances from gym
+      if (!currentSession && activeGymAttRes.status === 'fulfilled' && activeGymAttRes.value) {
+        const gData = activeGymAttRes.value;
+        const gList = Array.isArray(gData?.data) ? gData.data : (Array.isArray(gData) ? gData : []);
+        const match = gList.find(
+          (a) =>
+            (targetId && (Number(a.customerId) === Number(targetId) || Number(a.id) === Number(targetId))) ||
+            (normalized?.code && a.attendanceCode && String(a.attendanceCode).toLowerCase() === String(normalized.code).toLowerCase()) ||
+            (normalized?.email && a.customerEmail && a.customerEmail.toLowerCase() === normalized.email.toLowerCase())
+        );
+        if (match) {
+          currentSession = {
+            isInside: true,
+            checkInTime: match.checkInAt,
+            lockerId: match.lockerId,
+            lockerNumber: match.lockerNumber || match.lockerId,
+            attendanceCode: match.attendanceCode || normalized.code,
+          };
+        }
+      }
+
+      // 3. Fallback to localStorage active members
+      if (!currentSession) {
+        try {
+          const activeList = JSON.parse(localStorage.getItem('gym_active_members') || '[]');
+          const memberCode = normalized?.code || (targetId ? `ID-${targetId}` : null);
+          const inside = activeList.find(
+            (m) =>
+              (memberCode && m.code === memberCode) ||
+              (normalized?.code && String(m.code).toLowerCase() === String(normalized.code).toLowerCase())
+          );
+          if (inside) {
+            currentSession = {
+              isInside: true,
+              checkInTime: inside.checkInTime || inside.timestamp,
+              lockerId: inside.lockerId,
+              lockerNumber: inside.lockerNumber || inside.lockerId,
+              attendanceCode: inside.code,
+            };
+          }
+        } catch {}
+      }
+
+      setActiveSession(currentSession);
 
       if (occupancyRes.status === 'fulfilled' && occupancyRes.value) {
         const occ = occupancyRes.value;
@@ -151,8 +239,8 @@ export const CustomerDashboard = () => {
 
   useEffect(() => {
     loadMemberData();
-    // Auto refresh every 45s (pauses when backgrounded)
-    const interval = setInterval(loadMemberData, 45000);
+    // Auto refresh every 30s to keep locker status in real-time sync
+    const interval = setInterval(loadMemberData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -249,18 +337,8 @@ export const CustomerDashboard = () => {
             </div>
           </div>
 
-          {/* Desktop User Status & Actions */}
-          <div className="hidden lg:flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 hover:border-amber-500/40 text-xs font-bold text-zinc-300 hover:text-amber-400 transition-all cursor-pointer shadow-sm"
-              title="الصفحة الرئيسية للجيم"
-            >
-              <Home className="w-3.5 h-3.5 text-amber-400" />
-              <span>الرئيسية</span>
-            </button>
-
+          {/* Desktop Right Controls: Clock + Refresh + Avatar Profile Dropdown */}
+          <div className="hidden lg:flex items-center gap-3">
             {/* Live Clock on desktop */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-mono text-zinc-300">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -272,50 +350,143 @@ export const CustomerDashboard = () => {
             <button
               onClick={handleManualRefresh}
               disabled={refreshing}
-              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900 rounded-xl border border-zinc-800/80 transition-colors"
+              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900 rounded-xl border border-zinc-800/80 transition-colors cursor-pointer"
               title="تحديث البيانات"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
             </button>
 
-            <button
-              onClick={() => setIsChangePasswordModalOpen(true)}
-              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900 rounded-xl border border-zinc-800/80 transition-colors"
-              title="تغيير كلمة المرور"
-            >
-              <Key className="w-4 h-4" />
-            </button>
+            {/* User Avatar & Dropdown Menu */}
+            <div className="relative user-dropdown-container">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className={`flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border transition-all cursor-pointer group ${
+                  userMenuOpen 
+                    ? 'bg-zinc-800/90 border-amber-500/60 shadow-gold-glow' 
+                    : 'bg-zinc-900/80 hover:bg-zinc-800 border-zinc-800 hover:border-amber-500/40'
+                }`}
+                title="قائمة الحساب"
+              >
+                <div className="text-right">
+                  <span className="font-bold text-white block text-xs leading-tight group-hover:text-amber-300 transition-colors">
+                    {profile?.name || user?.name || 'عضو الجيم'}
+                  </span>
+                  <span className="text-[10px] text-amber-400/90 font-mono">
+                    {profile?.code || (profile?.id ? `ID-${profile.id}` : 'عضو')}
+                  </span>
+                </div>
 
-            <button
-              type="button"
-              onClick={() => setIsProfileSettingsModalOpen(true)}
-              className="flex items-center gap-2 bg-zinc-900/80 hover:bg-zinc-800 border border-amber-500/20 hover:border-amber-500/50 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer group"
-              title="إعدادات الملف الشخصي وتحديث البيانات"
-            >
-              <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center font-mono text-[11px] group-hover:scale-105 transition-transform">
-                {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-white block text-[11px] leading-tight group-hover:text-amber-300 transition-colors">
-                  {profile?.name || user?.name || 'عضو الجيم'}
-                </span>
-                <span className="text-[9px] text-amber-400 font-mono flex items-center gap-0.5">
-                  🐺 تعديل الحساب
-                </span>
-              </div>
-            </button>
+                <div className="relative">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 text-black font-black flex items-center justify-center font-mono text-sm shadow-sm group-hover:scale-105 transition-transform">
+                    {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
+                  </div>
+                  {activeSession && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-black" title="متواجد بالجيم حالياً" />
+                  )}
+                </div>
 
-            <button
-              onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition-all"
-              title="تسجيل الخروج"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>خروج</span>
-            </button>
+                <ChevronDown className={`w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180 text-amber-400' : ''}`} />
+              </button>
+
+              {/* User Dropdown Popup */}
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 mt-2 w-64 bg-zinc-950/95 backdrop-blur-2xl border border-amber-500/30 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden font-cairo"
+                  >
+                    {/* Header info */}
+                    <div className="p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 text-black font-black flex items-center justify-center font-mono text-base shadow-sm">
+                          {profile?.name ? profile.name.slice(0, 1).toUpperCase() : 'W'}
+                        </div>
+                        <div className="truncate">
+                          <h4 className="text-xs font-black text-white truncate">
+                            {profile?.name || user?.name || 'عضو الجيم'}
+                          </h4>
+                          <span className="text-[10px] text-zinc-400 block font-mono">
+                            {user?.email || profile?.phoneNumber || 'عضوية معتمدة'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px]">
+                        <span className="text-zinc-400">حالة التواجد:</span>
+                        {activeSession ? (
+                          <span className="text-emerald-400 font-bold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            في الجيم (لوكر #{activeSession.lockerNumber || activeSession.lockerId})
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500 font-medium">خارج الجيم</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileSettingsModalOpen(true);
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-200 hover:text-amber-400 hover:bg-zinc-900/90 rounded-xl transition-all text-right cursor-pointer"
+                      >
+                        <User className="w-4 h-4 text-amber-400" />
+                        <span>الملف الشخصي والقياسات</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsChangePasswordModalOpen(true);
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-200 hover:text-amber-400 hover:bg-zinc-900/90 rounded-xl transition-all text-right cursor-pointer"
+                      >
+                        <Key className="w-4 h-4 text-amber-400" />
+                        <span>تغيير كلمة المرور</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigate('/');
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-200 hover:text-amber-400 hover:bg-zinc-900/90 rounded-xl transition-all text-right cursor-pointer"
+                      >
+                        <Home className="w-4 h-4 text-amber-400" />
+                        <span>الرئيسية للجيم</span>
+                      </button>
+                    </div>
+
+                    {/* Logout button */}
+                    <div className="pt-2 mt-1 border-t border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-all text-right cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-400" />
+                        <span>تسجيل الخروج</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Mobile Right Controls: Refresh + Hamburger */}
+          {/* Mobile Right Controls: Refresh + Avatar Trigger */}
           <div className="flex lg:hidden items-center gap-1.5 sm:gap-2">
             <button
               onClick={handleManualRefresh}
@@ -328,19 +499,17 @@ export const CustomerDashboard = () => {
 
             <button
               type="button"
-              onClick={() => setIsProfileSettingsModalOpen(true)}
-              className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center font-mono text-xs active:scale-95 transition-all"
-              title="الملف الشخصي"
-            >
-              {profile?.name ? profile.name.slice(0, 1).toUpperCase() : 'W'}
-            </button>
-
-            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-amber-400 bg-zinc-900/90 rounded-xl border border-amber-500/30 active:scale-95 transition-all"
-              aria-label="القائمة"
+              className="relative p-1 rounded-xl bg-zinc-900 border border-amber-500/30 flex items-center gap-1.5 active:scale-95 transition-all"
+              title="القائمة والحساب"
             >
-              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 text-black font-black flex items-center justify-center font-mono text-xs">
+                {profile?.name ? profile.name.slice(0, 1).toUpperCase() : 'W'}
+              </div>
+              <Menu className="w-3.5 h-3.5 text-amber-400 ml-1" />
+              {activeSession && (
+                <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black" />
+              )}
             </button>
           </div>
         </div>
@@ -353,24 +522,36 @@ export const CustomerDashboard = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25 }}
-              className="lg:hidden border-t border-amber-500/20 mt-2.5 pt-3 space-y-2 bg-black/95 backdrop-blur-2xl rounded-2xl p-3 border border-zinc-800"
+              className="lg:hidden border-t border-amber-500/20 mt-2.5 pt-3 space-y-2 bg-black/95 backdrop-blur-2xl rounded-2xl p-3 border border-zinc-800 font-cairo"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs text-zinc-400 font-mono">
-                <span>{profile?.name || user?.name || 'عضو الجيم'}</span>
-                <span className="text-amber-400 font-bold">{profile?.code || user?.code || 'في انتظار الكود'}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 font-black flex items-center justify-center font-mono text-xs">
+                    {profile?.name ? profile.name.slice(0, 1).toUpperCase() : 'W'}
+                  </div>
+                  <div>
+                    <span className="font-bold text-white block">{profile?.name || user?.name || 'عضو الجيم'}</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">{profile?.code || user?.code || (profile?.id ? `ID-${profile.id}` : 'عضو')}</span>
+                  </div>
+                </div>
+                {activeSession && (
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    داخل الجيم (#{activeSession.lockerNumber || activeSession.lockerId})
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="space-y-1 pt-1">
                 <button
                   type="button"
                   onClick={() => {
-                    navigate('/');
+                    setIsProfileSettingsModalOpen(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95"
+                  className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95 text-right"
                 >
-                  <Home className="w-3.5 h-3.5 text-amber-400" />
-                  <span>الرئيسية</span>
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                  <span>الملف الشخصي والقياسات</span>
                 </button>
 
                 <button
@@ -379,10 +560,22 @@ export const CustomerDashboard = () => {
                     setIsChangePasswordModalOpen(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95"
+                  className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95 text-right"
                 >
                   <Key className="w-3.5 h-3.5 text-amber-400" />
                   <span>تغيير كلمة المرور</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95 text-right"
+                >
+                  <Home className="w-3.5 h-3.5 text-amber-400" />
+                  <span>الصفحة الرئيسية للجيم</span>
                 </button>
               </div>
 
@@ -584,6 +777,7 @@ export const CustomerDashboard = () => {
                 <CustomerAttendanceCalendar
                   customerId={profile?.id || profile?.customerId || user?.id}
                   customerName={profile?.name || user?.name}
+                  joinedAt={profile?.createdAt || user?.createdAt}
                 />
               </motion.div>
             ) : activeTab === 'packages' ? (
@@ -643,9 +837,9 @@ export const CustomerDashboard = () => {
                     <span className="text-[10px] text-zinc-400 block">كود الوحش للدخول والاستقبال:</span>
                     <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                       <span className="text-lg sm:text-2xl font-mono font-black text-amber-400 tracking-wider sm:tracking-widest truncate">
-                        {profile?.code || user?.code || 'في انتظار تعيين الكود'}
+                        {profile?.code || user?.code || (profile?.id ? `ID-${profile.id}` : 'في انتظار تعيين الكود')}
                       </span>
-                      {(profile?.code || user?.code) && (
+                      {(profile?.code || user?.code || profile?.id) && (
                         <button
                           onClick={handleCopyCode}
                           className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
@@ -680,18 +874,27 @@ export const CustomerDashboard = () => {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.05 }}
-                className="wolf-glass rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col justify-between"
+                className={`rounded-3xl p-4 sm:p-6 border flex flex-col justify-between transition-all ${
+                  activeSession 
+                    ? 'bg-gradient-to-br from-emerald-950/40 via-zinc-950 to-black border-emerald-500/50 shadow-[0_0_25px_rgba(16,185,129,0.15)]' 
+                    : 'wolf-glass border-zinc-800'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                        activeSession 
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      }`}>
                         <KeyRound className="w-4 h-4" />
                       </div>
                       <h3 className="text-xs sm:text-sm font-bold text-white">حالة التواجد واللوكر</h3>
                     </div>
                     {activeSession ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                         داخل الجيم الآن 🔥
                       </span>
                     ) : (
@@ -703,21 +906,23 @@ export const CustomerDashboard = () => {
 
                   {activeSession ? (
                     <div className="space-y-3 sm:space-y-4 my-2">
-                      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3 sm:p-4 text-center">
-                        <span className="text-xs text-zinc-400 block mb-1">لوكر التمارين المخصص لك:</span>
-                        <span className="text-2xl sm:text-3xl font-mono font-black text-amber-400 tracking-wider">
-                          #{activeSession.lockerId}
-                        </span>
+                      <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-600/10 to-transparent border border-emerald-500/30 rounded-2xl p-4 text-center">
+                        <span className="text-xs text-zinc-400 block mb-1">اللوكر المخصص لك حالياً:</span>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-3xl sm:text-4xl font-mono font-black text-amber-400 tracking-wider">
+                            لوكر #{activeSession.lockerNumber || activeSession.lockerId}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-zinc-400 space-y-1">
-                        <div className="flex justify-between">
+                      <div className="text-xs text-zinc-400 space-y-1.5 bg-black/40 p-3 rounded-xl border border-white/5">
+                        <div className="flex justify-between items-center">
                           <span>وقت تسجيل الدخول:</span>
-                          <span className="font-mono text-white">
+                          <span className="font-mono text-emerald-400 font-bold">
                             {new Date(activeSession.checkInTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <p className="text-[10px] sm:text-[11px] text-amber-400/90 pt-1 leading-relaxed">
-                          عاش يا بطل! متنساش تعمل تسجيل خروج عند الريسبشن لما تخلص تمرينتك وتسلم مفتاح اللوكر.
+                          عاش يا بطل! متنساش تسجل خروج عند الاستقبال وتسلم مفتاح اللوكر بعد ما تخلص تمرينك.
                         </p>
                       </div>
                     </div>

@@ -26,13 +26,16 @@ const RootRedirect = () => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const role = normalizeRole(user?.role);
-  if (role === 'Receptionist' || role === 'SuperAdmin' || role === 'Manager') {
+  if (role === 'Receptionist') {
     return <Navigate to="/dashboard/reception" replace />;
+  }
+  if (role === 'OperationManager' || role === 'Manager' || role === 'SuperAdmin') {
+    return <Navigate to="/dashboard/operations" replace />;
   }
   if (role === 'Customer') {
     return <Navigate to="/dashboard/customer" replace />;
   }
-  // SuperAdmin, Manager, Trainer
+  // Trainer, Gator
   return <Navigate to="/dashboard/under-construction" replace />;
 };
 
@@ -53,17 +56,28 @@ function App() {
               <Route
                 path="/dashboard/reception"
                 element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'SuperAdmin', 'Manager']}>
+                  <ProtectedRoute allowedRoles={['Receptionist', 'SuperAdmin', 'Manager', 'OperationManager']}>
                     <AttendanceDashboard />
                   </ProtectedRoute>
                 }
               />
 
+              {/* Dedicated Operation Manager Dashboard */}
+              <Route
+                path="/dashboard/operations"
+                element={
+                  <ProtectedRoute allowedRoles={['OperationManager', 'Manager', 'SuperAdmin']}>
+                    <AttendanceDashboard initialSection="kpis" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/operations" element={<Navigate to="/dashboard/operations" replace />} />
+
               {/* Lockers Management Module: Protected Route */}
               <Route
                 path="/dashboard/lockers"
                 element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin']}>
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin', 'OperationManager']}>
                     <LockersDashboard />
                   </ProtectedRoute>
                 }
@@ -74,7 +88,7 @@ function App() {
               <Route
                 path="/dashboard/packages"
                 element={
-                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin', 'Customer', 'Trainer']}>
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin', 'OperationManager', 'Customer', 'Trainer']}>
                     <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
                       <PackagesDashboard />
                     </div>
@@ -94,11 +108,11 @@ function App() {
               />
               <Route path="/dashboard/trainers" element={<Navigate to="/trainers" replace />} />
 
-              {/* KPIs Management Module: Manager & SuperAdmin */}
+              {/* KPIs Management Module: OperationManager, Manager & SuperAdmin */}
               <Route
                 path="/dashboard/kpis"
                 element={
-                  <ProtectedRoute allowedRoles={['Manager', 'SuperAdmin']}>
+                  <ProtectedRoute allowedRoles={['OperationManager', 'Manager', 'SuperAdmin']}>
                     <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
                       <KpisManagement />
                     </div>

@@ -592,8 +592,13 @@ const HeroSection = ({ onOpenVideo }) => {
    ═══════════════════════════════════════════════════════════════════════════ */
 const AboutWolvesSection = () => {
   return (
-    <section id="about" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#08080a] overflow-hidden border-t border-zinc-800/80">
-      <div className="max-w-7xl mx-auto">
+    <section id="about" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#060608] via-[#0b0b10] to-[#060608] overflow-hidden border-t border-zinc-800/80">
+      {/* Ambient background glows & lighting */}
+      <div className="absolute top-1/4 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-yellow-600/5 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-amber-500/[0.04] via-transparent to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           
           {/* Wolf Image Side with Glowing Amber Eyes */}
@@ -612,11 +617,11 @@ const AboutWolvesSection = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
               
-              {/* Gold lightning scratches overlay */}
-              <div className="absolute bottom-6 right-6 p-4 rounded-2xl bg-black/80 border border-amber-500/30 backdrop-blur-md max-w-xs text-right">
-                <span className="text-[11px] font-mono text-amber-400 font-bold block mb-1">عقلية الوحوش 🐺</span>
+              {/* Quote overlay */}
+              <div className="absolute bottom-6 right-6 p-3.5 rounded-2xl bg-black/80 border border-amber-500/30 backdrop-blur-md max-w-xs text-right">
+                <span className="text-[11px] font-mono text-amber-400 font-bold block mb-0.5">عقلية WOLVES 🐺</span>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  "الذئب لا يشغل نفسه بآراء الخراف. ركّز في هدفك واصنع فارقك."
+                  تركيز كامل، انضباط مستمر، وبناء حقيقي لقوتك ولياقتك.
                 </p>
               </div>
             </div>
@@ -647,31 +652,23 @@ const AboutWolvesSection = () => {
               </h2>
             </div>
 
-            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-semibold">
-              صالة <strong className="text-amber-400">WOLVES</strong> أكثر من مجرد نادي رياضي، إنها عقلية متكاملة وأسلوب حياة مستدام. أنشأنا هذه المساحة لمن يبحث عن المزيد — قوة أكبر، ثقة أعلى، وسيطرة كاملة على لياقته وصحته.
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">
+              صالة <strong className="text-amber-400">WOLVES</strong> مجتمع رياضي متكامل، بيئة تدريب احترافية ودعم مستمر من نخبة الكباتن لمساعدتك في بناء قوتك والوصول لأفضل لياقة بدنية.
             </p>
 
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              هنا ستجد البيئة المثالية، الدعم المستمر من الكباتن المعتمدين، ومجتمعاً من الوحوش يشاركك نفس العزيمة والهدف لتصل إلى أفضل نسخة من نفسك.
-            </p>
-
-            {/* Stats Row matching mockup: 500+ Members, 10+ Certified Coaches, 3 Branches/Zones */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-zinc-800">
-              <div className="bg-zinc-900/70 border border-zinc-800 p-3 sm:p-4 rounded-2xl text-center">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 block mb-0.5">500+</span>
-                <span className="text-[11px] text-zinc-400 font-bold block">وحش ومشترك</span>
+            {/* Clean feature pills instead of fake static counts */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-right space-y-1">
+                <span className="text-xs font-bold text-white block">🏋️‍♂️ تدريب وإشراف معتمد</span>
+                <span className="text-[11px] text-zinc-400 block">برامج مخصصة ومتابعة مستمرة</span>
               </div>
-              <div className="bg-zinc-900/70 border border-zinc-800 p-3 sm:p-4 rounded-2xl text-center">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 block mb-0.5">10+</span>
-                <span className="text-[11px] text-zinc-400 font-bold block">كباتن معتمدين</span>
-              </div>
-              <div className="bg-zinc-900/70 border border-zinc-800 p-3 sm:p-4 rounded-2xl text-center">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-amber-400 block mb-0.5">3</span>
-                <span className="text-[11px] text-zinc-400 font-bold block">صالات ومناطق</span>
+              <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-right space-y-1">
+                <span className="text-xs font-bold text-white block">⚡ أجهزة ومعدات حديثة</span>
+                <span className="text-[11px] text-zinc-400 block">بيئة آمنة متكاملة للتمارين</span>
               </div>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={() => {
@@ -719,8 +716,13 @@ const CoachesSection = () => {
   }, []);
 
   return (
-    <section id="coaches" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#060608]">
-      <div className="max-w-7xl mx-auto">
+    <section id="coaches" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#060608] via-[#0a0a0f] to-[#08080c] overflow-hidden border-t border-zinc-800/80">
+      {/* Background radial glows */}
+      <div className="absolute top-1/3 -left-48 w-[500px] h-[500px] bg-amber-500/[0.07] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-yellow-600/[0.04] rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-500/[0.03] via-transparent to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
@@ -779,7 +781,15 @@ const CoachesSection = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+          <div className={`grid gap-5 sm:gap-6 ${
+            coaches.length === 1 
+              ? 'max-w-xs mx-auto grid-cols-1' 
+              : coaches.length === 2 
+              ? 'max-w-2xl mx-auto grid-cols-1 sm:grid-cols-2' 
+              : coaches.length === 3 
+              ? 'max-w-4xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+              : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+          }`}>
             {coaches.map((coach, index) => {
               const hasImage = Boolean(coach.imageUrl || coach.photoUrl);
               const coachImg = hasImage ? (coach.imageUrl || coach.photoUrl) : null;
@@ -972,8 +982,13 @@ const PackagesSection = ({ onSelectPackage }) => {
   };
 
   return (
-    <section id="packages" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#08080a] border-t border-zinc-800/80">
-      <div className="max-w-7xl mx-auto">
+    <section id="packages" dir="rtl" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#08080c] via-[#0b0b12] to-[#060608] border-t border-zinc-800/80 overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 -right-48 w-[500px] h-[500px] bg-amber-500/[0.06] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -left-48 w-[500px] h-[500px] bg-yellow-600/[0.05] rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/[0.04] via-transparent to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Title */}
         <div className="text-center mb-14 sm:mb-20 space-y-3">
@@ -994,7 +1009,7 @@ const PackagesSection = ({ onSelectPackage }) => {
 
         {/* Pricing Cards Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-5xl mx-auto">
             {[1, 2, 3].map((i) => (
               <div key={i} className="rounded-3xl bg-[#101014] border border-zinc-800 p-8 space-y-5 animate-pulse">
                 <div className="h-4 bg-zinc-800 rounded w-1/3" />
@@ -1031,7 +1046,13 @@ const PackagesSection = ({ onSelectPackage }) => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          <div className={`grid gap-6 sm:gap-8 items-stretch mx-auto ${
+            packages.length === 1 
+              ? 'max-w-md grid-cols-1' 
+              : packages.length === 2 
+              ? 'max-w-3xl grid-cols-1 md:grid-cols-2' 
+              : 'max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
             {packages.map((pkg, idx) => {
               const isPopular = pkg.isPopular || idx === 1;
               const features = pkg.description

@@ -87,12 +87,22 @@ export const AttendanceDashboard = ({ initialSection }) => {
   } = useAuth();
 
   const roleMeta = getRoleMeta(user?.role);
+  const isOperationManager = 
+    roleMeta.role === 'OperationManager' || 
+    user?.role === 'OperationManager' || 
+    user?.roles?.includes('OperationManager');
+  const isManager = roleMeta.role === 'Manager' || user?.role === 'Manager';
+  const isSuperAdmin = roleMeta.role === 'SuperAdmin' || user?.role === 'SuperAdmin';
+  const isReception = 
+    roleMeta.role === 'Receptionist' || 
+    user?.role === 'Reception' || 
+    user?.role === 'Receptionist';
   const isCustomer = roleMeta.role === 'Customer';
   const isTrainer = roleMeta.role === 'Trainer';
   const isGator = roleMeta.role === 'Gator';
-  const isReception = roleMeta.role === 'Reception';
-  const isManager = roleMeta.role === 'Manager';
-  const isSuperAdmin = roleMeta.role === 'SuperAdmin';
+
+  // Can manage KPIs: Strictly Operation Manager, Manager, or SuperAdmin (NEVER Reception)
+  const canAccessKpis = (isOperationManager || isManager || isSuperAdmin) && !isReception;
 
   // Navigation main module tab: 'cards' | 'attendance' | 'lockers' | 'customers'
   // Default is 'cards' as requested (الاولى من فوق خالص للكاردز)
@@ -298,7 +308,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
       icon: Dumbbell,
       badge: null,
     },
-    ...(isManager || isSuperAdmin ? [
+    ...(canAccessKpis ? [
       {
         id: 'kpis',
         label: 'مؤشرات الأداء (KPIs)',
@@ -313,6 +323,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
       icon: Users,
       badge: pendingCount > 0 ? `${pendingCount}` : null,
       badgeColor: 'bg-amber-400 text-black shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse',
+    },
+    // Guaranteed to always be the last navigation item
+    {
+      id: 'home',
+      label: 'الصفحة الرئيسية',
+      icon: Home,
+      badge: null,
+      isExternalLink: true,
+      onClick: () => navigate('/'),
     },
   ];
 
@@ -343,29 +362,26 @@ export const AttendanceDashboard = ({ initialSection }) => {
         </button>
 
         <div className="relative z-10">
-          {/* Brand Header */}
-          <div className={`flex items-center gap-3 px-1 py-2 mb-5 border-b border-amber-500/15 transition-all ${
+          {/* Brand Header (Static, No navigation on logo click) */}
+          <div className={`flex items-center gap-3 px-1 py-2 mb-5 border-b border-amber-500/15 transition-all select-none ${
             isCollapsed ? 'justify-center' : 'justify-between'
           }`}>
             <div 
-              onClick={() => navigate('/')} 
-              className={`flex items-center gap-3 min-w-0 cursor-pointer group/logo ${isCollapsed ? 'justify-center' : ''}`}
-              title="العودة للصفحة الرئيسية"
+              className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}
             >
-              <div className="relative group flex-shrink-0">
-                <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl blur-md opacity-40 group-hover:opacity-75 transition duration-500" />
-                <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-b from-zinc-900 to-black border border-amber-500/50 shadow-gold-glow overflow-hidden p-1.5">
+              <div className="relative shrink-0">
+                <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-b from-zinc-900 to-black border border-amber-500/30 overflow-hidden p-1.5 shadow-sm">
                   <img
                     src={wolfLogo}
                     alt="WOLVES"
-                    className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                    className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(245,158,11,0.4)]"
                   />
                 </div>
               </div>
 
               {!isCollapsed && (
                 <div className="min-w-0">
-                  <h1 className="text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 truncate group-hover/logo:text-amber-300">
+                  <h1 className="text-sm font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 truncate">
                     WOLVES
                   </h1>
                   <p className="text-[10px] text-zinc-400 font-semibold truncate font-mono">
@@ -390,33 +406,6 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
           {/* Navigation Items List */}
           <nav className="space-y-1.5" aria-label="أقسام النظام الرئيسية">
-            {/* Quick Home Page Link in Sidebar */}
-            <div className="relative group pb-1.5 mb-1.5 border-b border-amber-500/15">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 font-bold ${
-                  isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-2.5'
-                }`}
-                title="الذهاب للصفحة الرئيسية للجيم"
-              >
-                <div className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
-                  <div className="p-2 rounded-xl bg-zinc-900/90 text-amber-400 border border-zinc-800/80 group-hover:border-amber-500/40 group-hover:scale-105 transition-all flex-shrink-0">
-                    <Home className="w-4 h-4" />
-                  </div>
-                  {!isCollapsed && (
-                    <span className="text-xs truncate font-bold">
-                      الصفحة الرئيسية
-                    </span>
-                  )}
-                </div>
-              </button>
-              {isCollapsed && (
-                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-zinc-950/95 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
-                  الصفحة الرئيسية
-                </div>
-              )}
-            </div>
 
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -425,31 +414,31 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 <div key={item.id} className="relative group">
                   <button
                     type="button"
-                    onClick={() => setMainTab(item.id)}
-                    className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 relative overflow-hidden ${
-                      isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-3'
+                    onClick={item.onClick ? item.onClick : () => setMainTab(item.id)}
+                    className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 relative overflow-hidden cursor-pointer ${
+                      isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
                     } ${
-                      isActive
-                        ? 'bg-gradient-to-l from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.15)] font-black'
-                        : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/70 border border-transparent hover:border-zinc-800/80 font-bold'
+                      isActive && !item.isExternalLink
+                        ? 'bg-amber-500/10 border border-amber-500/25 text-amber-300 font-bold'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent font-medium'
                     }`}
                   >
-                    {/* Active Golden Neon Indicator Bar */}
-                    {isActive && (
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-l-full bg-gradient-to-b from-amber-400 to-yellow-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
+                    {/* Active Indicator Bar */}
+                    {isActive && !item.isExternalLink && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-l-full bg-amber-400" />
                     )}
 
                     <div className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
                       <div className={`p-2 rounded-xl transition-all duration-200 flex-shrink-0 ${
                         isActive
-                          ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.5)] scale-105'
-                          : 'bg-zinc-900/90 text-zinc-400 border border-zinc-800/80 group-hover:text-amber-400 group-hover:border-amber-500/30 group-hover:bg-zinc-800'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : 'bg-zinc-900 text-zinc-400 border border-white/5 group-hover:text-zinc-200 group-hover:bg-zinc-800'
                       }`}>
                         <Icon className="w-4 h-4" />
                       </div>
 
                       {!isCollapsed && (
-                        <span className={`text-xs truncate ${isActive ? 'text-amber-300 font-black' : 'text-zinc-300 font-bold'}`}>
+                        <span className={`text-xs truncate ${isActive ? 'text-white font-bold' : 'text-zinc-300'}`}>
                           {item.label}
                         </span>
                       )}
@@ -490,7 +479,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
         </div>
 
         {/* Sidebar Footer User Card */}
-        <div className={`relative z-10 pt-3 border-t border-amber-500/15 ${isCollapsed ? 'flex flex-col items-center gap-2' : 'space-y-2'}`}>
+        <div className={`relative z-10 pt-3 border-t border-white/10 ${isCollapsed ? 'flex flex-col items-center gap-2' : 'space-y-2'}`}>
           {isAuthenticated ? (
             isCollapsed ? (
               <div className="flex flex-col items-center gap-2">
@@ -498,15 +487,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   <button
                     type="button"
                     onClick={() => setIsProfileSettingsModalOpen(true)}
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-900 to-black text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono hover:scale-105 transition-transform shadow-sm"
-                    title={user?.name || 'تعديل البيانات الشخصية'}
+                    className="w-9 h-9 rounded-xl bg-zinc-900 text-zinc-300 border border-white/10 flex items-center justify-center font-bold text-xs font-mono hover:text-amber-400 hover:border-amber-500/30 transition-all cursor-pointer"
+                    title={user?.name || 'الملف الشخصي'}
                   >
                     {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
                   </button>
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-black" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border-2 border-black" />
 
                   {/* Tooltip */}
-                  <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-zinc-950/95 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                  <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-zinc-950 border border-white/10 text-zinc-200 text-xs font-bold whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
                     {user?.name || roleMeta.label}
                   </div>
                 </div>
@@ -514,62 +503,44 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 <button
                   type="button"
                   onClick={logout}
-                  className="p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
+                  className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                   title="تسجيل الخروج"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center justify-between bg-gradient-to-r from-zinc-950/90 to-zinc-900/80 border border-amber-500/20 rounded-2xl p-2.5 shadow-sm">
+              <div className="flex items-center justify-between bg-zinc-900/60 border border-white/10 rounded-2xl p-2.5 transition-colors hover:border-white/20">
                 <button
                   type="button"
                   onClick={() => setIsProfileSettingsModalOpen(true)}
-                  className="flex items-center gap-2.5 min-w-0 text-right group flex-1"
-                  title="تعديل البيانات الشخصية والحساب"
+                  className="flex items-center gap-2.5 min-w-0 text-right group flex-1 cursor-pointer"
+                  title="فتح الملف الشخصي وتعديل الحساب"
                 >
                   <div className="relative flex-shrink-0">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs font-mono group-hover:scale-105 transition-transform">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-800 text-zinc-300 border border-white/10 flex items-center justify-center font-bold text-xs font-mono group-hover:text-amber-400 group-hover:border-amber-500/30 transition-colors">
                       {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
                     </div>
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-black" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-black" />
                   </div>
                   <div className="min-w-0 truncate">
-                    <span className="text-xs font-bold text-white block truncate group-hover:text-amber-400 transition-colors">
+                    <span className="text-xs font-bold text-zinc-200 block truncate group-hover:text-amber-400 transition-colors">
                       {user?.name || roleMeta.label}
                     </span>
-                    <span className="text-[10px] font-mono text-amber-400 block truncate font-semibold">
-                      {roleMeta.badge}
+                    <span className="text-[10px] text-zinc-500 block truncate font-medium">
+                      {roleMeta.fullTitle || 'موظف استقبال'}
                     </span>
                   </div>
                 </button>
 
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsProfileSettingsModalOpen(true)}
-                    className="p-1.5 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded-lg transition-colors"
-                    title="تعديل البيانات الشخصية"
-                  >
-                    <User className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsChangePasswordModalOpen(true)}
-                    className="p-1.5 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded-lg transition-colors"
-                    title="تغيير كلمة المرور"
-                  >
-                    <Key className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 rounded-lg transition-colors"
-                    title="تسجيل الخروج"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             )
           ) : (
@@ -611,9 +582,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
               <div>
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800">
                   <div 
-                    onClick={() => navigate('/')} 
-                    className="flex items-center gap-2.5 cursor-pointer"
-                    title="العودة للصفحة الرئيسية"
+                    className="flex items-center gap-2.5 select-none"
                   >
                     <img src={wolfLogo} alt="WOLVES" className="w-8 h-8 object-contain" />
                     <span className="text-sm font-black text-amber-400">WOLVES</span>
@@ -627,19 +596,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   </button>
                 </div>
 
-                <nav className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/');
-                    }}
-                    className="w-full text-right p-3 rounded-2xl flex items-center gap-3 bg-zinc-900/90 text-amber-300 hover:text-white border border-amber-500/25 font-bold transition-all cursor-pointer mb-2"
-                  >
-                    <Home className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs">الصفحة الرئيسية</span>
-                  </button>
-
+                <nav className="space-y-1.5">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = mainTab === item.id;
@@ -648,11 +605,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
                         key={item.id}
                         type="button"
                         onClick={() => {
-                          setMainTab(item.id);
                           setMobileMenuOpen(false);
+                          if (item.onClick) {
+                            item.onClick();
+                          } else {
+                            setMainTab(item.id);
+                          }
                         }}
                         className={`w-full text-right p-3 rounded-2xl flex items-center justify-between transition-all ${
-                          isActive
+                          isActive && !item.isExternalLink
                             ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black'
                             : 'text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold'
                         }`}
@@ -752,43 +713,20 @@ export const AttendanceDashboard = ({ initialSection }) => {
               </div>
             </div>
 
-            {/* Left: Home Button + Quick New Subscription Button + Profile Shortcut + Live Clock */}
+            {/* Left: Home Button + Packages-only New Subscription Button + Live Clock */}
+            {/* Left: Packages-only New Subscription Button + Live Clock */}
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 hover:border-amber-500/40 text-xs font-bold text-zinc-300 hover:text-amber-400 transition-all cursor-pointer shadow-sm"
-                title="الذهاب للصفحة الرئيسية للجيم"
-              >
-                <Home className="w-3.5 h-3.5 text-amber-400" />
-                <span>الرئيسية</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleOpenNewSubscription()}
-                className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                title="تسجيل اشتراك جديد بالصالة"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                <span className="hidden sm:inline">تسجيل اشتراك جديد</span>
-                <span className="sm:hidden">اشتراك جديد</span>
-              </button>
-
-              {/* Profile Shortcut in Header */}
-              {isAuthenticated && (
+              {/* Show '+ تسجيل اشتراك جديد' only and exclusively inside Packages/Subscriptions tab */}
+              {mainTab === 'packages' && (
                 <button
                   type="button"
-                  onClick={() => setIsProfileSettingsModalOpen(true)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-amber-500/25 hover:border-amber-500/50 transition-all cursor-pointer group"
-                  title="إعدادات الحساب والبيانات الشخصية"
+                  onClick={() => handleOpenNewSubscription()}
+                  className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+                  title="تسجيل اشتراك جديد بالصالة"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 text-black font-black text-xs flex items-center justify-center font-mono group-hover:scale-105 transition-transform">
-                    {user?.name ? user.name.slice(0, 1).toUpperCase() : 'W'}
-                  </div>
-                  <span className="text-xs font-bold text-white max-w-[110px] truncate hidden md:inline group-hover:text-amber-400 transition-colors">
-                    {user?.name || 'حسابي'}
-                  </span>
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span className="hidden sm:inline">تسجيل اشتراك جديد</span>
+                  <span className="sm:hidden">اشتراك جديد</span>
                 </button>
               )}
 
@@ -1182,7 +1120,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
             {/* ======================================================== */}
             {/* VIEW 7: KPIS MODULE (مؤشرات الأداء وتقييم المدربين)         */}
             {/* ======================================================== */}
-            {mainTab === 'kpis' && (
+            {mainTab === 'kpis' && canAccessKpis && (
               <motion.div
                 key="kpis-view"
                 initial={{ opacity: 0, y: 12 }}

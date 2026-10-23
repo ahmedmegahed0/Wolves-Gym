@@ -133,8 +133,10 @@ export const EditLockerModal = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto gold-scrollbar bg-gradient-to-b from-[#16161a] to-[#0c0c0e] border border-amber-500/30 rounded-3xl p-5 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)]"
         >
+
           {/* Top Gold Accent Bar */}
           <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700" />
 

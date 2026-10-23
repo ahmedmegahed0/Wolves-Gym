@@ -30,36 +30,53 @@ import {
   trainerService, 
   subscriptionService, 
   PACKAGE_TYPES, 
-  getPackageTypeMeta 
+  getPackageTypeMeta,
+  PAYMENT_METHODS as PAYMENT_METHOD_ENUM
 } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 
 /**
- * Payment method definitions with rich Egyptian gym payment contexts
+ * Payment method definitions aligned with backend PaymentMethod Enum:
+ * 0 = Cash, 1 = MobileWallet, 2 = InstaPay, 3 = Fawry, 4 = Other
  */
 const PAYMENT_METHODS = [
   {
     id: 0,
-    title: 'كاش / نقدي',
-    subTitle: 'دفع نقدي مباشر في الاستقبال',
+    title: 'كاش / نقدي (Cash)',
+    subTitle: 'دفع نقدي مباشر في خزينة الاستقبال',
     icon: Banknote,
     badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
   },
   {
     id: 1,
-    title: 'فيزا / بطاقة بنكية',
-    subTitle: 'ماستركارد أو بطاقة ائتمان',
-    icon: CreditCard,
-    badgeColor: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+    title: 'محفظة إلكترونية (Mobile Wallet)',
+    subTitle: 'فودافون كاش، أورنج، وي باي، إلخ',
+    icon: Wallet,
+    badgeColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
   },
   {
     id: 2,
-    title: 'محفظة إلكترونية',
-    subTitle: 'فودافون كاش / إنستاباي InstaPay',
-    icon: Wallet,
+    title: 'إنستاباي (InstaPay)',
+    subTitle: 'تحويل بنكي لحظي عبر تطبيق InstaPay',
+    icon: CreditCard,
     badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
   },
+  {
+    id: 3,
+    title: 'فوري (Fawry)',
+    subTitle: 'سداد عن طريق ماكينات وشبكة فوري',
+    icon: Receipt,
+    badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+  },
+  {
+    id: 4,
+    title: 'أخرى (Other)',
+    subTitle: 'طريقة دفع بديلة أو شيك معتمد',
+    icon: Sparkles,
+    badgeColor: 'text-zinc-400 bg-zinc-800 border-zinc-700',
+  },
 ];
+
 
 /**
  * CreateSubscriptionModal
@@ -91,23 +108,30 @@ export const CreateSubscriptionModal = ({
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
 
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [isPackageDropdownOpen, setIsPackageDropdownOpen] = useState(false);
+  const [packageSearchQuery, setPackageSearchQuery] = useState('');
   const [selectedTrainerId, setSelectedTrainerId] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState(0); // 0: Cash, 1: Card, 2: Wallet
+  const [paymentMethod, setPaymentMethod] = useState(0); // 0: Cash, 1: MobileWallet, 2: InstaPay, 3: Fawry, 4: Other
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const dropdownRef = useRef(null);
+  const packageDropdownRef = useRef(null);
 
-  // Close customer dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsCustomerDropdownOpen(false);
       }
+      if (packageDropdownRef.current && !packageDropdownRef.current.contains(e.target)) {
+        setIsPackageDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
 
   // Fetch initial packages, customers, and trainers when opened
   useEffect(() => {
@@ -215,6 +239,18 @@ export const CreateSubscriptionModal = ({
     );
   }, [customers, customerSearchQuery]);
 
+  // Filtered packages list for dropdown with search
+  const filteredPackages = useMemo(() => {
+    if (!packageSearchQuery.trim()) return packages;
+    const q = packageSearchQuery.trim().toLowerCase();
+    return packages.filter(
+      (p) =>
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q) ||
+        String(p.price || '').includes(q)
+    );
+  }, [packages, packageSearchQuery]);
+
   // Check if selected package is SharedPrivate (type 2)
   const isSharedPrivate = Boolean(
     selectedPackage && Number(selectedPackage.type) === PACKAGE_TYPES.SHARED_PRIVATE
@@ -223,10 +259,12 @@ export const CreateSubscriptionModal = ({
   // When package changes, if not shared private, clear trainerId
   const handleSelectPackage = (pkg) => {
     setSelectedPackage(pkg);
+    setIsPackageDropdownOpen(false);
     if (Number(pkg?.type) !== PACKAGE_TYPES.SHARED_PRIVATE) {
       setSelectedTrainerId(null);
     }
   };
+
 
   // Find selected trainer object
   const selectedTrainerObj = useMemo(() => {
@@ -525,7 +563,7 @@ export const CreateSubscriptionModal = ({
                   )}
                 </div>
 
-                {/* 2. SELECT PACKAGE (اختيار الباقة) */}
+                {/* 2. SELECT PACKAGE (اختيار الباقة كـ Dropdown ذكي) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
@@ -540,7 +578,7 @@ export const CreateSubscriptionModal = ({
                   </div>
 
                   {loadingInitial ? (
-                    <div className="h-28 bg-zinc-900/50 rounded-2xl animate-pulse flex items-center justify-center text-xs text-zinc-500">
+                    <div className="h-14 bg-zinc-900/50 rounded-2xl animate-pulse flex items-center justify-center text-xs text-zinc-500">
                       جاري تحميل الباقات المتاحة...
                     </div>
                   ) : packages.length === 0 ? (
@@ -548,58 +586,150 @@ export const CreateSubscriptionModal = ({
                       لا توجد باقات متاحة حالياً. يرجى إضافة باقة جديدة أولاً.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {packages.map((pkg) => {
-                        const isSelected = selectedPackage?.id === pkg.id;
-                        const pkgTypeMeta = getPackageTypeMeta(pkg.type);
-                        return (
-                          <div
-                            key={pkg.id}
-                            onClick={() => handleSelectPackage(pkg)}
-                            className={`relative p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                              isSelected
-                                ? 'bg-gradient-to-br from-amber-500/20 to-yellow-500/5 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                                : 'bg-zinc-900/70 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
-                            }`}
+                    <div ref={packageDropdownRef} className="relative">
+                      {/* Dropdown Trigger Button */}
+                      <button
+                        type="button"
+                        onClick={() => setIsPackageDropdownOpen((prev) => !prev)}
+                        className={`w-full p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                          isPackageDropdownOpen
+                            ? 'bg-zinc-900 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/50'
+                            : selectedPackage
+                            ? 'bg-zinc-900/90 border-amber-500/40 hover:border-amber-400'
+                            : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
+                        }`}
+                      >
+                        {selectedPackage ? (
+                          <div className="flex items-center justify-between flex-1 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${getPackageTypeMeta(selectedPackage.type).badgeColor}`}>
+                                {getPackageTypeMeta(selectedPackage.type).label}
+                              </span>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-black text-white truncate">
+                                  {selectedPackage.name}
+                                </h4>
+                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono mt-0.5">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-amber-400" />
+                                    {selectedPackage.duration} يوم
+                                  </span>
+                                  {selectedPackage.isPopular && (
+                                    <span className="text-amber-400 font-bold">• الأكثر طلباً</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-left shrink-0 mr-2">
+                              <span className="text-sm font-black text-amber-400 font-mono">
+                                {Number(selectedPackage.price).toLocaleString('ar-EG')}
+                              </span>
+                              <span className="text-[10px] text-zinc-400 font-cairo mr-1">ج.م</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-zinc-400 flex items-center gap-2">
+                            <Tag className="w-4 h-4 text-zinc-500" />
+                            اضغط لاختيار باقة التدريب المناسبة... ({packages.length} باقة متاحة)
+                          </span>
+                        )}
+
+                        <div className={`p-1 rounded-lg bg-zinc-800/80 text-zinc-400 transition-transform shrink-0 ${isPackageDropdownOpen ? 'rotate-180 text-amber-400' : ''}`}>
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      <AnimatePresence>
+                        {isPackageDropdownOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 left-0 top-full mt-2 bg-[#0d0d12] border border-amber-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden"
                           >
-                            {/* Selected Checkmark Indicator */}
-                            {isSelected && (
-                              <div className="absolute top-2.5 left-2.5 w-5 h-5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black flex items-center justify-center shadow-gold-glow">
-                                <Check className="w-3 h-3 stroke-[3]" />
+                            {/* Search box inside dropdown if packages > 4 */}
+                            {packages.length > 4 && (
+                              <div className="p-2.5 border-b border-zinc-800 bg-zinc-900/60">
+                                <div className="relative">
+                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                                  <input
+                                    type="text"
+                                    value={packageSearchQuery}
+                                    onChange={(e) => setPackageSearchQuery(e.target.value)}
+                                    placeholder="بحث سريع في الباقات..."
+                                    className="w-full pl-3 pr-8 py-1.5 rounded-xl bg-black/60 border border-zinc-800 focus:border-amber-500 text-xs text-white placeholder-zinc-500 outline-none"
+                                  />
+                                </div>
                               </div>
                             )}
 
-                            <div>
-                              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${pkgTypeMeta.badgeColor}`}>
-                                  {pkgTypeMeta.label}
-                                </span>
-                                <h4 className="text-xs font-black text-white truncate max-w-[150px]">
-                                  {pkg.name}
-                                </h4>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono">
-                                <Clock className="w-3 h-3 text-amber-400" />
-                                <span>{pkg.duration} يوماً تدريبياً</span>
-                              </div>
-                            </div>
+                            {/* Scrollable list of packages */}
+                            <div className="max-h-60 overflow-y-auto divide-y divide-zinc-850 custom-scrollbar p-1.5 space-y-1">
+                              {filteredPackages.length === 0 ? (
+                                <div className="p-4 text-center text-xs text-zinc-500">
+                                  لا توجد باقة مطابقة لاسم البحث
+                                </div>
+                              ) : (
+                                filteredPackages.map((pkg) => {
+                                  const isSelected = selectedPackage?.id === pkg.id;
+                                  const pkgTypeMeta = getPackageTypeMeta(pkg.type);
+                                  return (
+                                    <button
+                                      key={pkg.id}
+                                      type="button"
+                                      onClick={() => handleSelectPackage(pkg)}
+                                      className={`w-full p-2.5 rounded-xl text-right transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-amber-500/15 border border-amber-500/40 text-white'
+                                          : 'hover:bg-zinc-800/60 border border-transparent text-zinc-300'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        <div
+                                          className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                            isSelected
+                                              ? 'border-amber-400 bg-amber-400 text-black'
+                                              : 'border-zinc-700'
+                                          }`}
+                                        >
+                                          {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-white truncate">
+                                              {pkg.name}
+                                            </span>
+                                            <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold border ${pkgTypeMeta.badgeColor}`}>
+                                              {pkgTypeMeta.label}
+                                            </span>
+                                          </div>
+                                          <div className="text-[10px] text-zinc-400 font-mono flex items-center gap-2 mt-0.5">
+                                            <span>{pkg.duration} يوماً</span>
+                                            {pkg.description && (
+                                              <span className="text-zinc-500 truncate max-w-[160px] font-cairo">
+                                                • {pkg.description}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
 
-                            <div className="mt-3 pt-2 border-t border-zinc-800/80 flex items-center justify-between">
-                              <span className="text-sm font-black text-amber-400 font-mono">
-                                {Number(pkg.price).toLocaleString('ar-EG')}{' '}
-                                <span className="text-[10px] font-cairo text-zinc-400 font-normal">
-                                  ج.م
-                                </span>
-                              </span>
-                              {pkg.isPopular && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400">
-                                  الأكثر طلباً
-                                </span>
+                                      <div className="text-left shrink-0">
+                                        <span className="text-xs font-black text-amber-400 font-mono">
+                                          {Number(pkg.price).toLocaleString('ar-EG')}
+                                        </span>
+                                        <span className="text-[9px] text-zinc-400 font-cairo mr-1">ج.م</span>
+                                      </div>
+                                    </button>
+                                  );
+                                })
                               )}
                             </div>
-                          </div>
-                        );
-                      })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
                 </div>
@@ -697,14 +827,14 @@ export const CreateSubscriptionModal = ({
                   </div>
                 )}
 
-                {/* 3. PAYMENT METHOD (طريقة الدفع) */}
+                {/* 3. PAYMENT METHOD (طرق الدفع الخمسة المعتمدة في الباك إند) */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
                     <Receipt className="w-3.5 h-3.5" />
                     <span>3. طريقة الدفع واستلام المبلغ <span className="text-amber-400">*</span>:</span>
                   </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {PAYMENT_METHODS.map((pm) => {
                       const Icon = pm.icon;
                       const isSelected = paymentMethod === pm.id;
@@ -734,10 +864,10 @@ export const CreateSubscriptionModal = ({
                             </div>
                           </div>
                           <div>
-                            <div className={`text-xs font-black ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
+                            <div className={`text-xs font-black truncate ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
                               {pm.title}
                             </div>
-                            <div className="text-[10px] text-zinc-400 mt-0.5 truncate">
+                            <div className="text-[10px] text-zinc-400 mt-0.5 line-clamp-1">
                               {pm.subTitle}
                             </div>
                           </div>
@@ -746,6 +876,7 @@ export const CreateSubscriptionModal = ({
                     })}
                   </div>
                 </div>
+
 
                 {/* 4. NOTES (ملاحظات اختيارية) */}
                 <div className="space-y-1.5">

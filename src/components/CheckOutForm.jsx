@@ -89,40 +89,36 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
 
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between mb-4 sm:mb-5">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-zinc-900 border border-white/10 text-amber-400">
+                <LogOut className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2">
-                  تسجيل خروج واستلام مفتاح
-                  <span className="text-[9px] sm:text-[10px] font-mono uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30 px-1.5 sm:px-2 py-0.5 rounded-lg font-bold">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-1.5">
+                  تسجيل الخروج
+                  <span className="text-[9px] font-mono uppercase bg-white/5 text-zinc-400 border border-white/10 px-1.5 py-0.5 rounded font-semibold">
                     CHECK-OUT
                   </span>
                 </h3>
-                <p className="text-[11px] sm:text-xs text-zinc-400">
-                  تسجيل انتهاء التمرين وإفراغ اللوكر لاستقبال وحوش جدد
+                <p className="text-[11px] text-zinc-400">
+                  إنهاء التمرين وإخلاء اللوكر
                 </p>
               </div>
             </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {/* Member Code Input */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
-                  <QrCode className="w-3.5 h-3.5 text-amber-400" />
-                  كود العضو المغادر (Member Code):
-                </label>
-                <span className="text-[10px] text-zinc-500 font-mono">ID / Barcode</span>
-              </div>
+              <label className="text-xs font-semibold text-zinc-300 block mb-1">
+                كود العضو المغادر:
+              </label>
 
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-zinc-400">
-                  <QrCode className="w-4 h-4 text-amber-400/80" />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-500">
+                  <QrCode className="w-4 h-4 text-amber-500/70" />
                 </div>
                 <input
                   type="text"
@@ -131,11 +127,11 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
                     setCode(e.target.value);
                     if (error) setError(null);
                   }}
-                  placeholder="أدخل كود العضو المغادر"
-                  className={`w-full bg-black/60 text-white placeholder-zinc-500 text-sm rounded-2xl pr-10 pl-4 py-3 border font-mono tracking-wider transition-all focus:outline-none ${
+                  placeholder="أدخل كود العضو أو امسح الباركود..."
+                  className={`w-full bg-[#0e0e11] text-white placeholder-zinc-500 text-xs sm:text-sm rounded-xl pr-9 pl-3.5 py-2.5 border font-mono transition-colors focus:outline-none ${
                     error
-                      ? 'border-rose-500 focus:border-rose-400 focus:ring-1 focus:ring-rose-500'
-                      : 'border-zinc-800 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-inner'
+                      ? 'border-rose-500/80 focus:border-rose-400'
+                      : 'border-white/10 focus:border-amber-500/50 focus:bg-black/80'
                   }`}
                   disabled={loading}
                 />
@@ -184,20 +180,20 @@ export const CheckOutForm = ({ onCheckOutSuccess, recentActiveMembers = [] }) =>
             </div>
 
             {/* Quick Action Check-Out CTA Button */}
-            <div className="pt-2">
+            <div className="pt-1.5">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-black text-xs sm:text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-600 text-black shadow-gold-glow hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full py-2.5 sm:py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black font-semibold disabled:opacity-50 active:scale-[0.99]"
               >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-black" />
-                    <span>جاري تسجيل الخروج وإفراغ اللوكر...</span>
+                    <span>جاري تسجيل الخروج...</span>
                   </>
                 ) : (
                   <>
-                    <DoorOpen className="w-4 h-4 text-black" />
+                    <DoorOpen className="w-3.5 h-3.5 text-black" />
                     <span>تسجيل خروج وتسليم اللوكر</span>
                   </>
                 )}

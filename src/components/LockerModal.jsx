@@ -216,7 +216,9 @@ export const LockerModal = ({
             ) : filteredLockers.length > 0 ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
                 {filteredLockers.map((locker) => {
-                  const isSelected = Number(selectedLockerId) === Number(locker.number);
+                  const isSelected = 
+                    Number(selectedLockerId) === Number(locker.id) || 
+                    Number(selectedLockerId) === Number(locker.number);
                   const isOccupied = !locker.isAvailable || occupiedLockers.includes(Number(locker.number)) || occupiedLockers.includes(Number(locker.id));
 
                   return (
@@ -225,7 +227,7 @@ export const LockerModal = ({
                       key={locker.id}
                       disabled={isOccupied}
                       onClick={() => {
-                        onSelectLocker(locker.number);
+                        onSelectLocker(locker.id);
                         onClose();
                       }}
                       className={`relative p-3 rounded-2xl flex flex-col items-center justify-between border transition-all duration-200 group ${

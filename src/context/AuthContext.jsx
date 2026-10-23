@@ -50,7 +50,14 @@ export const AuthProvider = ({ children }) => {
   const redirectUserByRole = useCallback(async (targetUser) => {
     const role = normalizeRole(targetUser?.role);
 
-    // 1. Receptionist, SuperAdmin, Manager -> /dashboard/reception
+    // 1. OperationManager -> /dashboard/operations
+    if (role === 'OperationManager') {
+      setActiveAuthView('dashboard');
+      navigate('/dashboard/operations', { replace: true });
+      return;
+    }
+
+    // 2. Receptionist, SuperAdmin, Manager -> /dashboard/reception
     if (role === 'Receptionist' || role === 'SuperAdmin' || role === 'Manager') {
       setActiveAuthView('dashboard');
       navigate('/dashboard/reception', { replace: true });

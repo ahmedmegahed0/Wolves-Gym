@@ -200,41 +200,26 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
   return (
     <div dir="rtl" className="w-full space-y-6 font-cairo">
       {/* Header & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-amber-500/15">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-              صلاحيات المدير والأدمن
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-            <Crown className="w-6 h-6 text-amber-400" />
-            <span>لوحة إدارة باقات واشتراكات الجيم</span>
+          <h2 className="text-lg sm:text-2xl font-black text-white flex items-center gap-2">
+            <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+            <span>إدارة باقات الجيم</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            تحكم كامل في إنشاء وتعديل وفلترة وتفعيل خطط التدريب والأسعار والكباتن
+            تحكم كامل في خطط التدريب، الأسعار، والكباتن المخصصين
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-          {onBackToPublicGrid && (
-            <button
-              type="button"
-              onClick={onBackToPublicGrid}
-              className="px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold transition-all cursor-pointer"
-            >
-              عرض كروت العملاء
-            </button>
-          )}
-
           {onOpenNewSubscription && (
             <button
               type="button"
               onClick={() => onOpenNewSubscription()}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-              title="تسجيل اشتراك جديد بالصالة لأحد الوحوش"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black text-xs font-semibold shadow-sm transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              title="تسجيل اشتراك جديد بالصالة"
             >
-              <Plus className="w-4 h-4 stroke-[3]" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>تسجيل اشتراك جديد</span>
             </button>
           )}
@@ -242,9 +227,9 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/30 hover:border-amber-500/60 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-[#141417] hover:bg-zinc-800 text-zinc-200 hover:text-white border border-white/10 text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2]" />
             <span>إضافة باقة جديدة</span>
           </button>
         </div>
@@ -253,54 +238,54 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
       {/* Metric Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Packages */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+        <div className="bg-[#121215] border border-white/10 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 flex items-center justify-center shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">إجمالي الباقات</span>
+            <span className="text-[11px] font-medium text-zinc-400 block truncate">إجمالي الباقات</span>
             <span className="text-xl sm:text-2xl font-black text-white font-mono">{totalCount}</span>
           </div>
         </div>
 
         {/* Active Packages */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-emerald-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+        <div className="bg-[#121215] border border-white/10 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">باقات نشطة حالياً</span>
+            <span className="text-[11px] font-medium text-zinc-400 block truncate">باقات نشطة</span>
             <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">{activeCount}</span>
           </div>
         </div>
 
         {/* Private Packages */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+        <div className="bg-[#121215] border border-white/10 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
             <UserCheck className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">باقات كباتن خاصة</span>
+            <span className="text-[11px] font-medium text-zinc-400 block truncate">باقات خاصة</span>
             <span className="text-xl sm:text-2xl font-black text-amber-300 font-mono">{privateCount}</span>
           </div>
         </div>
 
         {/* Average Price */}
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-yellow-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-center justify-center shrink-0">
+        <div className="bg-[#121215] border border-white/10 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">متوسط الأسعار</span>
-            <span className="text-lg sm:text-xl font-black text-yellow-300 font-mono">
+            <span className="text-[11px] font-medium text-zinc-400 block truncate">متوسط الأسعار</span>
+            <span className="text-lg sm:text-xl font-black text-white font-mono">
               {avgPrice.toLocaleString('ar-EG')} <span className="text-[10px] text-zinc-400 font-normal">ج.م</span>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Comprehensive Filter Bar (Requirement 2) */}
-      <div className="bg-zinc-950/90 border border-amber-500/20 rounded-2xl p-4 space-y-3 shadow-lg">
+      {/* Streamlined Filter Bar: Search, Type, Status */}
+      <div className="bg-[#121215] border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           
           {/* 1. Search Box */}
@@ -311,7 +296,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               value={search}
               onChange={(e) => handleFilterChange(setSearch, e.target.value)}
               placeholder="بحث باسم الباقة أو الوصف أو المدة..."
-              className="w-full pr-10 pl-8 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60 transition-colors"
+              className="w-full pr-10 pl-8 py-2.5 rounded-xl bg-[#16161a] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/40 transition-colors"
             />
             {search && (
               <button
@@ -324,65 +309,48 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             )}
           </div>
 
-          {/* 2. Top Dropdown Filters */}
+          {/* 2. Streamlined Dropdown Filters */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            {/* Filter 1: Package Type (Types query param) */}
-            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
-              <span className="text-[10px] text-zinc-500 font-bold shrink-0">النوع:</span>
+            {/* Filter 1: Package Type */}
+            <div className="flex items-center gap-1.5 bg-[#16161a] border border-white/10 rounded-xl px-2.5 py-1.5">
+              <span className="text-[10px] text-zinc-400 font-medium shrink-0">النوع:</span>
               <select
                 value={selectedType}
                 onChange={(e) => handleFilterChange(setSelectedType, e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-zinc-900 text-white">كل الأنواع</option>
-                <option value="0" className="bg-zinc-900 text-sky-400">عادية / عامة (0)</option>
-                <option value="1" className="bg-zinc-900 text-amber-400">خاصة بكابتن (1)</option>
-                <option value="2" className="bg-zinc-900 text-purple-400">خاصة مشتركة (2)</option>
+                <option value="0" className="bg-zinc-900 text-zinc-200">عادية / عامة</option>
+                <option value="1" className="bg-zinc-900 text-amber-300">خاصة بكابتن</option>
+                <option value="2" className="bg-zinc-900 text-purple-300">خاصة مشتركة</option>
               </select>
             </div>
 
-            {/* Filter 2: Trainer Dropdown (TrainerId query param) */}
-            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
-              <span className="text-[10px] text-zinc-500 font-bold shrink-0">الكابتن:</span>
-              <select
-                value={selectedTrainerId}
-                onChange={(e) => handleFilterChange(setSelectedTrainerId, e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer max-w-[140px] truncate"
-              >
-                <option value="all" className="bg-zinc-900 text-white">كل الكباتن</option>
-                {trainers.map((t) => (
-                  <option key={t.id || t.trainerId} value={t.id || t.trainerId} className="bg-zinc-900 text-white">
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filter 3: Active Status (IsActive query param) */}
-            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
-              <span className="text-[10px] text-zinc-500 font-bold shrink-0">الحالة:</span>
+            {/* Filter 2: Active Status */}
+            <div className="flex items-center gap-1.5 bg-[#16161a] border border-white/10 rounded-xl px-2.5 py-1.5">
+              <span className="text-[10px] text-zinc-400 font-medium shrink-0">الحالة:</span>
               <select
                 value={selectedStatus}
                 onChange={(e) => handleFilterChange(setSelectedStatus, e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
               >
                 <option value="all" className="bg-zinc-900 text-white">كل الحالات</option>
-                <option value="active" className="bg-zinc-900 text-emerald-400">نشطة فقط</option>
-                <option value="inactive" className="bg-zinc-900 text-rose-400">معطلة فقط</option>
+                <option value="active" className="bg-zinc-900 text-emerald-400">نشطة</option>
+                <option value="inactive" className="bg-zinc-900 text-rose-400">معطلة</option>
               </select>
             </div>
 
             {/* SortBy Filter */}
-            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
-              <ArrowUpDown className="w-3 h-3 text-amber-400 shrink-0" />
+            <div className="flex items-center gap-1.5 bg-[#16161a] border border-white/10 rounded-xl px-2.5 py-1.5">
+              <ArrowUpDown className="w-3 h-3 text-zinc-400 shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
               >
                 <option value="" className="bg-zinc-900 text-zinc-300">الترتيب الافتراضي</option>
-                <option value="price_desc" className="bg-zinc-900 text-white">السعر: الأعلى أولاً</option>
-                <option value="price_asc" className="bg-zinc-900 text-white">السعر: الأقل أولاً</option>
+                <option value="price_desc" className="bg-zinc-900 text-white">السعر: الأعلى</option>
+                <option value="price_asc" className="bg-zinc-900 text-white">السعر: الأقل</option>
                 <option value="duration_desc" className="bg-zinc-900 text-white">المدة: الأطول</option>
                 <option value="duration_asc" className="bg-zinc-900 text-white">المدة: الأقصر</option>
               </select>
@@ -392,7 +360,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
             <select
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPageNumber(1); }}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500/40 cursor-pointer"
+              className="bg-[#16161a] border border-white/10 rounded-xl px-2.5 py-2 text-xs text-zinc-300 focus:outline-none cursor-pointer"
             >
               <option value="5">5 / صفحة</option>
               <option value="10">10 / صفحة</option>
@@ -403,17 +371,17 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-xl bg-zinc-900 text-amber-400 border border-zinc-800 hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-[#16161a] text-zinc-300 hover:text-white border border-white/10 hover:bg-zinc-800 transition-colors cursor-pointer"
               title="تحديث البيانات من السيرفر"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
             </button>
 
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-2.5 py-2 rounded-xl bg-zinc-900 text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 text-xs font-bold transition-all cursor-pointer"
+                className="px-2.5 py-2 rounded-xl bg-zinc-900 text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 text-xs font-medium transition-colors cursor-pointer"
                 title="إعادة ضبط الفلاتر"
               >
                 مسح الفلاتر
@@ -424,7 +392,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
       </div>
 
       {/* Table & Mobile Cards Container */}
-      <div className="bg-gradient-to-b from-[#141419] to-[#0c0c0e] border border-amber-500/20 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="bg-[#121215] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
         {/* Desktop Table View */}
         <div className="overflow-x-auto gold-scrollbar hidden md:block">
           <table className="w-full text-right text-xs text-zinc-300">
@@ -569,33 +537,33 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
                             pkg.isActive !== false
-                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
-                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
                           }`}
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              pkg.isActive !== false ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'
+                              pkg.isActive !== false ? 'bg-emerald-400' : 'bg-red-400'
                             }`}
                           />
-                          <span>{pkg.isActive !== false ? 'نشط' : 'متوقف'}</span>
+                          <span>{pkg.isActive !== false ? 'نشطة ومتاحة' : 'معطلة / موقوفة'}</span>
                         </span>
                       </td>
 
                       {/* Quick Actions */}
                       <td className="px-5 py-4 text-left">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Toggle Switch Button */}
+                          {/* Toggle Switch Button (Power Button Logic) */}
                           <button
                             type="button"
                             disabled={isToggling}
                             onClick={() => handleToggleStatus(pkg)}
-                            className={`p-2 rounded-xl transition-all cursor-pointer ${
+                            className={`p-2 rounded-xl transition-colors cursor-pointer ${
                               pkg.isActive !== false
-                                ? 'bg-zinc-900 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800'
-                                : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
                             }`}
-                            title={pkg.isActive !== false ? 'إيقاف الباقة مؤقتاً' : 'تنشيط الباقة'}
+                            title={pkg.isActive !== false ? 'الباقة نشطة (اضغط لإيقافها)' : 'الباقة معطلة (اضغط لتنشيطها)'}
                           >
                             <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
                           </button>
@@ -604,8 +572,8 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(pkg)}
-                            className="p-2 rounded-xl bg-zinc-900 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 border border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer"
-                            title="تعديل بيانات الباقة (PATCH)"
+                            className="p-2 rounded-xl bg-zinc-900 text-zinc-300 hover:text-amber-300 hover:bg-zinc-800 border border-white/10 transition-colors cursor-pointer"
+                            title="تعديل بيانات الباقة"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -614,7 +582,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                           <button
                             type="button"
                             onClick={() => setSelectedDetailsPackage(pkg)}
-                            className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-800 transition-all cursor-pointer"
+                            className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-white/10 hover:bg-zinc-800 transition-colors cursor-pointer"
                             title="معاينة تفاصيل الباقة"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -647,23 +615,23 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               const trainerName = getTrainerName(pkg.trainerId);
 
               return (
-                <div key={pkg.id} className="bg-black/60 rounded-2xl p-4 border border-zinc-800/80 space-y-3">
+                <div key={pkg.id} className="bg-[#141417] rounded-xl p-4 border border-white/10 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-lg bg-zinc-900 border border-amber-500/30 text-amber-400 font-mono text-xs font-bold">
+                      <span className="px-2 py-0.5 rounded-lg bg-zinc-900 border border-white/10 text-zinc-300 font-mono text-xs font-bold">
                         #{pkg.id}
                       </span>
-                      <h4 className="font-black text-white text-sm">{pkg.name}</h4>
+                      <h4 className="font-bold text-white text-sm">{pkg.name}</h4>
                     </div>
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         pkg.isActive !== false
-                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                      <span>{pkg.isActive !== false ? 'نشط' : 'متوقف'}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                      <span>{pkg.isActive !== false ? 'نشطة ومتاحة' : 'معطلة / موقوفة'}</span>
                     </span>
                   </div>
 
@@ -679,10 +647,10 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between text-xs bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/50">
+                  <div className="flex items-center justify-between text-xs bg-zinc-900/60 p-2.5 rounded-xl border border-white/5">
                     <div>
                       <span className="text-zinc-500 text-[10px] block">السعر:</span>
-                      <span className="text-amber-400 font-mono text-sm font-bold">
+                      <span className="text-amber-300 font-mono text-sm font-bold">
                         {Number(pkg.price).toLocaleString('ar-EG')} ج.م
                       </span>
                     </div>
@@ -705,20 +673,20 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                       type="button"
                       disabled={isToggling}
                       onClick={() => handleToggleStatus(pkg)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                         pkg.isActive !== false
-                          ? 'bg-zinc-900 text-zinc-300 hover:text-rose-400 border border-zinc-800'
-                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
                       }`}
                     >
                       <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                      <span>{pkg.isActive !== false ? 'إيقاف مؤقت' : 'تنشيط'}</span>
+                      <span>{pkg.isActive !== false ? 'نشطة (إيقاف)' : 'معطلة (تنشيط)'}</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(pkg)}
-                      className="flex-1 py-2 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2 rounded-xl bg-zinc-900 text-zinc-300 hover:text-white border border-white/10 text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>تعديل</span>
@@ -727,7 +695,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                     <button
                       type="button"
                       onClick={() => setSelectedDetailsPackage(pkg)}
-                      className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition-colors"
+                      className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-white/10 transition-colors"
                       title="تفاصيل"
                     >
                       <Eye className="w-3.5 h-3.5" />

@@ -14,6 +14,7 @@ import {
   CheckCircle2, 
   XCircle, 
   ChevronRight, 
+  ChevronLeft,
   AlertCircle, 
   X, 
   Check, 
@@ -321,7 +322,16 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   const { success: toastSuccess, error: toastError } = useToast();
 
   const userRole = user?.role || '';
-  const isOperationManagerOrAdmin = ['Manager', 'SuperAdmin', 'OperationManager', 'OperationsManager'].includes(userRole);
+  const isReception = userRole === 'Reception' || userRole === 'Receptionist';
+  const isOperationManagerOrAdmin = 
+    !isReception && 
+    (
+      userRole === 'OperationManager' || 
+      userRole === 'OperationsManager' || 
+      userRole === 'Manager' || 
+      userRole === 'SuperAdmin' ||
+      user?.roles?.includes?.('OperationManager')
+    );
 
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -443,15 +453,17 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Add Trainer Button */}
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4 text-black" />
-            <span>+ إضافة كابتن جديد</span>
-          </button>
+          {/* Add Trainer Button (Manager / Operation Manager only) */}
+          {isOperationManagerOrAdmin && (
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4 text-black" />
+              <span>+ إضافة كابتن جديد</span>
+            </button>
+          )}
 
           {onSwitchToCards && (
             <button
@@ -716,30 +728,34 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                             </button>
                           )}
 
-                          {/* Toggle Status */}
-                          <button
-                            type="button"
-                            disabled={isToggling}
-                            onClick={() => handleToggleStatus(t)}
-                            className={`p-2 rounded-xl transition-all cursor-pointer ${
-                              isActive
-                                ? 'bg-zinc-900 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800'
-                                : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
-                            }`}
-                            title={isActive ? 'تعطيل الكابتن' : 'تفعيل الكابتن'}
-                          >
-                            <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                          </button>
+                          {/* Toggle Status (Manager / OperationManager only) */}
+                          {isOperationManagerOrAdmin && (
+                            <button
+                              type="button"
+                              disabled={isToggling}
+                              onClick={() => handleToggleStatus(t)}
+                              className={`p-2 rounded-xl transition-all cursor-pointer ${
+                                isActive
+                                  ? 'bg-zinc-900 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800'
+                                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                              }`}
+                              title={isActive ? 'تعطيل الكابتن' : 'تفعيل الكابتن'}
+                            >
+                              <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
 
-                          {/* Edit Button */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(t)}
-                            className="p-2 rounded-xl bg-zinc-900 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 border border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer"
-                            title="تعديل بيانات المدرب (PATCH)"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
+                          {/* Edit Button (Manager / OperationManager only) */}
+                          {isOperationManagerOrAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(t)}
+                              className="p-2 rounded-xl bg-zinc-900 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 border border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer"
+                              title="تعديل بيانات المدرب"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -814,38 +830,41 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                       <span>التقارير</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(t)}
-                      className="py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[11px] font-bold flex items-center justify-center gap-1"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>تعديل</span>
-                    </button>
-
+                    {/* Operation Manager & Admin Exclusive Actions */}
                     {isOperationManagerOrAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTrainerForEvaluation(t);
-                          setIsEvaluationModalOpen(true);
-                        }}
-                        className="col-span-2 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-gold-glow"
-                      >
-                        <Target className="w-3.5 h-3.5" />
-                        <span>تقييم أداء الكابتن (KPIs)</span>
-                      </button>
-                    )}
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(t)}
+                          className="py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[11px] font-bold flex items-center justify-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>تعديل</span>
+                        </button>
 
-                    <button
-                      type="button"
-                      disabled={isToggling}
-                      onClick={() => handleToggleStatus(t)}
-                      className={`${isOperationManagerOrAdmin ? 'col-span-1' : 'col-span-3'} py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300`}
-                    >
-                      <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                      <span>{isActive ? 'تعطيل' : 'تفعيل'}</span>
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrainerForEvaluation(t);
+                            setIsEvaluationModalOpen(true);
+                          }}
+                          className="col-span-2 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-gold-glow"
+                        >
+                          <Target className="w-3.5 h-3.5" />
+                          <span>تقييم أداء الكابتن (KPIs)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isToggling}
+                          onClick={() => handleToggleStatus(t)}
+                          className="col-span-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300"
+                        >
+                          <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
+                          <span>{isActive ? 'تعطيل' : 'تفعيل'}</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );

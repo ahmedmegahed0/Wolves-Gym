@@ -37,7 +37,7 @@ const WEEK_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأر
  * - Total attendances badge
  * - Session details card on date click (checkInAt, checkOutAt, duration, lockerNumber)
  */
-export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) => {
+export const CustomerAttendanceCalendar = ({ customerId, customerName = '', joinedAt = null }) => {
   const { error: toastError } = useToast();
 
   const today = useMemo(() => new Date(), []);
@@ -123,6 +123,20 @@ export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) =>
     const firstDayIndex = new Date(selectedYear, selectedMonth - 1, 1).getDay(); // 0 is Sunday
     const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
 
+    // Normalized today start timestamp
+    const nowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+
+    // Normalized join date start timestamp
+    let joinDateTime = 0;
+    if (joinedAt) {
+      try {
+        const j = new Date(joinedAt);
+        if (!isNaN(j.getTime())) {
+          joinDateTime = new Date(j.getFullYear(), j.getMonth(), j.getDate()).getTime();
+        }
+      } catch {}
+    }
+
     const days = [];
     // Padding before first day
     for (let i = 0; i < firstDayIndex; i++) {
@@ -130,23 +144,31 @@ export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) =>
     }
     // Days in current month
     for (let d = 1; d <= daysInMonth; d++) {
+      const cellDateTime = new Date(selectedYear, selectedMonth - 1, d).getTime();
       const sessions = attendancesByDay.get(d) || [];
-      const isToday =
-        today.getFullYear() === selectedYear &&
-        today.getMonth() + 1 === selectedMonth &&
-        today.getDate() === d;
+      const hasAttendance = sessions.length > 0;
+      const isToday = cellDateTime === nowStart;
+      const isPast = cellDateTime < nowStart;
+      const isFuture = cellDateTime > nowStart;
+      const isAfterJoin = joinDateTime ? cellDateTime >= joinDateTime : true;
+
+      // Missed / Absent day: in the past, after or on join date, but NO attendance was recorded
+      const isAbsent = isPast && isAfterJoin && !hasAttendance;
 
       days.push({
         dayNumber: d,
         sessions,
-        hasAttendance: sessions.length > 0,
-        count: sessions.length,
+        hasAttendance,
+        isAbsent,
         isToday,
+        isPast,
+        isFuture,
+        count: sessions.length,
         isPadding: false,
       });
     }
     return days;
-  }, [selectedYear, selectedMonth, attendancesByDay, today]);
+  }, [selectedYear, selectedMonth, attendancesByDay, today, joinedAt]);
 
   // Format single date time
   const formatTime = (isoString) => {
@@ -309,6 +331,28 @@ export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) =>
 
       {/* Interactive Calendar Grid */}
       <div className="wolf-glass rounded-3xl p-4 sm:p-6 border border-amber-500/20 shadow-xl overflow-hidden">
+        {/* Visual Color Legend */}
+        <div className="flex items-center justify-between pb-3.5 mb-2 border-b border-zinc-800/80 flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-zinc-300 font-bold text-[11px] sm:text-xs">دليل علامات الحضور والغياب:</span>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] font-semibold">
+            <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-lg">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
+              <span className="text-emerald-400 font-bold">حضر التمرين ✓</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-lg">
+              <span className="text-rose-400 font-black font-mono text-xs">✕</span>
+              <span className="text-rose-400 font-medium">لم يحضر (راحة)</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-yellow-400/10 border border-yellow-400/30 px-2 py-0.5 rounded-lg">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+              <span className="text-yellow-400 font-medium">اليوم</span>
+            </div>
+          </div>
+        </div>
+
         {loading && !refreshing ? (
           <div className="py-16 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
@@ -354,17 +398,27 @@ export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) =>
                     }}
                     className={`aspect-square rounded-2xl p-1.5 sm:p-2.5 flex flex-col justify-between transition-all cursor-pointer relative group text-right ${
                       cell.hasAttendance
-                        ? 'bg-gradient-to-br from-amber-500/20 via-zinc-900 to-black border-2 border-amber-500/50 hover:border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                        : 'bg-zinc-950/60 hover:bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700'
-                    } ${cell.isToday ? 'ring-2 ring-yellow-400' : ''} ${
-                      isSelected ? 'ring-2 ring-amber-400 scale-[1.03] z-10' : ''
+                        ? 'bg-gradient-to-br from-emerald-500/25 via-zinc-900 to-black border-2 border-emerald-500/60 hover:border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.25)] scale-[1.01]'
+                        : cell.isAbsent
+                        ? 'bg-zinc-950/60 hover:bg-zinc-900/90 border border-rose-500/25 hover:border-rose-500/50'
+                        : cell.isToday
+                        ? 'bg-zinc-900/90 border-2 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                        : 'bg-zinc-950/40 hover:bg-zinc-900/60 border border-zinc-900 hover:border-zinc-800'
+                    } ${cell.isToday && !cell.hasAttendance ? 'ring-2 ring-yellow-400/80' : ''} ${
+                      isSelected ? 'ring-2 ring-amber-400 scale-[1.04] z-10' : ''
                     }`}
                   >
                     {/* Top Row: Day Number + Today Badge */}
                     <div className="flex items-center justify-between w-full">
                       <span
                         className={`text-xs sm:text-sm font-black font-mono ${
-                          cell.hasAttendance ? 'text-amber-400' : 'text-zinc-400'
+                          cell.hasAttendance
+                            ? 'text-emerald-400'
+                            : cell.isToday
+                            ? 'text-amber-400'
+                            : cell.isAbsent
+                            ? 'text-zinc-400'
+                            : 'text-zinc-600'
                         }`}
                       >
                         {cell.dayNumber}
@@ -378,17 +432,34 @@ export const CustomerAttendanceCalendar = ({ customerId, customerName = '' }) =>
                     {/* Bottom Indicator */}
                     {cell.hasAttendance ? (
                       <div className="flex items-center justify-between w-full mt-auto">
-                        <div className="p-0.5 sm:p-1 rounded-md bg-amber-500 text-black shadow-sm">
-                          <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-black" />
+                        <div className="p-0.5 sm:p-1 rounded-md bg-emerald-500 text-black shadow-sm flex items-center gap-0.5">
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
                         </div>
-                        {cell.count > 1 && (
-                          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-amber-300">
+                        {cell.count > 1 ? (
+                          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-emerald-300">
                             {cell.count}x
+                          </span>
+                        ) : (
+                          <span className="text-[8px] sm:text-[9px] font-bold text-emerald-400 hidden sm:inline">
+                            حضر ✓
                           </span>
                         )}
                       </div>
+                    ) : cell.isAbsent ? (
+                      <div className="flex items-center justify-between w-full mt-auto text-zinc-500">
+                        <span className="text-[10px] sm:text-[11px] font-mono font-black text-rose-500/80 bg-rose-500/10 px-1 rounded" title="لم يتم تسجيل حضور (غائب)">
+                          ✕
+                        </span>
+                        <span className="text-[8px] text-zinc-500 hidden sm:inline font-mono">
+                          راحة
+                        </span>
+                      </div>
+                    ) : cell.isToday ? (
+                      <div className="flex items-center justify-between w-full mt-auto text-yellow-400">
+                        <span className="text-[9px] font-bold font-mono">اليوم</span>
+                      </div>
                     ) : (
-                      <div className="w-1 h-1 rounded-full bg-zinc-800 self-center" />
+                      <div className="w-1 h-1 rounded-full bg-zinc-850 self-center mt-auto" />
                     )}
                   </button>
                 );

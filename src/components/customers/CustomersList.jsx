@@ -183,20 +183,20 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
   return (
     <div className="space-y-4 sm:space-y-6 font-cairo">
       {/* Top Banner & Quick Overview */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-950/80 wolf-glass rounded-3xl p-4 sm:p-6 border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#121215] rounded-2xl p-4 sm:p-5 border border-white/10">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <div className="p-2.5 rounded-xl bg-zinc-900 border border-white/5 text-amber-400">
             <Users className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <h2 className="text-base sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
-              إدارة وحوش الجيم وطلبات الاشتراك
-              <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg font-bold">
+              سجل الأعضاء والاشتراكات
+              <span className="text-[10px] font-mono bg-white/5 text-zinc-400 border border-white/10 px-2 py-0.5 rounded-md font-semibold">
                 MEMBERS
               </span>
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
-              مراجعة وقبول طلبات الاشتراك الجديدة، تفعيل العضويات، وتحديث القياسات البدنية
+              متابعة المشتركين، طلبات العضوية، وتحديث الحسابات
             </p>
           </div>
         </div>
@@ -207,10 +207,10 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
             <button
               type="button"
               onClick={() => onOpenNewSubscription()}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black text-xs font-semibold transition-all active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>تسجيل اشتراك جديد</span>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>اشتراك جديد</span>
             </button>
           )}
 
@@ -220,17 +220,17 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
               fetchTabCounts();
             }}
             disabled={refreshing || loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-amber-500/25 text-xs font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)]"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#16161a] hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 text-xs font-medium transition-colors disabled:opacity-50"
             title="تحديث قائمة المشتركين"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
-            <span>تحديث القائمة</span>
+            <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
+            <span>تحديث</span>
           </button>
         </div>
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="wolf-glass rounded-3xl p-4 sm:p-5 border border-amber-500/20 shadow-lg">
+      <div className="bg-[#121215] rounded-2xl p-3.5 sm:p-4 border border-white/10">
         <CustomerFilterTabs
           activeTab={activeTab}
           onTabChange={handleTabChange}
