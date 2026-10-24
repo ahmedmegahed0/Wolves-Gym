@@ -422,8 +422,6 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
     } finally {
       setSubmitting(false);
     }
-      setSubmitting(false);
-    }
   };
 
   if (!isOpen) return null;

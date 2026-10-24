@@ -12,6 +12,7 @@ import LandingPage from './components/landing/LandingPage';
 import AuthContainer from './components/auth/AuthContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import KpisManagement from './components/kpis/KpisManagement';
+import EmployeesManagementPage from './components/employees/EmployeesManagementPage';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { normalizeRole } from './services/apiClient';
@@ -133,6 +134,19 @@ function App() {
                 }
               />
               <Route path="/kpis" element={<Navigate to="/dashboard/kpis" replace />} />
+
+              {/* Employees / Staff Management Module: Receptionist, Manager, SuperAdmin, OperationManager */}
+              <Route
+                path="/dashboard/employees"
+                element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Reception', 'Admin', 'SuperAdmin', 'Owner', 'Manager', 'OperationManager']}>
+                    <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
+                      <EmployeesManagementPage />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/employees" element={<Navigate to="/dashboard/employees" replace />} />
 
               {/* Requirement 2 & 3: Customer Portal */}
               <Route

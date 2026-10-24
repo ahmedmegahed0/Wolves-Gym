@@ -30,7 +30,8 @@ import {
   Plus,
   Home,
   Dumbbell,
-  Target
+  Target,
+  Briefcase
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
@@ -45,6 +46,8 @@ import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
 import TrainersSection from './trainers/TrainersSection';
 import KpisManagement from './kpis/KpisManagement';
+import EmployeesManagementPage from './employees/EmployeesManagementPage';
+import { canManageEmployees } from '../services/employeesService';
 import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
@@ -104,7 +107,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
   // Can manage KPIs: Strictly Operation Manager, Manager, or SuperAdmin (NEVER Reception)
   const canAccessKpis = (isOperationManager || isManager || isSuperAdmin) && !isReception;
 
-  // Navigation main module tab: 'cards' | 'attendance' | 'lockers' | 'customers'
+  // Can manage Employees: Receptionist, Reception, Admin, SuperAdmin, Owner, Manager, OperationManager
+  const canAccessEmployees = canManageEmployees(user) || isReception || isOperationManager || isManager || isSuperAdmin;
+
+  // Navigation main module tab: 'cards' | 'attendance' | 'lockers' | 'customers' | 'employees'
   // Default is 'cards' as requested (الاولى من فوق خالص للكاردز)
   const [mainTab, setMainTab] = useState(() => {
     if (isTrainer) return 'customers';
@@ -114,6 +120,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
     if (location.pathname.includes('/lockers')) return 'lockers';
     if (location.pathname.includes('/packages') || location.pathname.includes('/subscriptions')) return 'packages';
     if (location.pathname.includes('/kpis')) return 'kpis';
+    if (location.pathname.includes('/employees')) return 'employees';
     if (location.pathname.includes('/attendance')) return 'attendance';
     return 'cards';
   });
@@ -315,6 +322,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
         icon: Target,
         badge: 'إدارة',
         badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+      }
+    ] : []),
+    ...(canAccessEmployees ? [
+      {
+        id: 'employees',
+        label: 'فريق العمل (الموظفين)',
+        icon: Briefcase,
+        badge: 'HR',
+        badgeColor: 'bg-amber-400 text-black',
       }
     ] : []),
     {
@@ -1129,6 +1145,21 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 transition={{ duration: 0.2 }}
               >
                 <KpisManagement isEmbedded={true} />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 8: EMPLOYEES MODULE (إدارة فريق العمل والموظفين)      */}
+            {/* ======================================================== */}
+            {mainTab === 'employees' && canAccessEmployees && (
+              <motion.div
+                key="employees-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <EmployeesManagementPage isEmbedded={true} />
               </motion.div>
             )}
 

@@ -464,6 +464,9 @@ export const translateServerErrorMessage = (rawMsg) => {
   }
 
   // Name / KPIs
+  if (/name.*contain only letters/i.test(msg) || /only letters and spaces/i.test(msg)) {
+    return 'الاسم يجب أن يحتوي على حروف ومسافات فقط (بدون أرقام أو رموز).';
+  }
   if (/name.*must not exceed/i.test(msg)) {
     const match = msg.match(/\d+/);
     const limit = match ? match[0] : '30';

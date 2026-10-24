@@ -18,6 +18,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { trainersService } from '../../services/trainersService';
+import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 
 /**
@@ -49,7 +50,12 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
     const errs = {};
     if (!formData.name.trim()) {
       errs.name = 'اسم الكابتن مطلوب';
+    } else if (formData.name.trim().length < 3) {
+      errs.name = 'اسم الكابتن يجب أن يكون 3 أحرف على الأقل';
+    } else if (!/^[\p{L}\s]+$/u.test(formData.name.trim())) {
+      errs.name = 'الاسم يجب أن يحتوي على حروف ومسافات فقط (بدون أرقام أو رموز)';
     }
+
     if (!formData.phoneNumber.trim()) {
       errs.phoneNumber = 'رقم الهاتف مطلوب';
     }
@@ -86,8 +92,23 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (err) {
       console.error('Create trainer error:', err);
-      const msg = err.response?.data?.message || err.message || 'حدث خطأ أثناء إنشاء حساب الكابتن.';
-      toastError('فشل إضافة الكابتن', msg);
+      const data = err.response?.data;
+      let errorMsg = 'حدث خطأ أثناء إنشاء حساب الكابتن.';
+
+      if (data?.errors) {
+        if (Array.isArray(data.errors)) {
+          errorMsg = data.errors.map((e) => translateServerErrorMessage(e.description || e)).join(' • ');
+        } else if (typeof data.errors === 'object') {
+          const list = Object.values(data.errors).flat().map(translateServerErrorMessage);
+          errorMsg = list.join(' • ');
+        }
+      } else if (data?.detail || data?.title) {
+        errorMsg = translateServerErrorMessage(data.detail || data.title);
+      } else if (typeof data === 'string') {
+        errorMsg = translateServerErrorMessage(data);
+      }
+
+      toastError('فشل إضافة الكابتن', errorMsg);
     } finally {
       setLoading(false);
     }

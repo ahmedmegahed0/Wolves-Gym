@@ -12,12 +12,14 @@ import {
   Loader2, 
   Sparkles, 
   Lock,
-  Crown
+  Crown,
+  Briefcase
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { usersService } from '../../services/usersService';
 import { getRoleMeta, trainerService } from '../../services/apiClient';
+import { getEmployeeMe, EMPLOYEE_ROLES } from '../../services/employeesService';
 
 /**
  * UserProfileSettingsModal
@@ -34,8 +36,10 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [employeeDetails, setEmployeeDetails] = useState(null);
 
   const roleMeta = getRoleMeta(user?.role);
+  const isEmployeeRole = ['Receptionist', 'OperationManager', 'Manager', 'SuperAdmin'].includes(roleMeta.role);
 
   // Sync with current user info whenever modal opens
   useEffect(() => {
@@ -45,6 +49,21 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
         phoneNumber: user.phoneNumber || '',
       });
       setErrors({});
+
+      // If user is employee/staff, fetch job details from /api/employees/me
+      if (isEmployeeRole) {
+        getEmployeeMe()
+          .then((emp) => {
+            if (emp) {
+              setEmployeeDetails(emp);
+              if (emp.phoneNumber && !user.phoneNumber) {
+                setFormData((prev) => ({ ...prev, phoneNumber: emp.phoneNumber }));
+                updateCurrentUser({ phoneNumber: emp.phoneNumber });
+              }
+            }
+          })
+          .catch(() => {});
+      }
 
       // If user is a trainer and phoneNumber is missing, sync from /api/Trainers/me
       if (user.role === 'Trainer' && !user.phoneNumber) {
@@ -63,7 +82,7 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
           .catch(() => {});
       }
     }
-  }, [isOpen, user, updateCurrentUser]);
+  }, [isOpen, user, isEmployeeRole, updateCurrentUser]);
 
   const validate = () => {
     const errs = {};
@@ -227,6 +246,22 @@ export const UserProfileSettingsModal = ({ isOpen, onClose }) => {
                     <span>كود العضوية الرقمي:</span>
                   </span>
                   <span className="font-mono text-amber-400 font-bold">{user.code}</span>
+                </div>
+              )}
+
+              {/* Employee Job Meta if available (Read-only) */}
+              {employeeDetails && (
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-zinc-800/60">
+                  <span className="text-zinc-400 flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5 text-amber-400" />
+                    <span>الرتبة والراتب المسجل:</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 font-bold font-mono">
+                      {employeeDetails.salary ? `${Number(employeeDetails.salary).toLocaleString()} ج.م` : '—'}
+                    </span>
+                    <Lock className="w-3 h-3 text-zinc-500" title="الراتب والرتبة محددة من قبل الإدارة" />
+                  </div>
                 </div>
               )}
             </div>
