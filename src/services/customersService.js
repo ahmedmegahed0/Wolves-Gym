@@ -12,7 +12,38 @@ import apiClient, { customerService } from './apiClient';
  * - GET /api/customers/{id}/attendances
  * - GET /api/customers/me
  */
+/**
+ * POST /api/customers
+ * Direct Customer Onboarding from Reception/Admin Dashboard
+ * @param {object} customerData
+ */
+export const createCustomerDirectly = async (customerData) => {
+  const response = await apiClient.post('/api/customers', {
+    name: customerData.name.trim(),
+    email: customerData.email.trim(),
+    phoneNumber: customerData.phoneNumber.trim(),
+    password: customerData.password,
+    confirmPassword: customerData.confirmPassword,
+    isActive: customerData.isActive ?? true,
+    code: customerData.code.trim(),
+    height: Number(customerData.height) || 0,
+    weight: Number(customerData.weight) || 0,
+    age: Number(customerData.age) || 0,
+    injuries: customerData.injuries || '',
+    chronicDiseases: customerData.chronicDiseases || '',
+    musclePercentage: Number(customerData.musclePercentage) || 0,
+    fatPercentage: Number(customerData.fatPercentage) || 0,
+    notes: customerData.notes || ''
+  });
+  return response.data;
+};
+
 export const customersService = {
+  /**
+   * POST /api/customers
+   */
+  createCustomerDirectly,
+
   /**
    * GET /api/customers
    */

@@ -22,9 +22,13 @@ import {
   UserCheck,
   UserPlus,
   Target,
-  BarChart2
+  BarChart2,
+  CalendarCheck,
+  CalendarX,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
-import { trainerService } from '../../services/apiClient';
+import trainersService, { trainerService } from '../../services/trainersService';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import useDebounce from '../../hooks/useDebounce';
@@ -47,6 +51,7 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
     yearsOfExperience: 1,
     salary: 0,
     isActive: true,
+    isAvailable: true,
   });
 
   const [errors, setErrors] = useState({});
@@ -59,7 +64,8 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
         phoneNumber: trainer.phoneNumber || '',
         yearsOfExperience: trainer.yearsOfExperience !== undefined ? Number(trainer.yearsOfExperience) : 1,
         salary: trainer.salary !== undefined ? Number(trainer.salary) : 0,
-        isActive: Boolean(trainer.isTrainerActive ?? trainer.isActive ?? true),
+        isActive: Boolean(trainer.isActive ?? trainer.isTrainerActive ?? true),
+        isAvailable: Boolean(trainer.isAvailable ?? true),
       });
       setErrors({});
     }
@@ -98,6 +104,7 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
         yearsOfExperience: Number(formData.yearsOfExperience),
         salary: Number(formData.salary),
         isActive: Boolean(formData.isActive),
+        isAvailable: Boolean(formData.isAvailable),
       };
 
       await trainerService.updateTrainer(trainerId, payload);
@@ -242,37 +249,65 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
               </div>
             </div>
 
-            {/* Active Status Switch */}
-            <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
-                    formData.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                  }`}
-                >
-                  <Power className="w-4 h-4" />
+            {/* Dual Status Switches (isActive vs isAvailable) */}
+            <div className="space-y-3 pt-1">
+              {/* 1. Account Active Status (DomainUser) */}
+              <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                    }`}
+                  >
+                    <Power className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">حالة تفعيل حساب الكابتن (User)</span>
+                    <span className="text-[10px] text-zinc-400">
+                      {formData.isActive ? 'حساب نشط ومصرح له بالدخول للنظام' : 'حساب معطل وممنوع من الدخول'}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs font-bold text-white block">حالة نشاط الكابتن</span>
-                  <span className="text-[10px] text-zinc-400">
-                    {formData.isActive ? 'الكابتن نشط ويظهر في قائمة التدريب' : 'الكابتن متوقف مؤقتاً أو في إجازة'}
-                  </span>
-                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
-                  formData.isActive ? 'bg-amber-500' : 'bg-zinc-800'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-black shadow-md transition-transform duration-200 ${
-                    formData.isActive ? 'translate-x-6 bg-black' : 'translate-x-0 bg-zinc-400'
-                  }`}
-                />
-              </button>
+              {/* 2. Trainer Booking Availability */}
+              <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.isAvailable ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-400'
+                    }`}
+                  >
+                    <CalendarCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">إتاحة الحجز واستقبال متدربين</span>
+                    <span className="text-[10px] text-zinc-400">
+                      {formData.isAvailable ? 'متاح للظهور للعملاء وللحجز في الباقات' : 'غير متاح حالياً للحجز أو الباقات الخاصة'}
+                    </span>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isAvailable}
+                    onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+              </div>
             </div>
 
             {/* Buttons */}
@@ -341,6 +376,7 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 350);
   const [isActiveFilter, setIsActiveFilter] = useState('all'); // 'all' | 'true' | 'false'
+  const [isAvailableFilter, setIsAvailableFilter] = useState('all'); // 'all' | 'true' | 'false'
   const [sortBy, setSortBy] = useState('');
 
   // Pagination
@@ -364,7 +400,9 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   const [trainerForReports, setTrainerForReports] = useState(null);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
 
-  const [togglingId, setTogglingId] = useState(null);
+  // Separate toggle loading states
+  const [togglingActiveId, setTogglingActiveId] = useState(null);
+  const [togglingAvailabilityId, setTogglingAvailabilityId] = useState(null);
 
   // Fetch Management Trainers
   const fetchTrainers = useCallback(async (isManual = false) => {
@@ -376,8 +414,13 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
       if (isActiveFilter === 'true') activeParam = true;
       else if (isActiveFilter === 'false') activeParam = false;
 
-      const res = await trainerService.getManagementTrainers({
+      let availableParam = undefined;
+      if (isAvailableFilter === 'true') availableParam = true;
+      else if (isAvailableFilter === 'false') availableParam = false;
+
+      const res = await trainersService.getTrainersManagement({
         isActive: activeParam,
+        isAvailable: availableParam,
         pageNumber,
         pageSize,
         search: debouncedSearch.trim(),
@@ -394,7 +437,7 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, debouncedSearch, isActiveFilter, sortBy, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, isActiveFilter, isAvailableFilter, sortBy, toastError]);
 
   useEffect(() => {
     fetchTrainers();
@@ -404,22 +447,61 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
     fetchTrainers(true);
   };
 
-  // Toggle trainer status
-  const handleToggleStatus = async (trainer) => {
+  // 1. Toggle Account Active Status (DomainUser)
+  const handleToggleActive = async (trainer) => {
     const tId = trainer.id || trainer.trainerId;
-    setTogglingId(tId);
+    setTogglingActiveId(tId);
     try {
-      const nextStatus = !Boolean(trainer.isTrainerActive ?? trainer.isActive);
-      await trainerService.toggleTrainerStatus(tId, trainer);
-      toastSuccess(
-        nextStatus ? 'تم تفعيل الكابتن' : 'تم تعطيل الكابتن',
-        `أصبح الكابتن "${trainer.name}" ${nextStatus ? 'نشطاً' : 'معطلاً'} في النظام.`
+      const nextStatus = !(trainer.isActive ?? trainer.isTrainerActive ?? true);
+      await trainersService.toggleTrainerActive(tId, trainer);
+
+      // Optimistic/Local state update without full page reload
+      setTrainers((prev) =>
+        prev.map((t) => {
+          if ((t.id || t.trainerId) === tId) {
+            return { ...t, isActive: nextStatus, isTrainerActive: nextStatus };
+          }
+          return t;
+        })
       );
-      fetchTrainers();
+
+      toastSuccess(
+        nextStatus ? 'تم تفعيل حساب الكابتن' : 'تم تعطيل حساب الكابتن',
+        `أصبح حساب الكابتن "${trainer.name}" ${nextStatus ? 'مفعلاً ومصرحاً له بالدخول' : 'معطلاً وممنوعاً من الدخول'}.`
+      );
     } catch (err) {
-      toastError('فشل تعديل الحالة', err.message || 'حدث خطأ أثناء تعديل حالة الكابتن.');
+      toastError('فشل تعديل حالة الحساب', err.friendlyMessage || err.message || 'حدث خطأ أثناء تعديل حالة الحساب.');
     } finally {
-      setTogglingId(null);
+      setTogglingActiveId(null);
+    }
+  };
+
+  // 2. Toggle Trainer Booking Availability
+  const handleToggleAvailability = async (trainer) => {
+    const tId = trainer.id || trainer.trainerId;
+    setTogglingAvailabilityId(tId);
+    try {
+      const nextAvailable = !(trainer.isAvailable ?? true);
+      await trainersService.toggleTrainerAvailability(tId, trainer);
+
+      // Optimistic/Local state update without full page reload
+      setTrainers((prev) =>
+        prev.map((t) => {
+          if ((t.id || t.trainerId) === tId) {
+            return { ...t, isAvailable: nextAvailable };
+          }
+          return t;
+        })
+      );
+
+      toastSuccess(
+        nextAvailable ? 'الكابتن متاح للحجز' : 'الكابتن غير متاح حالياً',
+        `أصبح الكابتن "${trainer.name}" ${nextAvailable ? 'متاحاً لاستقبال متدربين جدد والظهور في الباقات' : 'غير متاح حالياً للحجز أو الباقات'}.`
+      );
+    } catch (err) {
+      toastError('فشل تعديل حالة الإتاحة', err.friendlyMessage || err.message || 'حدث خطأ أثناء تعديل إتاحة الكابتن.');
+    } finally {
+      setTogglingAvailabilityId(null);
     }
   };
 
@@ -429,8 +511,8 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   };
 
   // Metrics
-  const activeCount = trainers.filter((t) => (t.isTrainerActive ?? t.isActive) !== false).length;
-  const inactiveCount = trainers.filter((t) => (t.isTrainerActive ?? t.isActive) === false).length;
+  const activeCount = trainers.filter((t) => (t.isActive ?? t.isTrainerActive) !== false).length;
+  const availableCount = trainers.filter((t) => t.isAvailable !== false).length;
   const totalSalaries = trainers.reduce((sum, t) => sum + (Number(t.salary) || 0), 0);
 
   return (
@@ -479,6 +561,7 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Metric 1: Total Trainers */}
         <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
@@ -489,26 +572,29 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
           </div>
         </div>
 
+        {/* Metric 2: Active Accounts */}
         <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-emerald-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-5 h-5" />
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">كباتن على رأس العمل</span>
+            <span className="text-[11px] font-bold text-zinc-400 block truncate">حسابات مفعلة</span>
             <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">{activeCount}</span>
           </div>
         </div>
 
-        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-rose-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
-            <XCircle className="w-5 h-5" />
+        {/* Metric 3: Available for Booking */}
+        <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+            <CalendarCheck className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[11px] font-bold text-zinc-400 block truncate">كباتن معطلين / إجازة</span>
-            <span className="text-xl sm:text-2xl font-black text-rose-400 font-mono">{inactiveCount}</span>
+            <span className="text-[11px] font-bold text-zinc-400 block truncate">متاحين للحجز</span>
+            <span className="text-xl sm:text-2xl font-black text-amber-300 font-mono">{availableCount}</span>
           </div>
         </div>
 
+        {/* Metric 4: Total Salaries */}
         <div className="bg-gradient-to-b from-[#141418] to-[#0c0c0e] border border-yellow-500/20 rounded-2xl p-4 shadow-lg flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-center justify-center shrink-0">
             <DollarSign className="w-5 h-5" />
@@ -546,17 +632,31 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
 
         {/* Filters & Actions */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          {/* Status Filter */}
+          {/* Account Status Filter */}
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
-            <span className="text-[10px] text-zinc-500 font-bold shrink-0">الحالة:</span>
+            <span className="text-[10px] text-zinc-500 font-bold shrink-0">الحساب:</span>
             <select
               value={isActiveFilter}
               onChange={(e) => { setIsActiveFilter(e.target.value); setPageNumber(1); }}
               className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
             >
-              <option value="all" className="bg-zinc-900 text-white">كل الكباتن</option>
-              <option value="true" className="bg-zinc-900 text-emerald-400">نشط فقط</option>
-              <option value="false" className="bg-zinc-900 text-rose-400">معطل فقط</option>
+              <option value="all" className="bg-zinc-900 text-white">الكل</option>
+              <option value="true" className="bg-zinc-900 text-emerald-400">مفعل</option>
+              <option value="false" className="bg-zinc-900 text-rose-400">معطل</option>
+            </select>
+          </div>
+
+          {/* Availability Filter */}
+          <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5">
+            <span className="text-[10px] text-zinc-500 font-bold shrink-0">التواجد:</span>
+            <select
+              value={isAvailableFilter}
+              onChange={(e) => { setIsAvailableFilter(e.target.value); setPageNumber(1); }}
+              className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+            >
+              <option value="all" className="bg-zinc-900 text-white">الكل</option>
+              <option value="true" className="bg-zinc-900 text-amber-300">متاح للحجز</option>
+              <option value="false" className="bg-zinc-900 text-zinc-400">غير متاح</option>
             </select>
           </div>
 
@@ -593,7 +693,8 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                 <th className="px-5 py-3.5">رقم الهاتف</th>
                 <th className="px-5 py-3.5">سنوات الخبرة</th>
                 <th className="px-5 py-3.5">الراتب الشهري</th>
-                <th className="px-5 py-3.5 text-center">الحالة</th>
+                <th className="px-5 py-3.5 text-center">حالة الحساب</th>
+                <th className="px-5 py-3.5 text-center">إتاحة الحجز</th>
                 <th className="px-5 py-3.5 text-left">إجراءات</th>
               </tr>
             </thead>
@@ -606,25 +707,28 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                     <td className="px-5 py-4"><div className="h-4 w-28 bg-zinc-800 rounded" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-16 bg-zinc-800 rounded" /></td>
                     <td className="px-5 py-4"><div className="h-4 w-20 bg-zinc-800 rounded" /></td>
-                    <td className="px-5 py-4 text-center"><div className="h-6 w-14 bg-zinc-800 rounded-full mx-auto" /></td>
+                    <td className="px-5 py-4 text-center"><div className="h-6 w-16 bg-zinc-800 rounded-full mx-auto" /></td>
+                    <td className="px-5 py-4 text-center"><div className="h-6 w-16 bg-zinc-800 rounded-full mx-auto" /></td>
                     <td className="px-5 py-4 text-left"><div className="h-7 w-20 bg-zinc-800 rounded-xl mr-auto" /></td>
                   </tr>
                 ))
               ) : trainers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-5 py-14 text-center">
+                  <td colSpan="7" className="px-5 py-14 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
                       <Users className="w-6 h-6" />
                     </div>
                     <h4 className="text-sm font-black text-white mb-1">لا يوجد مدربين مطابقين للبحث</h4>
-                    <p className="text-xs text-zinc-400">يرجى التأكد من كلمات البحث أو تغيير فلتر الحالة.</p>
+                    <p className="text-xs text-zinc-400">يرجى التأكد من كلمات البحث أو تغيير فلاتر التصفية.</p>
                   </td>
                 </tr>
               ) : (
                 trainers.map((t) => {
                   const tId = t.id || t.trainerId;
-                  const isToggling = togglingId === tId;
-                  const isActive = Boolean(t.isTrainerActive ?? t.isActive);
+                  const isActive = Boolean(t.isActive ?? t.isTrainerActive ?? true);
+                  const isAvailable = Boolean(t.isAvailable ?? true);
+                  const isTogglingActive = togglingActiveId === tId;
+                  const isTogglingAvailability = togglingAvailabilityId === tId;
 
                   return (
                     <tr key={tId} className="hover:bg-zinc-900/60 transition-colors group">
@@ -669,17 +773,31 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                         {Number(t.salary || 0).toLocaleString('ar-EG')} <span className="text-[10px] text-zinc-400 font-normal">ج.م</span>
                       </td>
 
-                      {/* Active Status */}
+                      {/* 1. Account Active Status Badge (DomainUser) */}
                       <td className="px-5 py-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors ${
                             isActive
-                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
-                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                              : 'bg-rose-500/10 text-rose-400 border-rose-500/25'
                           }`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-                          <span>{isActive ? 'نشط' : 'معطل'}</span>
+                          <span>{isActive ? 'حساب مفعل' : 'حساب معطل'}</span>
+                        </span>
+                      </td>
+
+                      {/* 2. Trainer Booking Availability Badge */}
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+                            isAvailable
+                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
+                              : 'bg-zinc-800/80 text-zinc-400 border-white/5'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-amber-400' : 'bg-zinc-500'}`} />
+                          <span>{isAvailable ? 'متاح للحجز' : 'غير متاح حالياً'}</span>
                         </span>
                       </td>
 
@@ -728,20 +846,37 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                             </button>
                           )}
 
-                          {/* Toggle Status (Manager / OperationManager only) */}
+                          {/* Toggle Booking Availability (Manager / OperationManager only) */}
                           {isOperationManagerOrAdmin && (
                             <button
                               type="button"
-                              disabled={isToggling}
-                              onClick={() => handleToggleStatus(t)}
+                              disabled={isTogglingAvailability}
+                              onClick={() => handleToggleAvailability(t)}
+                              className={`p-2 rounded-xl transition-all cursor-pointer ${
+                                isAvailable
+                                  ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/25'
+                                  : 'bg-zinc-900 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-zinc-800'
+                              }`}
+                              title={isAvailable ? 'إتاحة الحجز: جعل الكابتن غير متاح' : 'إتاحة الحجز: جعل الكابتن متاحاً للحجز'}
+                            >
+                              <CalendarCheck className={`w-3.5 h-3.5 ${isTogglingAvailability ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
+
+                          {/* Toggle Account Status (Manager / OperationManager only) */}
+                          {isOperationManagerOrAdmin && (
+                            <button
+                              type="button"
+                              disabled={isTogglingActive}
+                              onClick={() => handleToggleActive(t)}
                               className={`p-2 rounded-xl transition-all cursor-pointer ${
                                 isActive
                                   ? 'bg-zinc-900 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800'
                                   : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
                               }`}
-                              title={isActive ? 'تعطيل الكابتن' : 'تفعيل الكابتن'}
+                              title={isActive ? 'تعطيل حساب الكابتن' : 'تفعيل حساب الكابتن'}
                             >
-                              <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
+                              <Power className={`w-3.5 h-3.5 ${isTogglingActive ? 'animate-spin' : ''}`} />
                             </button>
                           )}
 
@@ -775,18 +910,27 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
           ) : (
             trainers.map((t) => {
               const tId = t.id || t.trainerId;
-              const isToggling = togglingId === tId;
-              const isActive = Boolean(t.isTrainerActive ?? t.isActive);
+              const isActive = Boolean(t.isActive ?? t.isTrainerActive ?? true);
+              const isAvailable = Boolean(t.isAvailable ?? true);
+              const isTogglingActive = togglingActiveId === tId;
+              const isTogglingAvailability = togglingAvailabilityId === tId;
 
               return (
                 <div key={tId} className="bg-black/60 rounded-2xl p-4 border border-zinc-800/80 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <h4 className="font-black text-white text-sm">{t.name}</h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isActive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
-                    }`}>
-                      {isActive ? 'نشط' : 'معطل'}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25' : 'bg-rose-500/10 text-rose-400 border-rose-500/25'
+                      }`}>
+                        {isActive ? 'حساب مفعل' : 'حساب معطل'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        isAvailable ? 'bg-amber-500/10 text-amber-300 border-amber-500/25' : 'bg-zinc-800/80 text-zinc-400 border-white/5'
+                      }`}>
+                        {isAvailable ? 'متاح للحجز' : 'غير متاح'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/50">
@@ -848,20 +992,36 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                             setTrainerForEvaluation(t);
                             setIsEvaluationModalOpen(true);
                           }}
-                          className="col-span-2 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-gold-glow"
+                          className="col-span-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-gold-glow"
                         >
                           <Target className="w-3.5 h-3.5" />
                           <span>تقييم أداء الكابتن (KPIs)</span>
                         </button>
 
+                        {/* Availability Toggle */}
                         <button
                           type="button"
-                          disabled={isToggling}
-                          onClick={() => handleToggleStatus(t)}
-                          className="col-span-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300"
+                          disabled={isTogglingAvailability}
+                          onClick={() => handleToggleAvailability(t)}
+                          className="col-span-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-amber-300"
+                          title="تبديل الإتاحة للحجز"
                         >
-                          <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                          <span>{isActive ? 'تعطيل' : 'تفعيل'}</span>
+                          <CalendarCheck className={`w-3.5 h-3.5 ${isTogglingAvailability ? 'animate-spin text-amber-400' : isAvailable ? 'text-amber-400' : 'text-zinc-500'}`} />
+                          <span>{isAvailable ? 'متاح للحجز' : 'غير متاح'}</span>
+                        </button>
+
+                        {/* Account Status Toggle */}
+                        <button
+                          type="button"
+                          disabled={isTogglingActive}
+                          onClick={() => handleToggleActive(t)}
+                          className={`col-span-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                            isActive ? 'bg-zinc-900 border border-zinc-800 text-zinc-300' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                          }`}
+                          title="تفعيل / تعطيل الحساب"
+                        >
+                          <Power className={`w-3.5 h-3.5 ${isTogglingActive ? 'animate-spin' : ''}`} />
+                          <span>{isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'}</span>
                         </button>
                       </>
                     )}

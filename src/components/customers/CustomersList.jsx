@@ -21,13 +21,15 @@ import {
   Sparkles,
   Info,
   Crown,
-  Plus
+  Plus,
+  UserPlus
 } from 'lucide-react';
 import { customerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 import ApprovalBadge from './ApprovalBadge';
 import CustomerFilterTabs from './CustomerFilterTabs';
 import CustomerEditModal from './CustomerEditModal';
+import AddCustomerModal from './AddCustomerModal';
 
 export const CustomersList = ({ onOpenNewSubscription = null }) => {
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
@@ -48,6 +50,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
   const [tabCounts, setTabCounts] = useState({ all: 0, pending: 0, approved: 0, rejected: 0 });
 
   // Modals & Action States
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [rejectConfirmModal, setRejectConfirmModal] = useState({ isOpen: false, customer: null });
@@ -180,6 +183,13 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
     fetchTabCounts();
   };
 
+  // 4. NEW MEMBER ADDED HANDLER (Direct Onboarding)
+  const handleCustomerAdded = (newCustomer) => {
+    // Refresh table and counts without full page reload
+    fetchCustomers(true);
+    fetchTabCounts();
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 font-cairo">
       {/* Top Banner & Quick Overview */}
@@ -203,11 +213,20 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
 
         {/* Quick Actions & Refresh */}
         <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsAddCustomerModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-black text-xs font-black shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all active:scale-95 cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>+ إضافة مشترك جديد</span>
+          </button>
+
           {onOpenNewSubscription && (
             <button
               type="button"
               onClick={() => onOpenNewSubscription()}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600/90 to-yellow-600/90 hover:from-amber-500 hover:to-yellow-500 text-black text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1c1c22] hover:bg-zinc-800 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>اشتراك جديد</span>
@@ -633,6 +652,13 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
           </div>
         )}
       </div>
+
+      {/* Direct Add Customer Modal */}
+      <AddCustomerModal
+        isOpen={isAddCustomerModalOpen}
+        onClose={() => setIsAddCustomerModalOpen(false)}
+        onCustomerAdded={handleCustomerAdded}
+      />
 
       {/* Edit Customer Modal */}
       <CustomerEditModal

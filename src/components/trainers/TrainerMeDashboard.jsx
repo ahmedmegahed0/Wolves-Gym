@@ -81,7 +81,8 @@ export const TrainerMeDashboard = () => {
 
   const trainerName = profile?.name || user?.name || 'كابتن كتيبة الذئاب';
   const trainerId = profile?.id || profile?.trainerId;
-  const isActive = Boolean(profile?.isTrainerActive ?? true);
+  const isActive = Boolean(profile?.isActive ?? profile?.isTrainerActive ?? true);
+  const isAvailable = Boolean(profile?.isAvailable ?? true);
   const years = profile?.yearsOfExperience ?? 1;
   const salary = profile?.salary ?? 0;
 
@@ -102,7 +103,7 @@ export const TrainerMeDashboard = () => {
               <div className="absolute -inset-1 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-3xl blur-md opacity-50 group-hover:opacity-75 transition duration-300" />
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-black border-2 border-amber-500/60 flex items-center justify-center text-amber-400 font-mono font-black text-2xl sm:text-3xl shadow-2xl">
                 {trainerName.slice(0, 1)}
-                <span className="absolute -bottom-1 -left-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-black" />
+                <span className={`absolute -bottom-1 -left-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-black ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
               </div>
             </div>
 
@@ -120,7 +121,17 @@ export const TrainerMeDashboard = () => {
                   }`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                  <span>{isActive ? 'نشط في الصالة' : 'متوقف مؤقتاً'}</span>
+                  <span>{isActive ? 'حساب مفعل' : 'حساب معطل'}</span>
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+                    isAvailable
+                      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                      : 'bg-zinc-800 text-zinc-400 border border-zinc-700/60'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-amber-400' : 'bg-zinc-500'}`} />
+                  <span>{isAvailable ? 'متاح للحجز' : 'غير متاح حالياً'}</span>
                 </span>
               </div>
 

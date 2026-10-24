@@ -97,6 +97,19 @@ function App() {
               />
               <Route path="/packages" element={<Navigate to="/dashboard/packages" replace />} />
 
+              {/* Subscriptions Lifecycle & Financial Summary Routes */}
+              <Route
+                path="/dashboard/subscriptions"
+                element={
+                  <ProtectedRoute allowedRoles={['Receptionist', 'Manager', 'SuperAdmin', 'OperationManager']}>
+                    <div className="min-h-screen bg-black bg-wolf-mesh p-4 sm:p-8">
+                      <PackagesDashboard initialTab="subscriptions" />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/subscriptions" element={<Navigate to="/dashboard/subscriptions" replace />} />
+
               {/* Trainers Showcase: Public and Dashboard routes */}
               <Route
                 path="/trainers"

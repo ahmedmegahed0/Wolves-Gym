@@ -112,7 +112,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
     if (initialSection) return initialSection;
     if (location.pathname === '/customers') return 'customers';
     if (location.pathname.includes('/lockers')) return 'lockers';
-    if (location.pathname.includes('/packages')) return 'packages';
+    if (location.pathname.includes('/packages') || location.pathname.includes('/subscriptions')) return 'packages';
     if (location.pathname.includes('/kpis')) return 'kpis';
     if (location.pathname.includes('/attendance')) return 'attendance';
     return 'cards';

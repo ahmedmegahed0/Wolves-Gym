@@ -157,11 +157,14 @@ export const CreateSubscriptionModal = ({
           setCustomers(rawCusts);
         }
 
-        // 3. Fetch trainers for conditional trainer selection
+        // 3. Fetch trainers for conditional trainer selection (Active & Available only)
         setLoadingTrainers(true);
         const trainersList = await trainerService.getAllTrainers();
         if (isMounted) {
-          setTrainers(Array.isArray(trainersList) ? trainersList : []);
+          const availableOnly = Array.isArray(trainersList)
+            ? trainersList.filter((t) => t.isAvailable !== false && t.isActive !== false && t.isTrainerActive !== false)
+            : [];
+          setTrainers(availableOnly);
         }
       } catch (err) {
         console.warn('Error loading subscription modal dependencies:', err);
@@ -363,10 +366,26 @@ export const CreateSubscriptionModal = ({
       onClose();
     } catch (err) {
       console.error('Subscription creation failed:', err);
-      toastError(
-        'فشل تسجيل الاشتراك',
-        err.message || 'حدث خطأ أثناء معالجة طلب الاشتراك. يرجى مراجعة البيانات والمحاولة مجدداً.'
-      );
+
+      const errorData = err.response?.data;
+      const isTrainerUnavailable = 
+        errorData?.errors?.some?.((e) => e.code === 'TRAINER_UNAVAILABLE' || e.description?.includes('TRAINER_UNAVAILABLE')) ||
+        errorData?.code === 'TRAINER_UNAVAILABLE' ||
+        errorData?.detail?.includes('TRAINER_UNAVAILABLE') ||
+        err.message?.includes('TRAINER_UNAVAILABLE') ||
+        err.friendlyMessage?.includes('غير متاح');
+
+      if (isTrainerUnavailable) {
+        toastError(
+          'المدرب غير متاح حالياً',
+          'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر.'
+        );
+      } else {
+        toastError(
+          'فشل تسجيل الاشتراك',
+          err.friendlyMessage || err.message || 'حدث خطأ أثناء معالجة طلب الاشتراك. يرجى مراجعة البيانات والمحاولة مجدداً.'
+        );
+      }
     } finally {
       setSubmitting(false);
     }

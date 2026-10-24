@@ -76,11 +76,13 @@ export const trainersService = {
 
   /**
    * Helper to fetch full list of trainers for dropdown selections
+   * Returns active and available coaches
    */
   async getAllTrainers({ signal } = {}) {
     try {
       const res = await this.getPublicTrainers({ pageSize: 100, signal });
-      return res.data || [];
+      const list = res.data || [];
+      return list.filter((t) => t.isAvailable !== false && t.isActive !== false && t.isTrainerActive !== false);
     } catch (err) {
       console.warn('Failed to load all trainers for dropdown:', err);
       return [];
@@ -90,7 +92,7 @@ export const trainersService = {
   /**
    * POST /api/Trainers
    * Create a new coach account and profile
-   * @param {{ name: string, email?: string, phoneNumber?: string, password?: string, confirmPassword?: string, salary?: number, yearsOfExperience?: number, isActive?: boolean }} data
+   * @param {{ name: string, email?: string, phoneNumber?: string, password?: string, confirmPassword?: string, salary?: number, yearsOfExperience?: number, isActive?: boolean, isAvailable?: boolean }} data
    */
   async createTrainer(data) {
     const payload = {
@@ -102,6 +104,7 @@ export const trainersService = {
       salary: Number(data.salary) || 0,
       yearsOfExperience: Number(data.yearsOfExperience) || 0,
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
+      isAvailable: data.isAvailable !== undefined ? Boolean(data.isAvailable) : true,
     };
 
     const response = await apiClient.post('/api/Trainers', payload);
@@ -111,10 +114,11 @@ export const trainersService = {
   /**
    * GET /api/Trainers/management
    * Admin management table with filtering & pagination
-   * @param {{ isActive?: boolean|string, pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
+   * @param {{ isActive?: boolean|string, isAvailable?: boolean|string, pageNumber?: number, pageSize?: number, search?: string, sortBy?: string, signal?: AbortSignal }} params
    */
   async getTrainersManagement({
     isActive = undefined,
+    isAvailable = undefined,
     pageNumber = 1,
     pageSize = 10,
     search = '',
@@ -126,6 +130,12 @@ export const trainersService = {
       query.append('IsActive', String(isActive));
     } else if (isActive === 'true' || isActive === 'false') {
       query.append('IsActive', isActive);
+    }
+
+    if (typeof isAvailable === 'boolean') {
+      query.append('IsAvailable', String(isAvailable));
+    } else if (isAvailable === 'true' || isAvailable === 'false') {
+      query.append('IsAvailable', isAvailable);
     }
 
     if (pageNumber) query.append('PageNumber', String(pageNumber));
@@ -192,7 +202,7 @@ export const trainersService = {
    * PATCH /api/Trainers/{id}
    * Update trainer info
    * @param {string|number} id
-   * @param {{ name?: string, phoneNumber?: string, yearsOfExperience?: number, salary?: number, isActive?: boolean }} data
+   * @param {{ name?: string, phoneNumber?: string, yearsOfExperience?: number, salary?: number, isActive?: boolean, isAvailable?: boolean }} data
    */
   async updateTrainer(id, data) {
     const payload = {};
@@ -201,23 +211,37 @@ export const trainersService = {
     if (data.yearsOfExperience !== undefined) payload.yearsOfExperience = Number(data.yearsOfExperience);
     if (data.salary !== undefined) payload.salary = Number(data.salary);
     if (data.isActive !== undefined) payload.isActive = Boolean(data.isActive);
+    if (data.isAvailable !== undefined) payload.isAvailable = Boolean(data.isAvailable);
 
     const response = await apiClient.patch(`/api/Trainers/${id}`, payload);
     return response.data;
   },
 
   /**
-   * Toggle Trainer active status
+   * Toggle Trainer active status (account login permission)
    */
-  async toggleTrainerStatus(id, currentTrainer) {
-    const nextStatus = !Boolean(currentTrainer.isTrainerActive ?? currentTrainer.isActive);
+  async toggleTrainerActive(id, currentTrainer) {
+    const nextStatus = !(currentTrainer.isActive ?? currentTrainer.isTrainerActive ?? true);
     return await this.updateTrainer(id, {
-      name: currentTrainer.name,
-      phoneNumber: currentTrainer.phoneNumber,
-      yearsOfExperience: currentTrainer.yearsOfExperience,
-      salary: currentTrainer.salary,
       isActive: nextStatus,
     });
+  },
+
+  /**
+   * Toggle Trainer booking availability (accepting trainees)
+   */
+  async toggleTrainerAvailability(id, currentTrainer) {
+    const nextAvailability = !(currentTrainer.isAvailable ?? true);
+    return await this.updateTrainer(id, {
+      isAvailable: nextAvailability,
+    });
+  },
+
+  /**
+   * Toggle Trainer status (Backward compatibility alias)
+   */
+  async toggleTrainerStatus(id, currentTrainer) {
+    return this.toggleTrainerActive(id, currentTrainer);
   },
 
   /**

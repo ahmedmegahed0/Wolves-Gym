@@ -13,7 +13,9 @@ import {
   CheckCircle2, 
   AlertCircle,
   ShieldCheck,
-  Power
+  Power,
+  CalendarCheck,
+  UserCheck
 } from 'lucide-react';
 import { trainersService } from '../../services/trainersService';
 import { useToast } from '../../context/ToastContext';
@@ -21,7 +23,7 @@ import { useToast } from '../../context/ToastContext';
 /**
  * CreateTrainerModal Component
  * Allows Management/SuperAdmin to create a new trainer account (POST /api/Trainers)
- * Body: { name, email, phoneNumber, password, confirmPassword, salary, yearsOfExperience, isActive }
+ * Body: { name, email, phoneNumber, password, confirmPassword, salary, yearsOfExperience, isActive, isAvailable }
  */
 export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -35,6 +37,7 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
     salary: 5000,
     yearsOfExperience: 2,
     isActive: true,
+    isAvailable: true,
   });
 
   const [errors, setErrors] = useState({});
@@ -276,28 +279,61 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
             </div>
 
-            {/* Active Status */}
-            <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  formData.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                }`}>
-                  <Power className="w-4 h-4" />
+            {/* Account & Booking Status Switches (isActive vs isAvailable) */}
+            <div className="space-y-3 pt-1">
+              {/* 1. Account Active Status (DomainUser) */}
+              <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    formData.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                  }`}>
+                    <Power className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">حالة تفعيل حساب الكابتن (User)</span>
+                    <span className="text-[11px] text-zinc-400">
+                      {formData.isActive ? 'حساب نشط ومصرح له بتسجيل الدخول للنظام' : 'حساب معطل مؤقتاً وممنوع من الدخول'}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs font-bold text-white block">حالة تفعيل الكابتن</span>
-                  <span className="text-[11px] text-zinc-400">
-                    {formData.isActive ? 'حساب نشط ومتاح للتعيين في الباقات' : 'حساب معطل مؤقتاً'}
-                  </span>
-                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
               </div>
 
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-5 h-5 rounded-lg accent-amber-500 cursor-pointer"
-              />
+              {/* 2. Trainer Booking Availability */}
+              <div className="flex items-center justify-between bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    formData.isAvailable ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-400'
+                  }`}>
+                    <CalendarCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">متاح للظهور والحجز للمشتركين</span>
+                    <span className="text-[11px] text-zinc-400">
+                      {formData.isAvailable ? 'متاح لاستقبال متدربين جدد والظهور في الباقات' : 'غير متاح حالياً للحجز أو الباقات الخاصة'}
+                    </span>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isAvailable}
+                    onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+              </div>
             </div>
 
             {/* Submit Actions */}

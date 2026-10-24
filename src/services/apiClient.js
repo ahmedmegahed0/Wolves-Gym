@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'gym_access_token',
   REFRESH_TOKEN: 'gym_refresh_token',
   USER_INFO: 'gym_user_info',
+  USER: 'gym_user_info',
   ACTIVITY_LOG: 'gym_activity_log',
   MAX_CAPACITY: 'gym_max_capacity',
 };
@@ -471,12 +472,17 @@ apiClient.interceptors.response.use(
           if (e.code === 'GreaterThanValidator' || e.description?.toLowerCase().includes('greater than zero')) {
             return 'رقم اللوكر لازم يكون رقم صحيح وموجب أكبر من صفر.';
           }
+          if (e.code === 'TRAINER_UNAVAILABLE' || e.description?.toLowerCase().includes('trainer unavailable') || e.description?.toLowerCase().includes('trainer is not available')) {
+            return 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر';
+          }
           return e.description || e.code;
         });
         friendlyMessage = errorDescriptions.join('; ');
       } else if (data.detail) {
         if (data.detail.toLowerCase().includes('pending for approval')) {
           friendlyMessage = 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
+        } else if (data.detail.includes('TRAINER_UNAVAILABLE') || data.detail.toLowerCase().includes('trainer is not available')) {
+          friendlyMessage = 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر';
         } else if (data.detail.toLowerCase().includes('already exists')) {
           friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
         } else {
@@ -498,7 +504,13 @@ apiClient.interceptors.response.use(
       } else if (status === 404 && isDefaultGenericMessage) {
         friendlyMessage = 'المورد أو العضو المطلوب غير موجود بالسيستم.';
       } else if (status === 409 && isDefaultGenericMessage) {
-        friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
+        if (originalRequest?.url?.toLowerCase()?.includes('subscription')) {
+          friendlyMessage = 'لا يمكن إجراء هذه العملية على هذا الاشتراك، قد يكون مجمداً أو ملغياً بالفعل.';
+        } else if (originalRequest?.url?.toLowerCase()?.includes('locker')) {
+          friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
+        } else {
+          friendlyMessage = 'البيانات المدخلة موجودة بالفعل في النظام أو تتعارض مع السجل الحالي.';
+        }
       }
 
     } else if (error.request) {
@@ -910,6 +922,31 @@ export const customerService = {
       ? Number(data.status) 
       : Number(data);
     return this.updateApprovalStatus(cleanId, statusVal);
+  },
+
+  /**
+   * POST /api/customers
+   * Direct customer creation from Reception
+   */
+  async createCustomerDirectly(customerData) {
+    const response = await apiClient.post('/api/customers', {
+      name: customerData.name.trim(),
+      email: customerData.email.trim(),
+      phoneNumber: customerData.phoneNumber.trim(),
+      password: customerData.password,
+      confirmPassword: customerData.confirmPassword,
+      isActive: customerData.isActive ?? true,
+      code: customerData.code.trim(),
+      height: Number(customerData.height) || 0,
+      weight: Number(customerData.weight) || 0,
+      age: Number(customerData.age) || 0,
+      injuries: customerData.injuries || '',
+      chronicDiseases: customerData.chronicDiseases || '',
+      musclePercentage: Number(customerData.musclePercentage) || 0,
+      fatPercentage: Number(customerData.fatPercentage) || 0,
+      notes: customerData.notes || ''
+    });
+    return response.data;
   },
 
   /**
