@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { createCustomerDirectly } from '../../services/customersService';
 import { usersService } from '../../services/usersService';
+import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 
 const INITIAL_FORM_DATA = {
@@ -310,6 +311,12 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
     setSubmitting(true);
 
     try {
+      const cleanNum = (val) => {
+        if (val === '' || val === null || val === undefined) return null;
+        const num = Number(val);
+        return !isNaN(num) && num > 0 ? num : null;
+      };
+
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
@@ -318,14 +325,14 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
         confirmPassword: formData.confirmPassword,
         isActive: Boolean(formData.isActive),
         code: formData.code.trim().toUpperCase(),
-        height: formData.height ? Number(formData.height) : 0,
-        weight: formData.weight ? Number(formData.weight) : 0,
-        age: formData.age ? Number(formData.age) : 0,
-        injuries: formData.injuries ? formData.injuries.trim() : '',
-        chronicDiseases: formData.chronicDiseases ? formData.chronicDiseases.trim() : '',
-        musclePercentage: formData.musclePercentage ? Number(formData.musclePercentage) : 0,
-        fatPercentage: formData.fatPercentage ? Number(formData.fatPercentage) : 0,
-        notes: formData.notes ? formData.notes.trim() : ''
+        height: cleanNum(formData.height),
+        weight: cleanNum(formData.weight),
+        age: cleanNum(formData.age),
+        injuries: formData.injuries ? formData.injuries.trim() : null,
+        chronicDiseases: formData.chronicDiseases ? formData.chronicDiseases.trim() : null,
+        musclePercentage: cleanNum(formData.musclePercentage),
+        fatPercentage: cleanNum(formData.fatPercentage),
+        notes: formData.notes ? formData.notes.trim() : null
       };
 
       const result = await createCustomerDirectly(payload);
@@ -382,13 +389,17 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
         let descriptions = [];
 
         if (Array.isArray(data.errors)) {
-          descriptions = data.errors.map(e => e.description || e.code || JSON.stringify(e));
+          descriptions = data.errors.map(e => {
+            const raw = e.description || e.message || e.code || (typeof e === 'string' ? e : JSON.stringify(e));
+            return translateServerErrorMessage(raw);
+          });
         } else if (typeof data.errors === 'object') {
           Object.keys(data.errors).forEach(key => {
             const lowerKey = key.charAt(0).toLowerCase() + key.slice(1);
-            const msg = Array.isArray(data.errors[key]) ? data.errors[key].join(', ') : data.errors[key];
-            fieldErrors[lowerKey] = msg;
-            descriptions.push(msg);
+            const raw = Array.isArray(data.errors[key]) ? data.errors[key].join(', ') : data.errors[key];
+            const translated = translateServerErrorMessage(raw);
+            fieldErrors[lowerKey] = translated;
+            descriptions.push(translated);
           });
         }
 
@@ -399,15 +410,18 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
 
         toastError(
           'خطأ في التحقق من البيانات',
-          descriptions.length > 0 ? descriptions.join(' • ') : 'يرجى التأكد من صحة بيانات الحساب.'
+          descriptions.length > 0 ? descriptions.join(' • ') : 'يرجى مراجعة وتصحيح البيانات المدخلة.'
         );
         return;
       }
 
       // Generic fallback
-      const fallbackMsg = data?.detail || data?.title || err.friendlyMessage || 'حدث خطأ أثناء حفظ بيانات المشترك بالسيرفر.';
+      const fallbackRaw = data?.detail || data?.title || err.friendlyMessage || 'حدث خطأ أثناء حفظ بيانات المشترك بالسيرفر.';
+      const fallbackMsg = translateServerErrorMessage(fallbackRaw);
       toastError('فشل إضافة المشترك', fallbackMsg);
     } finally {
+      setSubmitting(false);
+    }
       setSubmitting(false);
     }
   };

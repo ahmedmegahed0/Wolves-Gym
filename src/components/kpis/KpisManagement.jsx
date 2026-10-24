@@ -249,7 +249,7 @@ export const KpisManagement = ({ isEmbedded = false }) => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-white group-hover/logo:text-amber-400 transition-colors">
-                مؤشرات الأداء وتقييم المدربين (KPIs Module)
+                مؤشرات أداء المدربين (KPIs)
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
                 OPERATION MANAGER
@@ -290,7 +290,7 @@ export const KpisManagement = ({ isEmbedded = false }) => {
       {/* ============================================================== */}
       {/* 2. STATS & SUMMARY METRIC CARDS                               */}
       {/* ============================================================== */}
-      <section aria-label="إحصائيات مؤشرات الأداء" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6">
+      <section aria-label="إحصائيات مؤشرات الأداء" className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6">
         {/* Metric 1: Total KPIs */}
         <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/25 flex items-center gap-3.5 group hover:border-amber-500/50 transition-all">
           <div className="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform">
@@ -328,18 +328,6 @@ export const KpisManagement = ({ isEmbedded = false }) => {
               {statusFilter === 'inactive' ? totalCount : inactiveCount}
             </div>
             <div className="text-[10px] text-rose-400/90 font-bold">متوقفة ومخفية</div>
-          </div>
-        </div>
-
-        {/* Metric 4: System Status */}
-        <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-yellow-500/25 flex items-center gap-3.5 group hover:border-yellow-500/50 transition-all">
-          <div className="p-3 rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] group-hover:scale-110 transition-transform">
-            <Award className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <div className="text-[11px] sm:text-xs font-bold text-zinc-400">منظومة التقييم</div>
-            <div className="text-base sm:text-xl font-black text-white">Swagger Connected</div>
-            <div className="text-[10px] text-yellow-400 font-bold">تقييم المدربين مباشر</div>
           </div>
         </div>
       </section>

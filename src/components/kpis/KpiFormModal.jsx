@@ -13,30 +13,30 @@ import {
 import { kpisService, extractKpiErrorMessage } from '../../services/kpisService';
 import { useToast } from '../../context/ToastContext';
 
-// Suggested Standard Gym KPIs for quick one-click inspiration
+// Suggested Standard Gym KPIs for quick one-click inspiration (all under 30 chars for backend compatibility)
 const QUICK_SUGGESTIONS = [
   {
-    name: 'الالتزام بمواعيد الحصص والورديات',
+    name: 'الالتزام بمواعيد الحصص',
     desc: 'حضور الحصص والورديات المجدولة في الموعد المحدد دون تأخير أو غياب مفاجئ.',
   },
   {
-    name: 'المتابعة البدنية وقياسات المشتركين',
+    name: 'متابعة قياسات المشتركين',
     desc: 'إجراء قياسات الـ InBody الشهرية وتسجيل تطور الأعضاء وتحديث برامجهم التدريبية.',
   },
   {
-    name: 'توجيه الأعضاء والتحفيز داخل الصالة',
+    name: 'توجيه وتحفيز المتدربين',
     desc: 'التفاعل الإيجابي مع المتدربين وتصحيح الأوضاع الخاطئة أثناء أداء التمارين لضمان سلامتهم.',
   },
   {
-    name: 'تجديد الاشتراكات ونسبة رضا الأعضاء',
+    name: 'تجديد الاشتراكات ورضا العضو',
     desc: 'معدل تجديد المتدربين لاشتراكاتهم مع الكابتن ومستوى الرضا العام والتقييمات.',
   },
   {
-    name: 'معايير النظافة وسلامة الأجهزة والمعدات',
+    name: 'نظافة وسلامة الأجهزة',
     desc: 'إعادة الأوزان والدمبلز لأماكنها والحفاظ على سلامة ونظافة منطقة التمرين.',
   },
   {
-    name: 'تصميم خطط وبرامج تدريبية وتغذوية',
+    name: 'تصميم البرامج التدريبية',
     desc: 'ابتكار برامج تدريبية وتغذوية متخصصة ومناسبة لأهداف كل مشترك بشكل احترافي.',
   },
 ];
@@ -90,8 +90,8 @@ export const KpiFormModal = ({ isOpen, onClose, kpi = null, onSuccess }) => {
       newErrors.name = 'يرجى إدخال اسم مؤشر الأداء.';
     } else if (trimmedName.length < 2) {
       newErrors.name = 'اسم المؤشر يجب أن يتكون من حرفين على الأقل.';
-    } else if (trimmedName.length > 150) {
-      newErrors.name = 'اسم المؤشر طويل جداً (الحد الأقصى 150 حرفاً).';
+    } else if (trimmedName.length > 30) {
+      newErrors.name = 'اسم المؤشر يجب ألا يتجاوز 30 حرفاً (وفقاً للنظام).';
     }
 
     const trimmedDesc = formData.description.trim();
@@ -261,8 +261,8 @@ export const KpiFormModal = ({ isOpen, onClose, kpi = null, onSuccess }) => {
                     if (errors.name) setErrors({ ...errors, name: null });
                     if (serverError) setServerError('');
                   }}
-                  placeholder="مثال: الالتزام بمواعيد الحصص، المتابعة البدنية للمشتركين..."
-                  maxLength={150}
+                  placeholder="مثال: الالتزام بمواعيد الحصص، متابعة المشتركين..."
+                  maxLength={30}
                   className={`w-full px-4 py-3 rounded-2xl bg-zinc-900/90 border text-white text-sm placeholder:text-zinc-500 focus:outline-none transition-all ${
                     errors.name
                       ? 'border-rose-500/60 focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
@@ -271,7 +271,7 @@ export const KpiFormModal = ({ isOpen, onClose, kpi = null, onSuccess }) => {
                   disabled={loading}
                 />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500">
-                  {formData.name.length}/150
+                  {formData.name.length}/30
                 </span>
               </div>
               {errors.name && (

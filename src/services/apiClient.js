@@ -437,6 +437,89 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+/**
+ * Central translator from server/FluentValidation errors to clear, friendly Arabic
+ * @param {string} rawMsg
+ * @returns {string}
+ */
+export const translateServerErrorMessage = (rawMsg) => {
+  if (!rawMsg || typeof rawMsg !== 'string') return '';
+  const msg = rawMsg.trim();
+
+  // Physical measurements
+  if (/height.*greater than 0/i.test(msg)) {
+    return 'قيمة الطول يجب أن تكون رقماً موجباً أكبر من صفر (سم).';
+  }
+  if (/weight.*greater than 0/i.test(msg)) {
+    return 'قيمة الوزن يجب أن تكون رقماً موجباً أكبر من صفر (كجم).';
+  }
+  if (/age.*between 5 and 120/i.test(msg) || /age.*between/i.test(msg)) {
+    return 'العمر يجب أن يكون بين 5 و 120 سنة.';
+  }
+  if (/musclepercentage/i.test(msg)) {
+    return 'نسبة العضلات يجب أن تكون بين 0 و 100%.';
+  }
+  if (/fatpercentage/i.test(msg)) {
+    return 'نسبة الدهون يجب أن تكون بين 0 و 100%.';
+  }
+
+  // Name / KPIs
+  if (/name.*must not exceed/i.test(msg)) {
+    const match = msg.match(/\d+/);
+    const limit = match ? match[0] : '30';
+    return `اسم المؤشر يجب ألا يتجاوز ${limit} حرفاً.`;
+  }
+
+  // Identity & Auth
+  if (/email.*already exists|email.*taken|email.*registered/i.test(msg)) {
+    return 'البريد الإلكتروني مسجل بالفعل لمشترك آخر في الجيم.';
+  }
+  if (/phone.*already exists|phone.*taken|phone.*registered/i.test(msg)) {
+    return 'رقم الهاتف مسجل بالفعل لحساب آخر في الجيم.';
+  }
+  if (/code.*already exists|code.*taken/i.test(msg)) {
+    return 'كود العضوية مسجل بالفعل، يرجى توليد أو إدخال كود آخر.';
+  }
+  if (/invalid email or password|bad credentials|AUTH_INVALID_CREDENTIALS/i.test(msg)) {
+    return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+  }
+  if (/email is not verified|AUTH_EMAIL_NOT_VERIFIED/i.test(msg)) {
+    return 'الحساب موجود لكن لم يتم تفعيل البريد الإلكتروني بعد.';
+  }
+  if (/pending for approval|approval/i.test(msg)) {
+    return 'حساب العضو في انتظار موافقة إدارة الجيم (Pending Approval).';
+  }
+
+  // Trainers & Subscriptions
+  if (/trainer.*unavailable/i.test(msg)) {
+    return 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر.';
+  }
+
+  // Lockers
+  if (/locker.*already exists|LOCKER_NUMBER_ALREADY_EXISTS/i.test(msg)) {
+    return 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
+  }
+  if (/locker.*not found|LOCKER_NOT_FOUND/i.test(msg)) {
+    return 'اللوكر المطلوب غير موجود أو تم حذفه.';
+  }
+
+  // General Validation
+  if (/greater.*zero|greaterthanvalidator/i.test(msg)) {
+    return 'القيمة المدخلة يجب أن تكون رقماً موجباً أكبر من صفر.';
+  }
+  if (/passwords do not match|password.*match/i.test(msg)) {
+    return 'كلمتا المرور غير متطابقتين.';
+  }
+  if (/password.*least 6 characters/i.test(msg)) {
+    return 'كلمة المرور يجب أن تتكون من 6 أحرف على الأقل.';
+  }
+  if (/the field (.*) is required|is required/i.test(msg)) {
+    return 'هذا الحقل مطلوب، يرجى استكمال البيانات.';
+  }
+
+  return msg;
+};
+
 // Response Interceptor: Format errors and handle Silent Token Refresh
 apiClient.interceptors.response.use(
   (response) => response,
@@ -454,46 +537,30 @@ apiClient.interceptors.response.use(
       const { data, status } = error.response;
       if (Array.isArray(data.errors) && data.errors.length > 0) {
         const errorDescriptions = data.errors.map((e) => {
-          if (e.code === 'AUTH_INVALID_CREDENTIALS' || e.description?.includes('Invalid Email or password')) {
-            return 'البريد الإلكتروني أو كلمة المرور غير صحيحة، أو هذا الحساب غير موجود على سيرفر wolves.runasp.net';
-          }
-          if (e.code === 'AUTH_EMAIL_NOT_VERIFIED' || e.description?.includes('Email is not verified')) {
-            return 'الحساب موجود لكن لم يتم تفعيل البريد الإلكتروني بكود التحقق بعد.';
-          }
-          if (e.description?.toLowerCase().includes('pending for approval') || e.code?.includes('APPROVAL')) {
-            return 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
-          }
-          if (e.code === 'LOCKER_NUMBER_ALREADY_EXISTS' || e.description?.toLowerCase().includes('already exists')) {
-            return 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
-          }
-          if (e.code === 'LOCKER_NOT_FOUND' || e.description?.toLowerCase().includes('was not found')) {
-            return 'اللوكر المطلوب غير موجود أو تم حذفه.';
-          }
-          if (e.code === 'GreaterThanValidator' || e.description?.toLowerCase().includes('greater than zero')) {
-            return 'رقم اللوكر لازم يكون رقم صحيح وموجب أكبر من صفر.';
-          }
-          if (e.code === 'TRAINER_UNAVAILABLE' || e.description?.toLowerCase().includes('trainer unavailable') || e.description?.toLowerCase().includes('trainer is not available')) {
-            return 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر';
-          }
-          return e.description || e.code;
+          const raw = e.description || e.message || e.code || (typeof e === 'string' ? e : JSON.stringify(e));
+          return translateServerErrorMessage(raw);
         });
-        friendlyMessage = errorDescriptions.join('; ');
-      } else if (data.detail) {
-        if (data.detail.toLowerCase().includes('pending for approval')) {
-          friendlyMessage = 'حسابك في انتظار موافقة إدارة الجيم (Pending Approval). يرجى من إدارة الجيم/الأونر تفعيل الحساب لتتمكن من الدخول.';
-        } else if (data.detail.includes('TRAINER_UNAVAILABLE') || data.detail.toLowerCase().includes('trainer is not available')) {
-          friendlyMessage = 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر';
-        } else if (data.detail.toLowerCase().includes('already exists')) {
-          friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
-        } else {
-          friendlyMessage = data.detail;
+        friendlyMessage = errorDescriptions.join(' • ');
+      } else if (typeof data.errors === 'object' && data.errors !== null) {
+        const msgs = [];
+        Object.values(data.errors).forEach((val) => {
+          if (Array.isArray(val)) {
+            val.forEach((sub) => msgs.push(translateServerErrorMessage(sub)));
+          } else if (typeof val === 'string') {
+            msgs.push(translateServerErrorMessage(val));
+          }
+        });
+        if (msgs.length > 0) {
+          friendlyMessage = msgs.join(' • ');
         }
+      } else if (data.detail) {
+        friendlyMessage = translateServerErrorMessage(data.detail);
       } else if (data.title) {
         if (data.title === 'Unauthorized') friendlyMessage = 'البريد أو كلمة المرور غير صحيحة';
-        else if (data.title === 'Conflict') friendlyMessage = 'رقم اللوكر ده مسجل وموجود بالفعل في السيستم! اختر رقم دولاب تاني.';
-        else friendlyMessage = data.title;
+        else if (data.title === 'Conflict') friendlyMessage = 'البيانات المدخلة موجودة بالفعل في النظام أو تتعارض مع السجل الحالي.';
+        else friendlyMessage = translateServerErrorMessage(data.title);
       } else if (typeof data === 'string') {
-        friendlyMessage = data;
+        friendlyMessage = translateServerErrorMessage(data);
       }
 
       const isDefaultGenericMessage = !friendlyMessage || friendlyMessage === 'حدث خطأ أثناء الاتصال بالسيرفر. يرجى المحاولة لاحقاً.';
@@ -929,22 +996,28 @@ export const customerService = {
    * Direct customer creation from Reception
    */
   async createCustomerDirectly(customerData) {
+    const cleanNum = (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return !isNaN(num) && num > 0 ? num : null;
+    };
+
     const response = await apiClient.post('/api/customers', {
-      name: customerData.name.trim(),
-      email: customerData.email.trim(),
-      phoneNumber: customerData.phoneNumber.trim(),
+      name: customerData.name?.trim() || '',
+      email: customerData.email?.trim() || '',
+      phoneNumber: customerData.phoneNumber?.trim() || '',
       password: customerData.password,
       confirmPassword: customerData.confirmPassword,
       isActive: customerData.isActive ?? true,
-      code: customerData.code.trim(),
-      height: Number(customerData.height) || 0,
-      weight: Number(customerData.weight) || 0,
-      age: Number(customerData.age) || 0,
-      injuries: customerData.injuries || '',
-      chronicDiseases: customerData.chronicDiseases || '',
-      musclePercentage: Number(customerData.musclePercentage) || 0,
-      fatPercentage: Number(customerData.fatPercentage) || 0,
-      notes: customerData.notes || ''
+      code: customerData.code?.trim() || '',
+      height: cleanNum(customerData.height),
+      weight: cleanNum(customerData.weight),
+      age: cleanNum(customerData.age),
+      injuries: customerData.injuries?.trim() || null,
+      chronicDiseases: customerData.chronicDiseases?.trim() || null,
+      musclePercentage: cleanNum(customerData.musclePercentage),
+      fatPercentage: cleanNum(customerData.fatPercentage),
+      notes: customerData.notes?.trim() || null
     });
     return response.data;
   },

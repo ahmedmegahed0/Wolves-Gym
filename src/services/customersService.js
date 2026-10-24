@@ -18,22 +18,28 @@ import apiClient, { customerService } from './apiClient';
  * @param {object} customerData
  */
 export const createCustomerDirectly = async (customerData) => {
+  const cleanNum = (val) => {
+    if (val === '' || val === null || val === undefined) return null;
+    const num = Number(val);
+    return !isNaN(num) && num > 0 ? num : null;
+  };
+
   const response = await apiClient.post('/api/customers', {
-    name: customerData.name.trim(),
-    email: customerData.email.trim(),
-    phoneNumber: customerData.phoneNumber.trim(),
+    name: customerData.name?.trim() || '',
+    email: customerData.email?.trim() || '',
+    phoneNumber: customerData.phoneNumber?.trim() || '',
     password: customerData.password,
     confirmPassword: customerData.confirmPassword,
     isActive: customerData.isActive ?? true,
-    code: customerData.code.trim(),
-    height: Number(customerData.height) || 0,
-    weight: Number(customerData.weight) || 0,
-    age: Number(customerData.age) || 0,
-    injuries: customerData.injuries || '',
-    chronicDiseases: customerData.chronicDiseases || '',
-    musclePercentage: Number(customerData.musclePercentage) || 0,
-    fatPercentage: Number(customerData.fatPercentage) || 0,
-    notes: customerData.notes || ''
+    code: customerData.code?.trim() || '',
+    height: cleanNum(customerData.height),
+    weight: cleanNum(customerData.weight),
+    age: cleanNum(customerData.age),
+    injuries: customerData.injuries?.trim() || null,
+    chronicDiseases: customerData.chronicDiseases?.trim() || null,
+    musclePercentage: cleanNum(customerData.musclePercentage),
+    fatPercentage: cleanNum(customerData.fatPercentage),
+    notes: customerData.notes?.trim() || null
   });
   return response.data;
 };
