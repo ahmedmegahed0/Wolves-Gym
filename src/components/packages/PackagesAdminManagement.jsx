@@ -23,7 +23,8 @@ import {
   X,
   Filter,
   UserCheck,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { 
   packageService, 
@@ -532,41 +533,39 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                         {pkg.description ? pkg.description.replace(/[\n\r]+/g, ' • ') : '—'}
                       </td>
 
-                      {/* Active Status Badge */}
+                      {/* Active Status Toggle Switch (Status Toggle) */}
                       <td className="px-5 py-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-                            pkg.isActive !== false
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              pkg.isActive !== false ? 'bg-emerald-400' : 'bg-red-400'
+                        <div className="inline-flex flex-col items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            dir="ltr"
+                            disabled={isToggling}
+                            onClick={() => handleToggleStatus(pkg)}
+                            aria-label={`تغيير حالة باقة ${pkg.name}`}
+                            className={`relative inline-flex h-6 w-11 shrink-0 p-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500/40 disabled:opacity-50 ${
+                              pkg.isActive !== false ? 'bg-purple-600 hover:bg-purple-500' : 'bg-zinc-700 hover:bg-zinc-600'
                             }`}
-                          />
-                          <span>{pkg.isActive !== false ? 'نشطة ومتاحة' : 'معطلة / موقوفة'}</span>
-                        </span>
+                            title={pkg.isActive !== false ? 'الباقة نشطة (اضغط لإيقافها)' : 'الباقة معطلة (اضغط لتنشيطها)'}
+                          >
+                            <span
+                              className={`pointer-events-none inline-flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                pkg.isActive !== false ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            >
+                              {isToggling && (
+                                <Loader2 className="w-3 h-3 text-purple-600 animate-spin" />
+                              )}
+                            </span>
+                          </button>
+                          <span className={`text-[10px] font-bold ${pkg.isActive !== false ? 'text-purple-400' : 'text-zinc-500'}`}>
+                            {pkg.isActive !== false ? 'نشطة' : 'معطلة'}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Quick Actions */}
                       <td className="px-5 py-4 text-left">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Toggle Switch Button (Power Button Logic) */}
-                          <button
-                            type="button"
-                            disabled={isToggling}
-                            onClick={() => handleToggleStatus(pkg)}
-                            className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                              pkg.isActive !== false
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                                : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
-                            }`}
-                            title={pkg.isActive !== false ? 'الباقة نشطة (اضغط لإيقافها)' : 'الباقة معطلة (اضغط لتنشيطها)'}
-                          >
-                            <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                          </button>
 
                           {/* Edit Button */}
                           <button
@@ -623,16 +622,27 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                       </span>
                       <h4 className="font-bold text-white text-sm">{pkg.name}</h4>
                     </div>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        pkg.isActive !== false
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                      <span>{pkg.isActive !== false ? 'نشطة ومتاحة' : 'معطلة / موقوفة'}</span>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        dir="ltr"
+                        disabled={isToggling}
+                        onClick={() => handleToggleStatus(pkg)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 p-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                          pkg.isActive !== false ? 'bg-purple-600' : 'bg-zinc-700'
+                        }`}
+                        title={pkg.isActive !== false ? 'إيقاف الباقة' : 'تنشيط الباقة'}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                            pkg.isActive !== false ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-[10px] font-bold ${pkg.isActive !== false ? 'text-purple-400' : 'text-zinc-500'}`}>
+                        {pkg.isActive !== false ? 'نشطة' : 'معطلة'}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">

@@ -497,6 +497,12 @@ export const translateServerErrorMessage = (rawMsg) => {
   if (/trainer.*unavailable/i.test(msg)) {
     return 'هذا المدرب غير متاح حالياً لاستقبال اشتراكات جديدة، يرجى اختيار مدرب آخر.';
   }
+  if (/already.*evaluat|evaluation.*already.*exist|already.*submitted/i.test(msg)) {
+    return 'تم تسجيل تقييم لهذا الكابتن اليوم بالفعل. يمكنك تعديل تقييم اليوم بدلاً من إنشاء تقييم جديد.';
+  }
+  if (/score.*between|score.*inclusivebetween|score.*must be/i.test(msg)) {
+    return 'درجة التقييم يجب أن تكون رقماً صحيحاً ضمن النطاق المسموح به (1 إلى 10).';
+  }
 
   // Lockers
   if (/locker.*already exists|LOCKER_NUMBER_ALREADY_EXISTS/i.test(msg)) {

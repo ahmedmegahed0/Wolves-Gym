@@ -14,7 +14,7 @@ import {
   User,
   ShieldCheck
 } from 'lucide-react';
-import { kpisService } from '../../services/kpisService';
+import { kpisService, extractKpiErrorMessage } from '../../services/kpisService';
 import { trainersService } from '../../services/trainersService';
 import { useToast } from '../../context/ToastContext';
 
@@ -23,7 +23,7 @@ import { useToast } from '../../context/ToastContext';
  * Restricted to Operations Manager / Management.
  * Dynamically loads active KPIs from GET /api/Kpis?IsActive=true
  * Allows scoring (1-10 Slider / Star-like rating) + comment for each KPI item
- * Submits to POST /api/Trainers/{id}/kpi-evaluations
+ * Submits to POST /api/Trainers/{id}/kpi-evaluations (or PUT if evaluated today)
  */
 export const TrainerKpiEvaluationModal = ({ 
   isOpen, 
@@ -36,38 +36,88 @@ export const TrainerKpiEvaluationModal = ({
   const [kpis, setKpis] = useState([]);
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isExistingToday, setIsExistingToday] = useState(false);
+  const [existingDate, setExistingDate] = useState('');
   
   // Evaluation entries keyed by kpiId: { score: number, comment: string }
   const [evaluations, setEvaluations] = useState({});
   const [generalError, setGeneralError] = useState('');
 
-  const trainerId = trainer?.id || trainer?.trainerId;
+  const trainerId = trainer?.trainerId || trainer?.id;
 
-  // Load Active KPIs whenever modal opens
+  const getTodayIso = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // Load Active KPIs and check today's evaluation whenever modal opens
   useEffect(() => {
     if (!isOpen || !trainerId) return;
 
     let isMounted = true;
-    const fetchActiveKpis = async () => {
+    const fetchActiveKpisAndDaily = async () => {
       setLoadingKpis(true);
       setGeneralError('');
+      setIsExistingToday(false);
+
+      const todayStr = getTodayIso();
+      setExistingDate(todayStr);
+
       try {
-        const res = await kpisService.getKpis({ isActive: true, pageSize: 50 });
-        const list = Array.isArray(res?.data) ? res.data : [];
+        const [kpisRes, todayDailyRes] = await Promise.allSettled([
+          kpisService.getKpis({ isActive: true, pageSize: 50 }),
+          trainersService.getTrainerDailyKpiEvaluations(trainerId, { date: todayStr }),
+        ]);
+
+        const list = kpisRes.status === 'fulfilled' && Array.isArray(kpisRes.value?.data) 
+          ? kpisRes.value.data 
+          : [];
+
+        let existingScoresMap = {};
+        let foundToday = false;
+
+        if (todayDailyRes.status === 'fulfilled' && todayDailyRes.value) {
+          const dailyData = Array.isArray(todayDailyRes.value?.data)
+            ? todayDailyRes.value.data
+            : Array.isArray(todayDailyRes.value)
+              ? todayDailyRes.value
+              : [];
+
+          const match = dailyData.find((d) => d.date?.startsWith(todayStr));
+          if (match && Array.isArray(match.scores) && match.scores.length > 0) {
+            foundToday = true;
+            match.scores.forEach((s) => {
+              existingScoresMap[s.kpiId] = {
+                score: Number(s.score) || 8,
+                comment: s.comment || '',
+              };
+            });
+          }
+        }
+
         if (isMounted) {
           setKpis(list);
-          // Initialize scores with default 8/10 and empty comment
+          setIsExistingToday(foundToday);
+
+          // Initialize scores with existing scores if today was evaluated, or default 8/10
           const initialMap = {};
           list.forEach((kpi) => {
-            initialMap[kpi.id] = {
-              score: 8,
-              comment: '',
-            };
+            if (existingScoresMap[kpi.id]) {
+              initialMap[kpi.id] = existingScoresMap[kpi.id];
+            } else {
+              initialMap[kpi.id] = {
+                score: 8,
+                comment: '',
+              };
+            }
           });
           setEvaluations(initialMap);
         }
       } catch (err) {
-        console.error('Failed to load active KPIs for evaluation:', err);
+        console.error('Failed to load active KPIs or existing evaluation:', err);
         if (isMounted) {
           setGeneralError('تعذر جلب معايير التقييم النشطة من السيرفر.');
           toastError('فشل تحميل مؤشرات الأداء', 'يرجى التأكد من تفعيل معايير التقييم أولاً.');
@@ -77,7 +127,7 @@ export const TrainerKpiEvaluationModal = ({
       }
     };
 
-    fetchActiveKpis();
+    fetchActiveKpisAndDaily();
 
     return () => {
       isMounted = false;
@@ -122,6 +172,7 @@ export const TrainerKpiEvaluationModal = ({
 
     setSubmitting(true);
     setGeneralError('');
+    const todayStr = existingDate || getTodayIso();
 
     try {
       const scoresPayload = kpis.map((kpi) => {
@@ -129,18 +180,66 @@ export const TrainerKpiEvaluationModal = ({
         return {
           kpiId: Number(kpi.id),
           score: Number(item.score),
-          comment: item.comment ? String(item.comment).trim() : null,
+          comment: item.comment && String(item.comment).trim() ? String(item.comment).trim() : null,
         };
       });
 
-      await trainersService.submitTrainerKpiEvaluations(trainerId, {
-        scores: scoresPayload,
-      });
+      if (isExistingToday) {
+        // Update existing evaluation via PUT
+        await trainersService.updateTrainerKpiEvaluations(trainerId, {
+          date: todayStr,
+          scores: scoresPayload,
+        });
 
-      toastSuccess(
-        'تم تسجيل تقييم الكابتن بنجاح',
-        `تم حفظ تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
-      );
+        toastSuccess(
+          'تم تحديث تقييم الكابتن بنجاح',
+          `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+        );
+      } else {
+        // Submit new evaluation via POST
+        try {
+          await trainersService.submitTrainerKpiEvaluations(trainerId, {
+            scores: scoresPayload,
+          });
+
+          toastSuccess(
+            'تم تسجيل تقييم الكابتن بنجاح',
+            `تم حفظ تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+          );
+        } catch (postErr) {
+          // If server rejected with 400 or 409 because an evaluation already exists today, fallback to PUT
+          const errDetail = (
+            postErr.friendlyMessage || 
+            postErr.response?.data?.detail || 
+            postErr.response?.data?.title || 
+            postErr.message || 
+            ''
+          ).toLowerCase();
+
+          const isAlreadyExists = 
+            postErr.response?.status === 409 ||
+            errDetail.includes('already exist') ||
+            errDetail.includes('already submit') ||
+            errDetail.includes('بالفعل') ||
+            errDetail.includes('مسجل مسبقاً');
+
+          if (isAlreadyExists) {
+            console.info('Evaluation already exists for today. Attempting PUT update...');
+            await trainersService.updateTrainerKpiEvaluations(trainerId, {
+              date: todayStr,
+              scores: scoresPayload,
+            });
+
+            setIsExistingToday(true);
+            toastSuccess(
+              'تم تحديث تقييم الكابتن بنجاح',
+              `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+            );
+          } else {
+            throw postErr;
+          }
+        }
+      }
 
       if (onSuccess) {
         onSuccess();
@@ -148,7 +247,16 @@ export const TrainerKpiEvaluationModal = ({
       onClose();
     } catch (err) {
       console.error('Submit KPI Evaluation error:', err);
-      const msg = err.response?.data?.message || err.message || 'حدث خطأ أثناء إرسال التقييم للسيرفر.';
+      console.error('Error response details:', err.response?.data);
+
+      const msg = 
+        err.friendlyMessage || 
+        extractKpiErrorMessage(err, 'حدث خطأ أثناء إرسال التقييم للسيرفر.') ||
+        err.response?.data?.detail ||
+        err.response?.data?.title ||
+        err.message || 
+        'حدث خطأ أثناء إرسال التقييم للسيرفر.';
+
       setGeneralError(msg);
       toastError('فشل حفظ التقييم', msg);
     } finally {
@@ -209,13 +317,28 @@ export const TrainerKpiEvaluationModal = ({
           <div className="my-3.5 p-3 rounded-2xl bg-zinc-900/80 border border-amber-500/20 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold text-zinc-300">المتوسط الحالي لجلسة التقييم:</span>
+              <span className="text-xs font-bold text-zinc-300">
+                {isExistingToday ? 'المتوسط المعدل لتقييم اليوم:' : 'المتوسط الحالي لجلسة التقييم:'}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-lg font-black text-amber-400 font-mono">{currentAverage}</span>
               <span className="text-xs text-zinc-500 font-mono">/ 10</span>
             </div>
           </div>
+
+          {/* Existing Today Notice */}
+          {isExistingToday && (
+            <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>يوجد تقييم مسجل للكابتن اليوم ({existingDate}). يمكنك تعديل الدرجات وحفظ التحديثات مباشرة.</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
+                تحديث
+              </span>
+            </div>
+          )}
 
           {/* Error Notice */}
           {generalError && (
@@ -339,6 +462,11 @@ export const TrainerKpiEvaluationModal = ({
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-black" />
                       <span>جاري حفظ التقييم...</span>
+                    </>
+                  ) : isExistingToday ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-black" />
+                      <span>تحديث وحفظ تقييم اليوم</span>
                     </>
                   ) : (
                     <>

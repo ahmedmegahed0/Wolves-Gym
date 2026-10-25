@@ -50,6 +50,10 @@ import EmployeesManagementPage from './employees/EmployeesManagementPage';
 import { canManageEmployees } from '../services/employeesService';
 import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
 import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
+import CurrentlyInGymPage from './dashboard/CurrentlyInGymPage';
+import TodayAttendancesPage from './dashboard/TodayAttendancesPage';
+import OccupiedLockersPage from './dashboard/OccupiedLockersPage';
+import PendingSubscriptionsPage from './dashboard/PendingSubscriptionsPage';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -351,7 +355,20 @@ export const AttendanceDashboard = ({ initialSection }) => {
     },
   ];
 
-  const activeNavItem = navItems.find((item) => item.id === mainTab) || navItems[0];
+  const activeNavItem = useMemo(() => {
+    switch (mainTab) {
+      case 'currently-in-gym':
+        return { label: 'الوحوش في الجيم الآن', icon: Users };
+      case 'today-attendances':
+        return { label: 'سجل دخول اليوم', icon: Activity };
+      case 'occupied-lockers':
+        return { label: 'اللوكرات المشغولة حالياً', icon: KeyRound };
+      case 'pending-subscriptions':
+        return { label: 'الاشتراكات والطلبات المعلقة', icon: ShieldCheck };
+      default:
+        return navItems.find((item) => item.id === mainTab) || navItems[0];
+    }
+  }, [mainTab, navItems]);
 
   return (
     <div dir="rtl" className="min-h-screen bg-black bg-wolf-mesh text-zinc-100 font-cairo flex relative overflow-x-hidden">
@@ -769,51 +786,107 @@ export const AttendanceDashboard = ({ initialSection }) => {
               >
                 {/* 4 Metric Quick Stat Cards */}
                 <section aria-label="كروت الإحصائيات العامة" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-                  {/* Card 1 */}
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/25 hover:border-amber-500/50 transition-all flex items-center gap-3 sm:gap-4 group">
-                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
+                  {/* Card 1: Currently In Gym */}
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('currently-in-gym')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('currently-in-gym')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/25 hover:border-amber-500/70 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+                    title="اضغط لعرض قائمة الأعضاء المتواجدين في الجيم الآن بالتفصيل وخيار الخروج الفوري"
+                  >
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] group-hover:scale-110 group-hover:bg-amber-500/20 transition-all flex-shrink-0">
                       <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">في الجيم الآن</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate flex items-center justify-between">
+                        <span>في الجيم الآن</span>
+                        <ChevronLeft className="w-3.5 h-3.5 text-amber-400 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
+                      </div>
                       <div className="text-xl sm:text-3xl font-black text-white font-mono">{currentOccupancy}</div>
-                      <div className="text-[10px] text-amber-400 font-bold truncate">وحش بالتمرين</div>
+                      <div className="text-[10px] text-amber-400 font-bold truncate flex items-center justify-between">
+                        <span>وحش بالتمرين</span>
+                        <span className="text-[9px] text-zinc-500 hidden sm:inline group-hover:text-amber-300">عرض القائمة ←</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Card 2 */}
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-yellow-500/25 hover:border-yellow-500/50 transition-all flex items-center gap-3 sm:gap-4 group">
-                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
+                  {/* Card 2: Today Attendances */}
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('today-attendances')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('today-attendances')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-yellow-500/25 hover:border-yellow-500/70 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+                    title="اضغط لعرض سجل حضور وجلسات اليوم بالكامل"
+                  >
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-yellow-500/0 via-yellow-400 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] group-hover:scale-110 group-hover:bg-yellow-500/20 transition-all flex-shrink-0">
                       <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">دخول اليوم</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate flex items-center justify-between">
+                        <span>دخول اليوم</span>
+                        <ChevronLeft className="w-3.5 h-3.5 text-yellow-400 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
+                      </div>
                       <div className="text-xl sm:text-3xl font-black text-white font-mono">{totalCheckInsToday}</div>
-                      <div className="text-[10px] text-yellow-400 font-bold truncate">جلسة تمرين</div>
+                      <div className="text-[10px] text-yellow-400 font-bold truncate flex items-center justify-between">
+                        <span>جلسة تمرين</span>
+                        <span className="text-[9px] text-zinc-500 hidden sm:inline group-hover:text-yellow-300">عرض السجل ←</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Card 3 */}
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/25 hover:border-amber-500/50 transition-all flex items-center gap-3 sm:gap-4 group">
-                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-600/30 text-amber-500 shadow-[0_0_15px_rgba(217,119,6,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
+                  {/* Card 3: Occupied Lockers */}
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('occupied-lockers')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('occupied-lockers')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/25 hover:border-amber-500/70 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+                    title="اضغط لعرض قائمة اللوكرات المشغولة حالياً مع إمكانية الإخلاء الفوري"
+                  >
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-600/30 text-amber-500 shadow-[0_0_15px_rgba(217,119,6,0.2)] group-hover:scale-110 group-hover:bg-amber-600/20 transition-all flex-shrink-0">
                       <KeyRound className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">لوكرات مشغولة</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate flex items-center justify-between">
+                        <span>لوكرات مشغولة</span>
+                        <ChevronLeft className="w-3.5 h-3.5 text-amber-400 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
+                      </div>
                       <div className="text-xl sm:text-3xl font-black text-white font-mono">{occupiedLockerCount}</div>
-                      <div className="text-[10px] text-amber-400 font-bold truncate">دولاب مسلم للأعضاء</div>
+                      <div className="text-[10px] text-amber-400 font-bold truncate flex items-center justify-between">
+                        <span>دولاب مسلم للأعضاء</span>
+                        <span className="text-[9px] text-zinc-500 hidden sm:inline group-hover:text-amber-300">عرض اللوكرات ←</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Card 4 */}
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-emerald-500/25 hover:border-emerald-500/50 transition-all flex items-center gap-3 sm:gap-4 group">
-                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-110 transition-transform flex-shrink-0">
+                  {/* Card 4: Pending Subscriptions */}
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('pending-subscriptions')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('pending-subscriptions')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-emerald-500/25 hover:border-emerald-500/70 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+                    title="اضغط لعرض طلبات الاشتراكات والحسابات المعلقة والموافقة عليها بنقرة واحدة"
+                  >
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all flex-shrink-0">
                       <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate">الاشتراكات المعلقة</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate flex items-center justify-between">
+                        <span>الاشتراكات المعلقة</span>
+                        <ChevronLeft className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
+                      </div>
                       <div className="text-xl sm:text-3xl font-black text-emerald-400 font-mono">{pendingCount}</div>
-                      <div className="text-[10px] text-emerald-400 font-bold truncate">في انتظار التفعيل</div>
+                      <div className="text-[10px] text-emerald-400 font-bold truncate flex items-center justify-between">
+                        <span>في انتظار التفعيل</span>
+                        <span className="text-[9px] text-zinc-500 hidden sm:inline group-hover:text-emerald-300">مراجعة وتفعيل ←</span>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -894,7 +967,14 @@ export const AttendanceDashboard = ({ initialSection }) => {
               >
                 {/* Metric Quick Stats Bar */}
                 <section aria-label="إحصائيات الجيم" className="grid grid-cols-3 gap-2 sm:gap-5">
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right">
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('currently-in-gym')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('currently-in-gym')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-amber-500/60 transition-all flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    title="عرض الأعضاء في الجيم الآن"
+                  >
                     <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                       <Users className="w-4 h-4 sm:w-6 sm:h-6" />
                     </div>
@@ -905,7 +985,14 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     </div>
                   </div>
 
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right">
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('today-attendances')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('today-attendances')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-yellow-500/60 transition-all flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    title="عرض سجل دخول اليوم"
+                  >
                     <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-yellow-500/30 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                       <Activity className="w-4 h-4 sm:w-6 sm:h-6" />
                     </div>
@@ -916,7 +1003,14 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     </div>
                   </div>
 
-                  <div className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right">
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMainTab('occupied-lockers')}
+                    onKeyDown={(e) => e.key === 'Enter' && setMainTab('occupied-lockers')}
+                    className="wolf-glass rounded-2xl sm:rounded-3xl p-3 sm:p-5 border border-amber-500/20 hover:border-amber-600/60 transition-all flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-right cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                    title="عرض اللوكرات المشغولة حالياً"
+                  >
                     <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-600/30 text-amber-500 shadow-[0_0_15px_rgba(217,119,6,0.2)]">
                       <KeyRound className="w-4 h-4 sm:w-6 sm:h-6" />
                     </div>
@@ -1160,6 +1254,81 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 transition={{ duration: 0.2 }}
               >
                 <EmployeesManagementPage isEmbedded={true} />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 9: CURRENTLY IN GYM (الوحوش في الجيم الآن)           */}
+            {/* ======================================================== */}
+            {mainTab === 'currently-in-gym' && (
+              <motion.div
+                key="currently-in-gym-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CurrentlyInGymPage
+                  onBack={() => setMainTab('cards')}
+                  onCheckInNew={() => setMainTab('attendance')}
+                  onCheckOutSuccess={handleCheckOutSuccess}
+                />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 10: TODAY ATTENDANCES (سجل دخول اليوم)              */}
+            {/* ======================================================== */}
+            {mainTab === 'today-attendances' && (
+              <motion.div
+                key="today-attendances-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TodayAttendancesPage
+                  onBack={() => setMainTab('cards')}
+                  onCheckInNew={() => setMainTab('attendance')}
+                  onCheckOutSuccess={handleCheckOutSuccess}
+                />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 11: OCCUPIED LOCKERS (اللوكرات المشغولة حالياً)       */}
+            {/* ======================================================== */}
+            {mainTab === 'occupied-lockers' && (
+              <motion.div
+                key="occupied-lockers-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <OccupiedLockersPage
+                  onBack={() => setMainTab('cards')}
+                  onNavigateLockers={() => setMainTab('lockers')}
+                  onCheckOutSuccess={handleCheckOutSuccess}
+                />
+              </motion.div>
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW 12: PENDING SUBSCRIPTIONS (الاشتراكات المعلقة)       */}
+            {/* ======================================================== */}
+            {mainTab === 'pending-subscriptions' && (
+              <motion.div
+                key="pending-subscriptions-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <PendingSubscriptionsPage
+                  onBack={() => setMainTab('cards')}
+                  onPendingCountChange={(cnt) => setPendingCount(cnt)}
+                />
               </motion.div>
             )}
 
