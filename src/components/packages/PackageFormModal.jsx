@@ -277,7 +277,7 @@ export const PackageFormModal = ({
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-xs font-black text-white">خاصة بكابتن</span>
+                    <span className="text-xs font-black text-white">برايفت</span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono">1</span>
                   </div>
                   <p className="text-[10px] text-zinc-400 leading-tight">

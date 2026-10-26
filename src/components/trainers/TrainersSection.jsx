@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import TrainerCard from './TrainerCard';
 import TrainersAdminManagement from './TrainersAdminManagement';
+import TrainerPackagesModal from './TrainerPackagesModal';
 import { trainerService, getRoleMeta } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -61,6 +62,9 @@ export const TrainersSection = ({
 
   const { error: toastError, success: toastSuccess } = useToast();
 
+  // Selected trainer for private packages modal
+  const [selectedTrainerModal, setSelectedTrainerModal] = useState(null);
+
   // Query & Filter states for Public Cards View
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +72,6 @@ export const TrainersSection = ({
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
   const [activeSpecialty, setActiveSpecialty] = useState('all');
-  const [sortBy, setSortBy] = useState('');
 
   // Pagination states
   const [pageNumber, setPageNumber] = useState(1);
@@ -86,7 +89,6 @@ export const TrainersSection = ({
         pageNumber,
         pageSize,
         search: debouncedSearch.trim(),
-        sortBy,
         signal,
       });
 
@@ -103,7 +105,7 @@ export const TrainersSection = ({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, debouncedSearch, sortBy, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, toastError]);
 
   // Trigger fetch with cancellation of in-flight obsolete queries
   useEffect(() => {
@@ -180,36 +182,6 @@ export const TrainersSection = ({
                 <span>الرئيسية</span>
               </button>
 
-              {/* View Switcher for Staff */}
-              {canManage && (
-                <div className="flex items-center gap-1.5 bg-zinc-950/90 border border-amber-500/20 rounded-2xl p-1.5 shadow-md">
-                  <button
-                    type="button"
-                    onClick={() => setActiveView('cards')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
-                      activeView === 'cards'
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <Grid className="w-3.5 h-3.5" />
-                    <span>كروت الكباتن</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveView('management')}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
-                      activeView === 'management'
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <Table className="w-3.5 h-3.5" />
-                    <span>جدول الإدارة</span>
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -231,33 +203,6 @@ export const TrainersSection = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {canManage && (
-              <div className="flex items-center gap-1 bg-zinc-950 border border-amber-500/20 rounded-xl p-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveView('cards')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    activeView === 'cards'
-                      ? 'bg-amber-500 text-black'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  الكروت
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveView('management')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    activeView === 'management'
-                      ? 'bg-amber-500 text-black'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  جدول الإدارة
-                </button>
-              </div>
-            )}
-
             {activeView === 'cards' && (
               <button
                 type="button"
@@ -284,7 +229,7 @@ export const TrainersSection = ({
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            <TrainersAdminManagement onSwitchToCards={() => setActiveView('cards')} />
+            <TrainersAdminManagement />
           </motion.div>
         ) : (
           <motion.div
@@ -416,7 +361,7 @@ export const TrainersSection = ({
                   <TrainerCard
                     key={trainer.id || trainer.trainerId}
                     trainer={trainer}
-                    onSelect={onSelectTrainer}
+                    onSelect={(t) => onSelectTrainer ? onSelectTrainer(t) : setSelectedTrainerModal(t)}
                   />
                 ))}
               </div>
@@ -471,6 +416,13 @@ export const TrainersSection = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Trainer Private Packages Modal */}
+      <TrainerPackagesModal
+        isOpen={Boolean(selectedTrainerModal)}
+        onClose={() => setSelectedTrainerModal(null)}
+        trainer={selectedTrainerModal}
+      />
     </div>
   );
 };

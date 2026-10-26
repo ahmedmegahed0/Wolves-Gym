@@ -27,7 +27,6 @@ export const trainersService = {
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
     if (search && search.trim()) query.append('Search', search.trim());
-    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     try {
       const response = await apiClient.get(`/api/Trainers?${query.toString()}`, { signal });
@@ -141,7 +140,6 @@ export const trainersService = {
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
     if (search && search.trim()) query.append('Search', search.trim());
-    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     try {
       const response = await apiClient.get(`/api/Trainers/management?${query.toString()}`, { signal });
@@ -264,7 +262,6 @@ export const trainersService = {
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
     if (search && search.trim()) query.append('Search', search.trim());
-    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     const response = await apiClient.get(`/api/Trainers/${id}/customers?${query.toString()}`, { signal });
     const payload = response.data;
@@ -360,7 +357,6 @@ export const trainersService = {
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
     if (search && search.trim()) query.append('Search', search.trim());
-    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     const response = await apiClient.get(`/api/Trainers/${id}/kpi-evaluations?${query.toString()}`, { signal });
     return response.data;
@@ -380,7 +376,6 @@ export const trainersService = {
     if (pageNumber) query.append('PageNumber', String(pageNumber));
     if (pageSize) query.append('PageSize', String(pageSize));
     if (search && search.trim()) query.append('Search', search.trim());
-    if (sortBy && sortBy.trim()) query.append('SortBy', sortBy.trim());
 
     const response = await apiClient.get(`/api/Trainers/${id}/kpi-evaluations/daily?${query.toString()}`, { signal });
     const payload = response.data;

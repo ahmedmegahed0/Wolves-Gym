@@ -37,7 +37,6 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
   // Filters & Pagination State
   const [activeTab, setActiveTab] = useState('1'); // '1' = Approved/Active members by default
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -83,7 +82,6 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
         pageNumber,
         pageSize,
         search: searchQuery,
-        sortBy,
         signal,
       });
 
@@ -103,7 +101,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeTab, pageNumber, pageSize, searchQuery, sortBy, toastError]);
+  }, [activeTab, pageNumber, pageSize, searchQuery, toastError]);
 
   // Initial & Dependency Fetch with in-flight cancellation
   useEffect(() => {
@@ -396,18 +394,6 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                         {/* Actions */}
                         <td className="py-4 px-5">
                           <div className="flex items-center justify-center gap-1.5">
-                            {/* Subscribe to Package Button */}
-                            {onOpenNewSubscription && (
-                              <button
-                                type="button"
-                                onClick={() => onOpenNewSubscription(c)}
-                                className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1 hover:scale-105 active:scale-95"
-                                title="تسجيل أو تجديد اشتراك في باقة تدريب لهذا العضو"
-                              >
-                                <Crown className="w-3.5 h-3.5 text-amber-400 group-hover:text-black" />
-                                <span>اشتراك باقة</span>
-                              </button>
-                            )}
 
                             {/* Accept button for pending/rejected */}
                             {Number(c.approvalStatus) !== 1 && (
@@ -510,16 +496,6 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
 
                     {/* Action Buttons Row */}
                     <div className="flex flex-wrap items-center gap-2 pt-1">
-                      {onOpenNewSubscription && (
-                        <button
-                          type="button"
-                          onClick={() => onOpenNewSubscription(c)}
-                          className="flex-1 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                        >
-                          <Crown className="w-3.5 h-3.5" />
-                          <span>اشتراك باقة</span>
-                        </button>
-                      )}
 
                       {Number(c.approvalStatus) !== 1 && (
                         <button

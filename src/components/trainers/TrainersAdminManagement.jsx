@@ -377,7 +377,6 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
   const debouncedSearch = useDebounce(search, 350);
   const [isActiveFilter, setIsActiveFilter] = useState('all'); // 'all' | 'true' | 'false'
   const [isAvailableFilter, setIsAvailableFilter] = useState('all'); // 'all' | 'true' | 'false'
-  const [sortBy, setSortBy] = useState('');
 
   // Pagination
   const [pageNumber, setPageNumber] = useState(1);
@@ -424,7 +423,6 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
         pageNumber,
         pageSize,
         search: debouncedSearch.trim(),
-        sortBy,
       });
 
       setTrainers(res.data || []);
@@ -437,7 +435,7 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, debouncedSearch, isActiveFilter, isAvailableFilter, sortBy, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, isActiveFilter, isAvailableFilter, toastError]);
 
   useEffect(() => {
     fetchTrainers();
@@ -544,16 +542,6 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
             >
               <UserPlus className="w-4 h-4 text-black" />
               <span>+ إضافة كابتن جديد</span>
-            </button>
-          )}
-
-          {onSwitchToCards && (
-            <button
-              type="button"
-              onClick={onSwitchToCards}
-              className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
-            >
-              عرض كروت الكباتن الرياضية
             </button>
           )}
         </div>

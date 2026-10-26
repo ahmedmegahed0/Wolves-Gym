@@ -1245,8 +1245,8 @@ export const getPackageTypeMeta = (type) => {
       return {
         type: 1,
         key: 'Private',
-        label: 'خاصة بكابتن',
-        subLabel: 'تدريب فردي مخصص (PT)',
+        label: 'برايفت',
+        subLabel: 'تدريب فردي مخصص (Private)',
         badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
         textColor: 'text-amber-400',
       };

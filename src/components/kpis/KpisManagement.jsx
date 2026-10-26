@@ -32,18 +32,6 @@ const STATUS_FILTERS = [
   { id: 'active', label: 'المفعلة فقط' },
   { id: 'inactive', label: 'المعطلة فقط' },
 ];
-
-/**
- * Sort options for KPIs
- */
-const SORT_OPTIONS = [
-  { id: '', label: 'الترتيب الافتراضي' },
-  { id: 'createdAt_desc', label: 'الأحدث إضافة' },
-  { id: 'createdAt_asc', label: 'الأقدم إضافة' },
-  { id: 'name_asc', label: 'الاسم (أ - ي)' },
-  { id: 'name_desc', label: 'الاسم (ي - أ)' },
-];
-
 /**
  * KpisManagement Component
  * Comprehensive management dashboard and data table for KPIs Module.
@@ -62,7 +50,6 @@ export const KpisManagement = ({ isEmbedded = false }) => {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 350);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'inactive'
-  const [sortBy, setSortBy] = useState('');
 
   // Pagination states connected to API
   const [pageNumber, setPageNumber] = useState(1);
@@ -97,7 +84,6 @@ export const KpisManagement = ({ isEmbedded = false }) => {
             pageNumber,
             pageSize,
             search: debouncedSearch.trim(),
-            sortBy,
           },
           { signal }
         );
@@ -118,7 +104,7 @@ export const KpisManagement = ({ isEmbedded = false }) => {
         setRefreshing(false);
       }
     },
-    [pageNumber, pageSize, debouncedSearch, statusFilter, sortBy, toastError]
+    [pageNumber, pageSize, debouncedSearch, statusFilter, toastError]
   );
 
   // Effect to load data
@@ -188,15 +174,9 @@ export const KpisManagement = ({ isEmbedded = false }) => {
     setPageNumber(1);
   };
 
-  const handleSortChange = (val) => {
-    setSortBy(val);
-    setPageNumber(1);
-  };
-
   const handleResetFilters = () => {
     setSearch('');
     setStatusFilter('all');
-    setSortBy('');
     setPageNumber(1);
   };
 
@@ -209,7 +189,7 @@ export const KpisManagement = ({ isEmbedded = false }) => {
     return kpis.filter((k) => k.isActive === false).length;
   }, [kpis]);
 
-  const hasActiveFilters = Boolean(search || statusFilter !== 'all' || sortBy);
+  const hasActiveFilters = Boolean(search || statusFilter !== 'all');
 
   const formatDate = (isoString) => {
     if (!isoString) return '—';

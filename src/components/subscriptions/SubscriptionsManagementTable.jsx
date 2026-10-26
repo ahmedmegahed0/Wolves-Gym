@@ -63,7 +63,6 @@ export const SubscriptionsManagementTable = ({
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 1 | 2 | 3 | 4 | 5
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [sortBy, setSortBy] = useState('');
 
   // Modals state
   const [selectedSubForDetails, setSelectedSubForDetails] = useState(null);
@@ -83,7 +82,6 @@ export const SubscriptionsManagementTable = ({
         Search: debouncedSearch,
         PageNumber: pageNumber,
         PageSize: pageSize,
-        SortBy: sortBy
       });
 
       setSubscriptions(res.items || []);
@@ -95,7 +93,7 @@ export const SubscriptionsManagementTable = ({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [statusFilter, debouncedSearch, pageNumber, pageSize, sortBy, toastError]);
+  }, [statusFilter, debouncedSearch, pageNumber, pageSize, toastError]);
 
   useEffect(() => {
     fetchSubscriptions();

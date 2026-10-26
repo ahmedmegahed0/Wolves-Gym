@@ -11,7 +11,8 @@ import {
   Dumbbell, 
   Flame, 
   CheckCircle2, 
-  ChevronLeft
+  ChevronLeft,
+  Crown
 } from 'lucide-react';
 
 /**
@@ -64,7 +65,10 @@ export const TrainerCard = ({ trainer, onSelect = null }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -5 }}
       transition={{ duration: 0.25 }}
-      className="group relative bg-gradient-to-b from-[#141419] via-[#0f0f13] to-[#09090b] border border-amber-500/20 hover:border-amber-500/60 rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-xl hover:shadow-[0_0_35px_rgba(245,158,11,0.22)] transition-all duration-300 font-cairo overflow-hidden"
+      onClick={() => onSelect && onSelect(trainer)}
+      className={`group relative bg-gradient-to-b from-[#141419] via-[#0f0f13] to-[#09090b] border border-amber-500/20 hover:border-amber-500/60 rounded-3xl p-5 sm:p-6 flex flex-col justify-between shadow-xl hover:shadow-[0_0_35px_rgba(245,158,11,0.22)] transition-all duration-300 font-cairo overflow-hidden ${
+        onSelect ? 'cursor-pointer' : ''
+      }`}
     >
       {/* Ambient Gold Radial Flare on Hover */}
       <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all pointer-events-none" />
@@ -150,6 +154,7 @@ export const TrainerCard = ({ trainer, onSelect = null }) => {
         {trainer.phoneNumber && (
           <a
             href={`tel:${trainer.phoneNumber}`}
+            onClick={(e) => e.stopPropagation()}
             className="w-full py-2.5 px-3 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-amber-500/30 text-zinc-300 hover:text-amber-400 text-xs font-bold transition-all flex items-center justify-center gap-2 group/btn"
           >
             <Phone className="w-3.5 h-3.5 text-amber-400 group-hover/btn:scale-110 transition-transform" />
@@ -160,10 +165,14 @@ export const TrainerCard = ({ trainer, onSelect = null }) => {
         {onSelect && (
           <button
             type="button"
-            onClick={() => onSelect(trainer)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(trainer);
+            }}
             className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <span>طلب تدريب خاص (PT)</span>
+            <Crown className="w-3.5 h-3.5" />
+            <span>باقات الكابتن الخاصة (PT)</span>
             <ChevronLeft className="w-3.5 h-3.5 stroke-[3]" />
           </button>
         )}

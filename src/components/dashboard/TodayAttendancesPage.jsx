@@ -105,7 +105,6 @@ export const TodayAttendancesPage = ({
       const res = await attendanceService.getAttendances({
         fromDate: todayStartIso,
         pageSize: 100,
-        sortBy: 'CheckInAt desc',
       });
 
       const list = Array.isArray(res?.data) ? res.data : [];

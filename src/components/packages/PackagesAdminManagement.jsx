@@ -56,7 +56,6 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
   const [selectedType, setSelectedType] = useState('all'); // 'all' | '0' | '1' | '2'
   const [selectedTrainerId, setSelectedTrainerId] = useState('all'); // 'all' | number
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
-  const [sortBy, setSortBy] = useState('');
   
   // Pagination
   const [pageNumber, setPageNumber] = useState(1);
@@ -112,7 +111,6 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
         pageNumber,
         pageSize,
         search: debouncedSearch.trim(),
-        sortBy,
       });
 
       setPackages(res.data || []);
@@ -125,7 +123,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pageNumber, pageSize, debouncedSearch, selectedType, selectedTrainerId, selectedStatus, sortBy, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, selectedType, selectedTrainerId, selectedStatus, toastError]);
 
   useEffect(() => {
     fetchPackages();
@@ -177,7 +175,6 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
     setSelectedType('all');
     setSelectedTrainerId('all');
     setSelectedStatus('all');
-    setSortBy('');
     setPageNumber(1);
   };
 
@@ -196,7 +193,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
     ? Math.round(packages.reduce((sum, p) => sum + (Number(p.price) || 0), 0) / packages.length)
     : 0;
 
-  const hasActiveFilters = search || selectedType !== 'all' || selectedTrainerId !== 'all' || selectedStatus !== 'all' || sortBy;
+  const hasActiveFilters = search || selectedType !== 'all' || selectedTrainerId !== 'all' || selectedStatus !== 'all';
 
   return (
     <div dir="rtl" className="w-full space-y-6 font-cairo">
@@ -322,7 +319,7 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               >
                 <option value="all" className="bg-zinc-900 text-white">كل الأنواع</option>
                 <option value="0" className="bg-zinc-900 text-zinc-200">عادية / عامة</option>
-                <option value="1" className="bg-zinc-900 text-amber-300">خاصة بكابتن</option>
+                <option value="1" className="bg-zinc-900 text-amber-300">برايفت</option>
                 <option value="2" className="bg-zinc-900 text-purple-300">خاصة مشتركة</option>
               </select>
             </div>

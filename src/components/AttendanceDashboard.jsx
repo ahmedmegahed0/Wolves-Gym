@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   LayoutDashboard,
-  Flame, 
-  KeyRound, 
-  Users, 
-  Clock, 
-  Activity, 
-  Columns, 
+  Flame,
+  KeyRound,
+  Users,
+  Clock,
+  Activity,
+  Columns,
   Maximize2,
   User,
   LogOut,
@@ -44,7 +44,7 @@ import CustomerProfileCard from './customers/CustomerProfileCard';
 import CustomerDashboard from './customers/CustomerDashboard';
 import LockersDashboard from './lockers/LockersDashboard';
 import PackagesDashboard from './packages/PackagesDashboard';
-import TrainersSection from './trainers/TrainersSection';
+import TrainersAdminManagement from './trainers/TrainersAdminManagement';
 import KpisManagement from './kpis/KpisManagement';
 import EmployeesManagementPage from './employees/EmployeesManagementPage';
 import { canManageEmployees } from '../services/employeesService';
@@ -82,10 +82,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { 
-    isAuthenticated, 
-    user, 
-    logout, 
+  const {
+    isAuthenticated,
+    user,
+    logout,
     setActiveAuthView,
     isChangePasswordModalOpen,
     setIsChangePasswordModalOpen,
@@ -94,15 +94,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
   } = useAuth();
 
   const roleMeta = getRoleMeta(user?.role);
-  const isOperationManager = 
-    roleMeta.role === 'OperationManager' || 
-    user?.role === 'OperationManager' || 
+  const isOperationManager =
+    roleMeta.role === 'OperationManager' ||
+    user?.role === 'OperationManager' ||
     user?.roles?.includes('OperationManager');
   const isManager = roleMeta.role === 'Manager' || user?.role === 'Manager';
   const isSuperAdmin = roleMeta.role === 'SuperAdmin' || user?.role === 'SuperAdmin';
-  const isReception = 
-    roleMeta.role === 'Receptionist' || 
-    user?.role === 'Reception' || 
+  const isReception =
+    roleMeta.role === 'Receptionist' ||
+    user?.role === 'Reception' ||
     user?.role === 'Receptionist';
   const isCustomer = roleMeta.role === 'Customer';
   const isTrainer = roleMeta.role === 'Trainer';
@@ -143,7 +143,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
       const next = !prev;
       try {
         localStorage.setItem('gym_sidebar_collapsed', String(next));
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -197,7 +197,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
   const handleOccupancyUpdated = useCallback((count) => {
     setCurrentOccupancy(count);
   }, []);
-  
+
   // On mobile, always use 'tabs' view mode
   const [activeTab, setActiveTab] = useState('check-in');
   const [viewMode, setViewMode] = useState('split');
@@ -364,7 +364,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
       case 'occupied-lockers':
         return { label: 'اللوكرات المشغولة حالياً', icon: KeyRound };
       case 'pending-subscriptions':
-        return { label: 'الاشتراكات والطلبات المعلقة', icon: ShieldCheck };
+        return { label: 'طلبات عضوية غير مفعلة', icon: ShieldCheck };
       default:
         return navItems.find((item) => item.id === mainTab) || navItems[0];
     }
@@ -372,14 +372,13 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
   return (
     <div dir="rtl" className="min-h-screen bg-black bg-wolf-mesh text-zinc-100 font-cairo flex relative overflow-x-hidden">
-      
+
       {/* ============================================================== */}
       {/* 1. RIGHT SIDEBAR (الشريط الجانبي الأيمن الفاخر - Desktop)       */}
       {/* ============================================================== */}
-      <aside 
-        className={`hidden md:flex fixed inset-y-0 right-0 z-40 bg-[#09090c]/95 border-l border-amber-500/20 backdrop-blur-2xl flex-col justify-between p-3.5 shadow-[0_0_40px_rgba(0,0,0,0.85)] transition-all duration-300 ease-in-out select-none ${
-          isCollapsed ? 'w-20' : 'w-64 lg:w-72'
-        }`}
+      <aside
+        className={`hidden md:flex fixed inset-y-0 right-0 z-40 bg-[#09090c]/95 border-l border-amber-500/20 backdrop-blur-2xl flex-col justify-between p-3.5 shadow-[0_0_40px_rgba(0,0,0,0.85)] transition-all duration-300 ease-in-out select-none ${isCollapsed ? 'w-20' : 'w-64 lg:w-72'
+          }`}
       >
         {/* Subtle Ambient Gold Gradient in Sidebar */}
         <div className="absolute top-0 right-0 left-0 h-40 bg-gradient-to-b from-amber-500/10 via-amber-500/0 to-transparent pointer-events-none" />
@@ -396,10 +395,9 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
         <div className="relative z-10">
           {/* Brand Header (Static, No navigation on logo click) */}
-          <div className={`flex items-center gap-3 px-1 py-2 mb-5 border-b border-amber-500/15 transition-all select-none ${
-            isCollapsed ? 'justify-center' : 'justify-between'
-          }`}>
-            <div 
+          <div className={`flex items-center gap-3 px-1 py-2 mb-5 border-b border-amber-500/15 transition-all select-none ${isCollapsed ? 'justify-center' : 'justify-between'
+            }`}>
+            <div
               className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}
             >
               <div className="relative shrink-0">
@@ -448,13 +446,11 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   <button
                     type="button"
                     onClick={item.onClick ? item.onClick : () => setMainTab(item.id)}
-                    className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 relative overflow-hidden cursor-pointer ${
-                      isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
-                    } ${
-                      isActive && !item.isExternalLink
+                    className={`w-full text-right rounded-2xl flex items-center transition-all duration-200 relative overflow-hidden cursor-pointer ${isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3.5 py-2.5'
+                      } ${isActive && !item.isExternalLink
                         ? 'bg-amber-500/10 border border-amber-500/25 text-amber-300 font-bold'
                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent font-medium'
-                    }`}
+                      }`}
                   >
                     {/* Active Indicator Bar */}
                     {isActive && !item.isExternalLink && (
@@ -462,11 +458,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     )}
 
                     <div className={`flex items-center gap-3 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
-                      <div className={`p-2 rounded-xl transition-all duration-200 flex-shrink-0 ${
-                        isActive
+                      <div className={`p-2 rounded-xl transition-all duration-200 flex-shrink-0 ${isActive
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                           : 'bg-zinc-900 text-zinc-400 border border-white/5 group-hover:text-zinc-200 group-hover:bg-zinc-800'
-                      }`}>
+                        }`}>
                         <Icon className="w-4 h-4" />
                       </div>
 
@@ -479,11 +474,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
                     {/* Badge when expanded */}
                     {!isCollapsed && item.badge && (
-                      <span className={`text-[10px] font-mono font-black min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        isActive
+                      <span className={`text-[10px] font-mono font-black min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center flex-shrink-0 ${isActive
                           ? 'bg-amber-400 text-black shadow-[0_0_8px_rgba(245,158,11,0.6)]'
                           : (item.badgeColor || 'bg-amber-500/20 text-amber-400 border border-amber-500/30')
-                      }`}>
+                        }`}>
                         {item.badge}
                       </span>
                     )}
@@ -580,9 +574,8 @@ export const AttendanceDashboard = ({ initialSection }) => {
             <button
               type="button"
               onClick={() => setActiveAuthView('login')}
-              className={`w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 ${
-                isCollapsed ? 'px-0' : ''
-              }`}
+              className={`w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 ${isCollapsed ? 'px-0' : ''
+                }`}
               title="تسجيل الدخول"
             >
               <LogIn className="w-4 h-4" />
@@ -614,7 +607,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
             >
               <div>
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800">
-                  <div 
+                  <div
                     className="flex items-center gap-2.5 select-none"
                   >
                     <img src={wolfLogo} alt="WOLVES" className="w-8 h-8 object-contain" />
@@ -645,11 +638,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
                             setMainTab(item.id);
                           }
                         }}
-                        className={`w-full text-right p-3 rounded-2xl flex items-center justify-between transition-all ${
-                          isActive && !item.isExternalLink
+                        className={`w-full text-right p-3 rounded-2xl flex items-center justify-between transition-all ${isActive && !item.isExternalLink
                             ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black'
                             : 'text-zinc-400 hover:text-white hover:bg-zinc-900 font-bold'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <Icon className="w-4 h-4" />
@@ -707,15 +699,14 @@ export const AttendanceDashboard = ({ initialSection }) => {
       {/* ============================================================== */}
       {/* 3. MAIN CONTENT CONTAINER (مساحة المحتوى الرئيسية)             */}
       {/* ============================================================== */}
-      <div 
-        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-in-out ${
-          isCollapsed ? 'mr-0 md:mr-20' : 'mr-0 md:mr-64 lg:mr-72'
-        }`}
+      <div
+        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-in-out ${isCollapsed ? 'mr-0 md:mr-20' : 'mr-0 md:mr-64 lg:mr-72'
+          }`}
       >
         {/* Top Header Bar: Clean Breadcrumb + Clock */}
         <header className="sticky top-0 z-30 wolf-glass bg-zinc-950/90 border-b border-amber-500/20 backdrop-blur-2xl">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-            
+
             {/* Right: Hamburger on mobile + Sidebar toggle shortcut + Breadcrumb */}
             <div className="flex items-center gap-3">
               <button
@@ -771,7 +762,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
         {/* Main Body */}
         <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
           <AnimatePresence mode="wait">
-            
+
             {/* ======================================================== */}
             {/* VIEW 1: CARDS & OVERVIEW (كروت النظرة العامة - الأولى)    */}
             {/* ======================================================== */}
@@ -787,7 +778,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 {/* 4 Metric Quick Stat Cards */}
                 <section aria-label="كروت الإحصائيات العامة" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
                   {/* Card 1: Currently In Gym */}
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('currently-in-gym')}
@@ -813,7 +804,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   </div>
 
                   {/* Card 2: Today Attendances */}
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('today-attendances')}
@@ -839,7 +830,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   </div>
 
                   {/* Card 3: Occupied Lockers */}
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('occupied-lockers')}
@@ -865,13 +856,13 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   </div>
 
                   {/* Card 4: Pending Subscriptions */}
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('pending-subscriptions')}
                     onKeyDown={(e) => e.key === 'Enter' && setMainTab('pending-subscriptions')}
                     className="wolf-glass rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-emerald-500/25 hover:border-emerald-500/70 transition-all flex items-center gap-3 sm:gap-4 group cursor-pointer hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
-                    title="اضغط لعرض طلبات الاشتراكات والحسابات المعلقة والموافقة عليها بنقرة واحدة"
+                    title="اضغط لعرض طلبات العضوية غير المفعلة والموافقة عليها بنقرة واحدة"
                   >
                     <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-900 border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all flex-shrink-0">
@@ -879,7 +870,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] sm:text-xs font-bold text-zinc-400 truncate flex items-center justify-between">
-                        <span>الاشتراكات المعلقة</span>
+                        <span>طلبات عضوية غير مفعلة</span>
                         <ChevronLeft className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" />
                       </div>
                       <div className="text-xl sm:text-3xl font-black text-emerald-400 font-mono">{pendingCount}</div>
@@ -967,7 +958,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
               >
                 {/* Metric Quick Stats Bar */}
                 <section aria-label="إحصائيات الجيم" className="grid grid-cols-3 gap-2 sm:gap-5">
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('currently-in-gym')}
@@ -985,7 +976,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     </div>
                   </div>
 
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('today-attendances')}
@@ -1003,7 +994,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     </div>
                   </div>
 
-                  <div 
+                  <div
                     role="button"
                     tabIndex={0}
                     onClick={() => setMainTab('occupied-lockers')}
@@ -1035,22 +1026,20 @@ export const AttendanceDashboard = ({ initialSection }) => {
                   <div className="hidden md:flex items-center gap-1 p-1 bg-zinc-900/90 rounded-xl border border-zinc-800">
                     <button
                       onClick={() => setViewMode('split')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                        viewMode === 'split'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${viewMode === 'split'
                           ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
                           : 'text-zinc-400 hover:text-white'
-                      }`}
+                        }`}
                     >
                       <Columns className="w-3.5 h-3.5" />
                       متجاور
                     </button>
                     <button
                       onClick={() => setViewMode('tabs')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                        viewMode === 'tabs'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${viewMode === 'tabs'
                           ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-gold-glow'
                           : 'text-zinc-400 hover:text-white'
-                      }`}
+                        }`}
                     >
                       <Maximize2 className="w-3.5 h-3.5" />
                       تبويبات
@@ -1065,21 +1054,19 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     <div className="flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
                       <button
                         onClick={() => setActiveTab('check-in')}
-                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                          activeTab === 'check-in'
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${activeTab === 'check-in'
                             ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-gold-glow'
                             : 'text-zinc-400 hover:text-white'
-                        }`}
+                          }`}
                       >
                         تسجيل دخول
                       </button>
                       <button
                         onClick={() => setActiveTab('check-out')}
-                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                          activeTab === 'check-out'
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${activeTab === 'check-out'
                             ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black shadow-gold-glow'
                             : 'text-zinc-400 hover:text-white'
-                        }`}
+                          }`}
                       >
                         تسجيل خروج
                       </button>
@@ -1105,21 +1092,19 @@ export const AttendanceDashboard = ({ initialSection }) => {
                         <div className="flex rounded-2xl bg-zinc-950 p-1.5 border border-zinc-800">
                           <button
                             onClick={() => setActiveTab('check-in')}
-                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
-                              activeTab === 'check-in'
+                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${activeTab === 'check-in'
                                 ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black shadow-gold-glow'
                                 : 'text-zinc-400 hover:text-white'
-                            }`}
+                              }`}
                           >
                             تسجيل دخول واستلام لوكر
                           </button>
                           <button
                             onClick={() => setActiveTab('check-out')}
-                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
-                              activeTab === 'check-out'
+                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${activeTab === 'check-out'
                                 ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-black shadow-gold-glow'
                                 : 'text-zinc-400 hover:text-white'
-                            }`}
+                              }`}
                           >
                             تسجيل خروج وتسليم لوكر
                           </button>
@@ -1220,11 +1205,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.2 }}
               >
-                <TrainersSection
-                  isEmbedded={true}
-                  initialView="management"
-                  onSelectTrainer={(trainer) => handleOpenNewSubscription(null, null)}
-                />
+                <TrainersAdminManagement />
               </motion.div>
             )}
 

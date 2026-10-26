@@ -31,7 +31,7 @@ import { useAuth } from '../../context/AuthContext';
  * Customer & Public View for Gym Membership Plans
  * Features gym pricing cards, search/filter, and subscription guidance to gym reception.
  */
-export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false }) => {
+export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false, trainerId = null }) => {
   const { user, isAuthenticated, setActiveAuthView } = useAuth();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
@@ -39,7 +39,6 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('price_asc');
   const [durationFilter, setDurationFilter] = useState('all'); // 'all' | '30' | '90' | '180' | '365'
   const [typeFilter, setTypeFilter] = useState('all'); // 'all' | '0' | '1' | '2'
 
@@ -57,7 +56,7 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
         pageNumber: 1,
         pageSize: 50,
         search,
-        sortBy,
+        trainerId: trainerId || undefined,
       });
       setPackages(Array.isArray(res?.data) ? res.data : []);
     } catch (err) {
@@ -67,7 +66,7 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
       setLoading(false);
       setRefreshing(false);
     }
-  }, [search, sortBy]);
+  }, [search, trainerId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -83,6 +82,10 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
 
   // Client-side duration & type filtering & sorting
   const filteredPackages = packages.filter((pkg) => {
+    // Hide private trainer packages from general public list (only show them when specifically viewing a trainer)
+    if (!trainerId && Number(pkg.type ?? 0) === 1) {
+      return false;
+    }
     if (typeFilter !== 'all' && Number(pkg.type ?? 0) !== Number(typeFilter)) {
       return false;
     }
@@ -93,12 +96,6 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
     if (durationFilter === '180') return days > 90 && days <= 180;
     if (durationFilter === '365') return days > 180;
     return true;
-  }).sort((a, b) => {
-    if (sortBy === 'price_asc') return Number(a.price) - Number(b.price);
-    if (sortBy === 'price_desc') return Number(b.price) - Number(a.price);
-    if (sortBy === 'duration_asc') return Number(a.duration) - Number(b.duration);
-    if (sortBy === 'duration_desc') return Number(b.duration) - Number(a.duration);
-    return (a.name || '').localeCompare(b.name || '');
   });
 
   // Handle plan selection -> open reception subscription modal
@@ -165,12 +162,17 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
 
         {/* Package Type Filter Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0 scrollbar-none bg-zinc-950/80 p-1 rounded-2xl border border-zinc-800/80">
-          {[
-            { id: 'all', label: 'كافة الباقات' },
-            { id: '0', label: 'عادية' },
-            { id: '1', label: 'خاصة بكابتن' },
-            { id: '2', label: 'خاصة مشتركة' },
-          ].map((tab) => (
+          {(trainerId
+            ? [
+                { id: 'all', label: 'كافة باقات الكابتن' },
+                { id: '1', label: 'برايفت' },
+              ]
+            : [
+                { id: 'all', label: 'كافة الباقات العامة' },
+                { id: '0', label: 'عادية' },
+                { id: '2', label: 'خاصة مشتركة' },
+              ]
+          ).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setTypeFilter(tab.id)}
@@ -208,22 +210,8 @@ export const PackagesPricingGrid = ({ onOpenAdminManagement, isEmbedded = false 
           ))}
         </div>
 
-        {/* Sort & Refresh */}
+        {/* Refresh Action */}
         <div className="flex items-center gap-2 self-end lg:self-auto">
-          <div className="flex items-center gap-1 bg-zinc-900 px-3 py-1.5 rounded-xl border border-zinc-800 text-xs text-zinc-300">
-            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-xs font-bold text-zinc-200 focus:outline-none cursor-pointer"
-            >
-              <option value="price_asc" className="bg-zinc-900">السعر: من الأقل للأعلى</option>
-              <option value="price_desc" className="bg-zinc-900">السعر: من الأعلى للأقل</option>
-              <option value="duration_asc" className="bg-zinc-900">المدة: الأقصر أولاً</option>
-              <option value="duration_desc" className="bg-zinc-900">المدة: الأطول أولاً</option>
-            </select>
-          </div>
-
           <button
             type="button"
             onClick={handleRefresh}

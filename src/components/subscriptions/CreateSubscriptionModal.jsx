@@ -151,7 +151,7 @@ export const CreateSubscriptionModal = ({
 
         // 2. Fetch initial customers
         setLoadingCustomers(true);
-        const custRes = await customerService.getCustomers({ pageSize: 50, sortBy: 'createdAt' });
+        const custRes = await customerService.getCustomers({ pageSize: 50 });
         if (isMounted) {
           const rawCusts = Array.isArray(custRes?.items) ? custRes.items : [];
           setCustomers(rawCusts);

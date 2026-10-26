@@ -19,7 +19,8 @@ import {
   ToggleLeft,
   ToggleRight,
   Clock,
-  ShieldAlert
+  ShieldAlert,
+  ArrowRight
 } from 'lucide-react';
 import { customerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
@@ -69,6 +70,24 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
       setErrors({});
     }
   }, [customer]);
+
+  // Lock body scroll and listen for Escape key to close full-page view
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !customer) return null;
 
@@ -162,112 +181,126 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
   return (
     <AnimatePresence>
-      <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md font-cairo">
+      <div 
+        dir="rtl" 
+        className="fixed inset-0 z-50 bg-[#09090b] text-white overflow-y-auto font-cairo flex flex-col min-h-screen gold-scrollbar"
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 20 }}
-          className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 max-w-2xl lg:max-w-4xl w-full shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh]"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 12 }}
+          transition={{ duration: 0.2 }}
+          className="flex-1 flex flex-col w-full min-h-screen"
         >
-          {/* Top Gold Accent Line */}
-          <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 opacity-90" />
+          {/* Top Sticky Header */}
+          <div className="sticky top-0 z-40 bg-[#0d0d12]/95 backdrop-blur-md border-b border-zinc-800 shadow-2xl">
+            {/* Top Row: Back button, Customer Title, Quick Actions */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-3 sm:px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-amber-400 border border-zinc-800 hover:border-amber-500/40 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm group"
+                >
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-amber-400" />
+                  <span>رجوع لقائمة الأعضاء</span>
+                </button>
 
-          {/* Modal Header */}
-          <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-zinc-800">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-zinc-900 border border-amber-500/30 text-amber-400 shadow-gold-glow shrink-0">
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                <div className="h-6 w-px bg-zinc-800 hidden sm:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-gold-glow">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-black text-white">
+                        {formData.name || 'ملف العضو'}
+                      </h2>
+                      <span className="text-xs font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-lg">
+                        #{targetId}
+                      </span>
+                      {formData.code && (
+                        <span className="hidden sm:inline text-xs font-mono bg-zinc-900 text-zinc-300 px-2 py-0.5 rounded-lg border border-zinc-800">
+                          كود: {formData.code}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-400 hidden sm:block">
+                      تحديث البيانات الشخصية، القياسات والـ BMI، السجل الصحي، ملاحظات السلوك، وسجل الحضور الشهري
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                  ملف وتعديل الوحش
-                  <span className="text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-lg">
-                    #{targetId}
-                  </span>
-                </h3>
-                <p className="text-[10px] sm:text-xs text-zinc-400">
-                  تحديث البيانات، حالة الاعتماد، ملاحظات السلوك، وسجل الحضور
-                </p>
+
+              {/* Right Action Buttons */}
+              <div className="flex items-center gap-2.5">
+                {(activeSection === 'basic' || activeSection === 'physical' || activeSection === 'health') && (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        <span>جاري الحفظ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-black" />
+                        <span>حفظ التعديلات</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors cursor-pointer"
+                  title="إغلاق والعودة"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+
+            {/* Navigation Tabs Bar */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3">
+              <div className="flex items-center gap-2 overflow-x-auto gold-scrollbar py-1">
+                {[
+                  { key: 'basic', label: 'البيانات الأساسية', icon: User },
+                  { key: 'physical', label: 'القياسات البدنية و BMI', icon: Scale },
+                  { key: 'health', label: 'السجل الصحي والإصابات', icon: HeartPulse },
+                  { key: 'notes', label: 'ملاحظات السلوك والانضباط', icon: FileText },
+                  { key: 'attendance', label: 'تقويم وسجل الحضور الشهري', icon: Calendar },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeSection === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveSection(tab.key)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black scale-[1.02]'
+                          : 'bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-amber-400'}`} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Navigation Section Tabs */}
-          <div className="grid grid-cols-5 rounded-xl sm:rounded-2xl bg-black/60 p-1 border border-zinc-800 my-2.5 sm:my-3.5 gap-1 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setActiveSection('basic')}
-              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-                activeSection === 'basic'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">الأساسية</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection('physical')}
-              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-                activeSection === 'physical'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">القياسات</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection('health')}
-              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-                activeSection === 'health'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <HeartPulse className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">الصحي</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection('notes')}
-              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-                activeSection === 'notes'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">السلوك</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSection('attendance')}
-              className={`py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${
-                activeSection === 'attendance'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="truncate">الحضور</span>
-            </button>
-          </div>
-
-          {/* Form Body / Content with Smooth Transitions */}
-          <div className="flex-1 overflow-y-auto space-y-4 px-1 py-1 gold-scrollbar">
+          {/* Page Body Content */}
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
             {/* 1. BASIC INFO SECTION */}
             {activeSection === 'basic' && (
               <motion.div
@@ -668,32 +701,31 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
               </motion.div>
             )}
 
-            {/* Modal Actions */}
-            <div className="pt-3 border-t border-zinc-800/80 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
-              <div className="text-[11px] text-zinc-500">
-                {activeSection === 'notes' || activeSection === 'attendance' ? (
-                  <span>يتم حفظ وتحديث الملاحظات والحضور مباشرة وفورياً مع السيرفر.</span>
-                ) : (
-                  <span>تأكد من مراجعة القياسات والبيانات قبل الحفظ النهائي.</span>
-                )}
-              </div>
+          </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={loading}
-                  className="px-4 py-2 sm:py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold transition-colors text-center"
-                >
-                  إغلاق
-                </button>
+          {/* Sticky Bottom Actions Bar (for editable tabs) */}
+          {(activeSection === 'basic' || activeSection === 'physical' || activeSection === 'health') && (
+            <div className="sticky bottom-0 z-30 bg-[#0d0d12]/95 backdrop-blur-md border-t border-zinc-800 py-3.5 shadow-2xl">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400">
+                  تأكد من مراجعة القياسات والبيانات قبل اعتماد الحفظ النهائي بالسيرفر.
+                </span>
 
-                {(activeSection === 'basic' || activeSection === 'physical' || activeSection === 'health') && (
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={loading}
+                    className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    إلغاء والرجوع
+                  </button>
+
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     {loading ? (
                       <>
@@ -707,10 +739,10 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
                       </>
                     )}
                   </button>
-                )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

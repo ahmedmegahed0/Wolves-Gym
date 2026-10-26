@@ -957,7 +957,7 @@ const PackagesSection = ({ onSelectPackage }) => {
     const fetchPlans = async () => {
       try {
         setLoading(true);
-        const res = await packageService.getPackages({ pageNumber: 1, pageSize: 6, sortBy: 'price_asc' });
+        const res = await packageService.getPackages({ pageNumber: 1, pageSize: 6 });
         const list = Array.isArray(res?.data) ? res.data : [];
         if (isMounted) setPackages(list);
       } catch (err) {

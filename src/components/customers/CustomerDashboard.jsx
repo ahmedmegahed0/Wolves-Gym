@@ -249,11 +249,17 @@ export const CustomerDashboard = () => {
     loadMemberData();
   };
 
+  const memberCode = (profile?.code && String(profile.code).trim() && !String(profile.code).startsWith('ID-')) 
+    ? String(profile.code).trim() 
+    : (user?.code && String(user.code).trim() && !String(user.code).startsWith('ID-'))
+    ? String(user.code).trim()
+    : null;
+
   const handleCopyCode = () => {
-    if (profile?.code) {
-      navigator.clipboard.writeText(profile.code);
+    if (memberCode) {
+      navigator.clipboard.writeText(memberCode);
       setCopiedCode(true);
-      toastSuccess('تم نسخ الكود!', `كود الوحش الخاص بك: ${profile.code}`);
+      toastSuccess('تم نسخ الكود!', `كود الوحش الخاص بك: ${memberCode}`);
       setTimeout(() => setCopiedCode(false), 2500);
     }
   };
@@ -373,7 +379,7 @@ export const CustomerDashboard = () => {
                     {profile?.name || user?.name || 'عضو الجيم'}
                   </span>
                   <span className="text-[10px] text-amber-400/90 font-mono">
-                    {profile?.code || (profile?.id ? `ID-${profile.id}` : 'عضو')}
+                    {memberCode || 'عضو Wolves'}
                   </span>
                 </div>
 
@@ -432,7 +438,7 @@ export const CustomerDashboard = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          setIsProfileSettingsModalOpen(true);
+                          setActiveTab('profile');
                           setUserMenuOpen(false);
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-zinc-200 hover:text-amber-400 hover:bg-zinc-900/90 rounded-xl transition-all text-right cursor-pointer"
@@ -531,7 +537,7 @@ export const CustomerDashboard = () => {
                   </div>
                   <div>
                     <span className="font-bold text-white block">{profile?.name || user?.name || 'عضو الجيم'}</span>
-                    <span className="text-[10px] text-zinc-400 font-mono">{profile?.code || user?.code || (profile?.id ? `ID-${profile.id}` : 'عضو')}</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">{memberCode || 'عضو Wolves'}</span>
                   </div>
                 </div>
                 {activeSession && (
@@ -545,7 +551,7 @@ export const CustomerDashboard = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsProfileSettingsModalOpen(true);
+                    setActiveTab('profile');
                     setMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-zinc-900 text-xs font-bold text-zinc-200 border border-zinc-800 active:scale-95 text-right"
@@ -711,14 +717,14 @@ export const CustomerDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Responsive Navigation Tabs for Customer: Profile & Pass vs Attendance vs Packages vs Trainers */}
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 w-full max-w-2xl">
+            {/* Responsive Navigation Tabs for Customer */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 bg-zinc-950/90 p-1.5 rounded-2xl border border-amber-500/20 w-full max-w-3xl">
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'overview'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
@@ -728,10 +734,23 @@ export const CustomerDashboard = () => {
 
               <button
                 type="button"
+                onClick={() => setActiveTab('profile')}
+                className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                  activeTab === 'profile'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                }`}
+              >
+                <User className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">البروفايل والقياسات</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab('calendar')}
-                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'calendar'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
@@ -742,9 +761,9 @@ export const CustomerDashboard = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('packages')}
-                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'packages'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
@@ -755,9 +774,9 @@ export const CustomerDashboard = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('trainers')}
-                className={`py-2 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
+                className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate ${
                   activeTab === 'trainers'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-gold-glow font-black'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
                 }`}
               >
@@ -766,7 +785,248 @@ export const CustomerDashboard = () => {
               </button>
             </div>
 
-            {activeTab === 'calendar' ? (
+            {activeTab === 'profile' ? (
+              <motion.div
+                key="customer-profile-tab"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6 pt-2 max-w-5xl mx-auto w-full font-cairo"
+              >
+                {/* 1. Member Profile Hero Card */}
+                <div className="wolf-glass rounded-3xl p-5 sm:p-7 border border-amber-500/30 relative overflow-hidden shadow-2xl">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4 sm:gap-5">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-600 text-black font-black flex items-center justify-center font-mono text-2xl sm:text-3xl shadow-gold-glow shrink-0">
+                        {profile?.name ? profile.name.slice(0, 1).toUpperCase() : (user?.name ? user.name.slice(0, 1).toUpperCase() : 'W')}
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <h2 className="text-lg sm:text-2xl font-black text-white">
+                            {profile?.name || user?.name || 'عضو الجيم'}
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            عضو نشط ومعتمد
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-zinc-400 flex-wrap">
+                          {profile?.phoneNumber && (
+                            <span className="flex items-center gap-1 font-mono">
+                              <Phone className="w-3.5 h-3.5 text-amber-400" />
+                              {profile.phoneNumber}
+                            </span>
+                          )}
+                          {user?.email && (
+                            <span className="text-zinc-500 font-mono">
+                              {user.email}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Code Status Badge */}
+                        <div className="pt-1">
+                          {memberCode ? (
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-black/70 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold">
+                              <span>كود الوحش للدخول:</span>
+                              <span className="text-sm font-black text-white">{memberCode}</span>
+                              <button
+                                type="button"
+                                onClick={handleCopyCode}
+                                className="p-1 hover:text-white transition-colors cursor-pointer"
+                                title="نسخ الكود"
+                              >
+                                {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-bold">
+                              <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                              في انتظار تخصيص كود الدخول من موظف الاستقبال
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2.5 self-start md:self-center flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileSettingsModalOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-amber-400 border border-zinc-800 hover:border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      >
+                        <User className="w-4 h-4 text-amber-400" />
+                        <span>تعديل الاسم والهاتف</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsChangePasswordModalOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-amber-400 border border-zinc-800 hover:border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      >
+                        <Key className="w-4 h-4 text-amber-400" />
+                        <span>تغيير كلمة المرور</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Physical Metrics & BMI Hero */}
+                <div className="wolf-glass rounded-3xl p-5 sm:p-7 border border-amber-500/20 relative space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-gold-glow">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-black text-white">
+                          مؤشرات اللياقة والقياسات البدنية
+                        </h3>
+                        <p className="text-xs text-zinc-400">
+                          الوزن، الطول، مؤشر كتلة الجسم (BMI)، ونسب العضلات والدهون
+                        </p>
+                      </div>
+                    </div>
+
+                    {bmi ? (
+                      <div className="px-3.5 py-1.5 rounded-xl bg-zinc-900 border border-amber-500/30 flex items-center gap-2 self-start sm:self-auto font-mono">
+                        <span className="text-xs text-zinc-400">BMI:</span>
+                        <span className="text-base font-black text-amber-400">{bmi}</span>
+                        <span className={`text-xs font-bold ${bmiStatus.color}`}>({bmiStatus.label})</span>
+                      </div>
+                    ) : (
+                      <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>لم يتم تسجيل القياسات بعد</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4 Stats Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    {/* Weight */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 hover:border-amber-500/30 transition-all space-y-2">
+                      <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                        <Scale className="w-4 h-4 text-amber-400" />
+                        <span>الوزن الحالي</span>
+                      </div>
+                      {profile?.weight ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black font-mono text-white">{profile.weight}</span>
+                          <span className="text-xs text-zinc-400">كجم</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-500 font-bold block pt-1">قيد التسجيل</span>
+                      )}
+                    </div>
+
+                    {/* Height */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 hover:border-amber-500/30 transition-all space-y-2">
+                      <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                        <Ruler className="w-4 h-4 text-amber-400" />
+                        <span>الطول</span>
+                      </div>
+                      {profile?.height ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black font-mono text-white">{profile.height}</span>
+                          <span className="text-xs text-zinc-400">سم</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-500 font-bold block pt-1">قيد التسجيل</span>
+                      )}
+                    </div>
+
+                    {/* Muscle % */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 hover:border-amber-500/30 transition-all space-y-2">
+                      <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                        <Flame className="w-4 h-4 text-emerald-400" />
+                        <span>نسبة العضلات</span>
+                      </div>
+                      {profile?.musclePercentage ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-400">{profile.musclePercentage}</span>
+                          <span className="text-xs text-emerald-400">%</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-500 font-bold block pt-1">قيد التسجيل</span>
+                      )}
+                    </div>
+
+                    {/* Fat % */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 hover:border-amber-500/30 transition-all space-y-2">
+                      <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                        <Activity className="w-4 h-4 text-amber-400" />
+                        <span>نسبة الدهون</span>
+                      </div>
+                      {profile?.fatPercentage ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl sm:text-3xl font-black font-mono text-white">{profile.fatPercentage}</span>
+                          <span className="text-xs text-amber-400">%</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-500 font-bold block pt-1">قيد التسجيل</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Health and Injuries Notes */}
+                  <div className="p-4 rounded-2xl bg-black/60 border border-zinc-800 space-y-3">
+                    <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                      <HeartPulse className="w-4 h-4" />
+                      <span>السجل الصحي والإصابات المعتمد للكباتن:</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 rounded-xl bg-zinc-900/70 border border-zinc-850">
+                        <span className="text-zinc-400 text-[11px] block mb-1">الإصابات والعمليات السابقة:</span>
+                        <p className="text-zinc-200 font-medium">
+                          {profile?.injuries || 'لا توجد إصابات مسجلة (سليم رياضياً)'}
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-zinc-900/70 border border-zinc-850">
+                        <span className="text-zinc-400 text-[11px] block mb-1">الأمراض المزمنة والمحاذير:</span>
+                        <p className="text-zinc-200 font-medium">
+                          {profile?.chronicDiseases || 'لا توجد أمراض مزمنة أو محاذير مسجلة'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {profile?.notes && (
+                      <div className="p-3 rounded-xl bg-zinc-900/70 border border-zinc-850 text-xs">
+                        <span className="text-zinc-400 text-[11px] block mb-1">ملاحظات الكابتن والاستقبال:</span>
+                        <p className="text-zinc-200">{profile.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Link to Attendance Calendar */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-zinc-900 to-black border border-amber-500/30 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">سجل وتمارين الحضور الشهري</h4>
+                      <p className="text-[11px] text-zinc-400">تابع أيام حضورك للجيم ومواعيد الحصص وأرقام اللوكرات</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('calendar')}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black text-xs font-bold hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                  >
+                    عرض سجل الحضور
+                  </button>
+                </div>
+              </motion.div>
+            ) : activeTab === 'calendar' ? (
               <motion.div
                 key="customer-calendar-tab"
                 initial={{ opacity: 0, y: 10 }}
@@ -802,8 +1062,8 @@ export const CustomerDashboard = () => {
               </motion.div>
             ) : (
               <>
-                {/* Quick Overview Grid: Digital Pass + Current Session + Gym Occupancy */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {/* Quick Overview Grid: Digital Pass + Gym Occupancy */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
               
               {/* 1. Digital Member Pass (بطاقة الوحش الرقمية المتجاوبة تماماً) */}
               <motion.div
@@ -835,31 +1095,43 @@ export const CustomerDashboard = () => {
                   {/* Member Code Barcode Simulator */}
                   <div className="bg-black/80 rounded-2xl p-3 sm:p-4 border border-amber-500/30 text-center space-y-2">
                     <span className="text-[10px] text-zinc-400 block">كود الوحش للدخول والاستقبال:</span>
-                    <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                      <span className="text-lg sm:text-2xl font-mono font-black text-amber-400 tracking-wider sm:tracking-widest truncate">
-                        {profile?.code || user?.code || (profile?.id ? `ID-${profile.id}` : 'في انتظار تعيين الكود')}
-                      </span>
-                      {(profile?.code || user?.code || profile?.id) && (
-                        <button
-                          onClick={handleCopyCode}
-                          className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
-                          title="نسخ الكود"
-                        >
-                          {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      )}
-                    </div>
+                    {memberCode ? (
+                      <>
+                        <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                          <span className="text-lg sm:text-2xl font-mono font-black text-amber-400 tracking-wider sm:tracking-widest truncate">
+                            {memberCode}
+                          </span>
+                          <button
+                            onClick={handleCopyCode}
+                            className="p-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:text-amber-400 hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
+                            title="نسخ الكود"
+                          >
+                            {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
 
-                    {/* Barcode Lines Graphics - Flexible and Responsive */}
-                    <div className="flex justify-center items-center gap-0.5 sm:gap-1 pt-1 opacity-75 overflow-hidden">
-                      {[4, 2, 6, 3, 5, 2, 4, 6, 2, 5, 3, 4, 6, 2, 5, 4, 2, 6].map((h, i) => (
-                        <div
-                          key={i}
-                          style={{ height: `${h * 3.5}px` }}
-                          className={`w-0.5 sm:w-1 rounded-sm ${i % 2 === 0 ? 'bg-amber-400' : 'bg-zinc-600'}`}
-                        />
-                      ))}
-                    </div>
+                        {/* Barcode Lines Graphics - Flexible and Responsive */}
+                        <div className="flex justify-center items-center gap-0.5 sm:gap-1 pt-1 opacity-75 overflow-hidden">
+                          {[4, 2, 6, 3, 5, 2, 4, 6, 2, 5, 3, 4, 6, 2, 5, 4, 2, 6].map((h, i) => (
+                            <div
+                              key={i}
+                              style={{ height: `${h * 3.5}px` }}
+                              className={`w-0.5 sm:w-1 rounded-sm ${i % 2 === 0 ? 'bg-amber-400' : 'bg-zinc-600'}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="py-2.5 px-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-center space-y-1">
+                        <div className="flex items-center justify-center gap-1.5 text-amber-300 font-bold text-xs sm:text-sm">
+                          <Clock className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                          <span>في انتظار تخصيص كود الدخول</span>
+                        </div>
+                        <p className="text-[10px] text-zinc-400 leading-tight">
+                          لم يُسجل كود دخول بعد • يرجى مراجعة موظف الاستقبال لتخصيص كود العضوية
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -869,88 +1141,12 @@ export const CustomerDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* 2. Active Workout / Locker Status (حالة التواجد الحالية واللوكر) */}
+              {/* 2. Live Gym Occupancy Radar (رادار إشغال الجيم) */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.05 }}
-                className={`rounded-3xl p-4 sm:p-6 border flex flex-col justify-between transition-all ${
-                  activeSession 
-                    ? 'bg-gradient-to-br from-emerald-950/40 via-zinc-950 to-black border-emerald-500/50 shadow-[0_0_25px_rgba(16,185,129,0.15)]' 
-                    : 'wolf-glass border-zinc-800'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                        activeSession 
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      }`}>
-                        <KeyRound className="w-4 h-4" />
-                      </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white">حالة التواجد واللوكر</h3>
-                    </div>
-                    {activeSession ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                        داخل الجيم الآن 🔥
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-zinc-800 text-zinc-400">
-                        خارج الجيم
-                      </span>
-                    )}
-                  </div>
-
-                  {activeSession ? (
-                    <div className="space-y-3 sm:space-y-4 my-2">
-                      <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-600/10 to-transparent border border-emerald-500/30 rounded-2xl p-4 text-center">
-                        <span className="text-xs text-zinc-400 block mb-1">اللوكر المخصص لك حالياً:</span>
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-3xl sm:text-4xl font-mono font-black text-amber-400 tracking-wider">
-                            لوكر #{activeSession.lockerNumber || activeSession.lockerId}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-zinc-400 space-y-1.5 bg-black/40 p-3 rounded-xl border border-white/5">
-                        <div className="flex justify-between items-center">
-                          <span>وقت تسجيل الدخول:</span>
-                          <span className="font-mono text-emerald-400 font-bold">
-                            {new Date(activeSession.checkInTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-[10px] sm:text-[11px] text-amber-400/90 pt-1 leading-relaxed">
-                          عاش يا بطل! متنساش تسجل خروج عند الاستقبال وتسلم مفتاح اللوكر بعد ما تخلص تمرينك.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-4 sm:py-6 text-center space-y-2 sm:space-y-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto">
-                        <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400/70" />
-                      </div>
-                      <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-                        أنت مش مسجل دخول في الجيم دلوقتي. 
-                        أول ما توصل للجيم، أظهر كود الوحش الخاص بك لمسؤول الاستقبال لاستلام اللوكر وبدء التمرين.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-[10px] sm:text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                  <span>أمان اللوكرات مضمون</span>
-                  <span className="text-amber-400 font-bold">Wolves Safety</span>
-                </div>
-              </motion.div>
-
-              {/* 3. Live Gym Occupancy Radar (رادار إشغال الجيم) */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="wolf-glass rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col justify-between md:col-span-2 lg:col-span-1"
+                className="wolf-glass rounded-3xl p-4 sm:p-6 border border-zinc-800 flex flex-col justify-between w-full"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -1147,10 +1343,6 @@ export const CustomerDashboard = () => {
                 </div>
               )}
 
-                {/* Packages & Membership Plans Section */}
-                <div className="pt-5 sm:pt-6 border-t border-amber-500/20">
-                  <PackagesPricingGrid isEmbedded={true} />
-                </div>
               </motion.div>
             </>
           )}

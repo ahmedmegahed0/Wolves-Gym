@@ -70,11 +70,17 @@ export const PendingSubscriptionsPage = ({
         pageSize: 50,
       });
 
-      const list = Array.isArray(res?.data) ? res.data : [];
+      const list = Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res)
+        ? res
+        : [];
       setPendingMembers(list);
 
       if (onPendingCountChange) {
-        onPendingCountChange(res.totalCount || list.length);
+        onPendingCountChange(res?.totalCount ?? list.length);
       }
     } catch (err) {
       console.error('Failed to load pending members:', err);
@@ -190,15 +196,15 @@ export const PendingSubscriptionsPage = ({
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
-                الاشتراكات والطلبات المعلقة
+                طلبات عضوية غير مفعلة
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-gold-glow flex items-center gap-1 font-mono">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{pendingMembers.length} في انتظار الموافقة</span>
+                <span>{pendingMembers.length} في انتظار التفعيل</span>
               </span>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              مراجعة وتفعيل حسابات الأعضاء الجدد والاشتراكات المعلقة بنقرة واحدة
+              مراجعة وتفعيل طلبات العضوية الجديدة والاشتراكات غير المفعلة بنقرة واحدة
             </p>
           </div>
         </div>
@@ -274,12 +280,12 @@ export const PendingSubscriptionsPage = ({
           </div>
           <div>
             <h4 className="text-base sm:text-lg font-black text-white">
-              {search ? 'لا توجد نتائج مطابقة' : 'لا توجد اشتراكات أو طلبات معلقة! 🎉'}
+              {search ? 'لا توجد نتائج مطابقة' : 'لا توجد طلبات عضوية غير مفعلة! 🎉'}
             </h4>
             <p className="text-xs text-zinc-400 max-w-sm mx-auto mt-1">
               {search
                 ? `لم يتم العثور على طلبات تطابق كلمة البحث "${search}"`
-                : 'جميع حسابات واشتراكات الأعضاء معتمدة ومفعلة بنجاح.'}
+                : 'جميع طلبات العضوية واشتراكات الأعضاء معتمدة ومفعلة بنجاح.'}
             </p>
           </div>
         </div>
