@@ -79,8 +79,6 @@ export const CustomerDashboard = () => {
   // Live gym occupancy
   const [occupancyData, setOccupancyData] = useState({
     currentOccupancy: 0,
-    maxCapacity: 100,
-    percentage: 0,
   });
 
   // Current session status (whether member is checked in right now)
@@ -221,12 +219,8 @@ export const CustomerDashboard = () => {
       if (occupancyRes.status === 'fulfilled' && occupancyRes.value) {
         const occ = occupancyRes.value;
         const current = Number(occ.currentOccupancy || occ.count || 0);
-        const max = Number(occ.maxCapacity || 100);
-        const pct = Math.min(100, Math.round((current / max) * 100));
         setOccupancyData({
           currentOccupancy: current,
-          maxCapacity: max,
-          percentage: pct,
         });
       }
     } catch (err) {
@@ -1164,28 +1158,30 @@ export const CustomerDashboard = () => {
 
                   <div className="py-2 text-center">
                     <div className="relative inline-flex items-center justify-center my-1 sm:my-2">
-                      {/* Circular Progress Indicator */}
+                      {/* Circular Live Indicator */}
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-zinc-800 flex items-center justify-center relative">
                         <div
                           className="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"
                           style={{ animationDuration: '8s' }}
                         />
                         <div className="text-center">
-                          <span className="text-xl sm:text-2xl font-mono font-black text-amber-400">
-                            {occupancyData.percentage}%
+                          <span className="text-2xl sm:text-3xl font-mono font-black text-amber-400">
+                            {occupancyData.currentOccupancy}
                           </span>
+                          <span className="text-[10px] text-zinc-400 block font-bold mt-0.5">وحش الآن</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-1 sm:mt-2 space-y-1">
                       <h4 className="text-xs sm:text-sm font-bold text-white">
-                        {occupancyData.percentage < 40 && 'الجيم رايق وجاهز للتمرين 🔥'}
-                        {occupancyData.percentage >= 40 && occupancyData.percentage < 75 && 'إشغال متوسط ومناسب للتمرين 💪'}
-                        {occupancyData.percentage >= 75 && 'وقت ذروة (الجيم مليان طاقة) ⚡'}
+                        {occupancyData.currentOccupancy === 0 && 'الجيم رايق وجاهز للتمرين 🔥'}
+                        {occupancyData.currentOccupancy > 0 && occupancyData.currentOccupancy <= 20 && 'إشغال هادئ ومناسب للتمرين 💪'}
+                        {occupancyData.currentOccupancy > 20 && occupancyData.currentOccupancy <= 50 && 'أجواء رياضية وحماسية ⚡'}
+                        {occupancyData.currentOccupancy > 50 && 'وقت ذروة وحماس عالي 💥'}
                       </h4>
                       <p className="text-[11px] sm:text-xs text-zinc-400 font-mono">
-                        {occupancyData.currentOccupancy} وحش يتمرنون الآن من أصل {occupancyData.maxCapacity}
+                        {occupancyData.currentOccupancy} وحش يتمرنون الآن في صالة الجيم
                       </p>
                     </div>
                   </div>

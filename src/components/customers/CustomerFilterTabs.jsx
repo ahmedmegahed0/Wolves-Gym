@@ -52,7 +52,7 @@ export const CustomerFilterTabs = ({
     },
     {
       id: '2',
-      label: 'الاشتراكات المرفوضة',
+      label: 'الطلبات المرفوضة',
       shortLabel: 'مرفوضة',
       icon: XCircle,
       count: counts.rejected,

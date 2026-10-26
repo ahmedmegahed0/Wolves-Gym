@@ -43,7 +43,7 @@ export const ApprovalBadge = ({ status, size = 'md' }) => {
         <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
       </span>
       <Clock className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
-      <span>طلب معلق</span>
+      <span>طلب عضوية غير مفعل</span>
     </span>
   );
 };

@@ -27,7 +27,7 @@ export const CreateEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
     email: '',
     phoneNumber: '',
     salary: '',
-    role: 1, // Default: Receptionist
+    role: 6, // Default: Reception (6)
     password: '',
     confirmPassword: '',
     isActive: true,

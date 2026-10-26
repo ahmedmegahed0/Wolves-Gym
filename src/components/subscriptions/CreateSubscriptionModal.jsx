@@ -490,10 +490,12 @@ export const CreateSubscriptionModal = ({
                           </h4>
                           <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5 font-mono">
                             <span dir="ltr">{selectedCustomer.phoneNumber || 'بدون هاتف'}</span>
-                            <span className="text-zinc-600">•</span>
-                            <span className="text-amber-400 font-bold">
-                              {selectedCustomer.code || `ID-${selectedCustomer.id}`}
-                            </span>
+                            {selectedCustomer.code && !/^ID-\d+$/i.test(String(selectedCustomer.code).trim()) && (
+                              <>
+                                <span className="text-zinc-600">•</span>
+                                <span className="text-amber-400 font-bold">{selectedCustomer.code}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -569,9 +571,11 @@ export const CreateSubscriptionModal = ({
                                     </div>
                                   </div>
 
-                                  <div className="px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-amber-400 shrink-0">
-                                    {c.code || `ID-${c.id}`}
-                                  </div>
+                                  {c.code && !/^ID-\d+$/i.test(String(c.code).trim()) && (
+                                    <div className="px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-amber-400 shrink-0">
+                                      {c.code}
+                                    </div>
+                                  )}
                                 </button>
                               ))
                             )}
@@ -940,9 +944,11 @@ export const CreateSubscriptionModal = ({
                           <span className="text-xs font-black text-white truncate">
                             {selectedCustomer.name}
                           </span>
-                          <span className="text-[11px] font-mono text-amber-400 font-bold">
-                            {selectedCustomer.code || `ID-${selectedCustomer.id}`}
-                          </span>
+                          {selectedCustomer.code && !/^ID-\d+$/i.test(String(selectedCustomer.code).trim()) && (
+                            <span className="text-[11px] font-mono text-amber-400 font-bold">
+                              {selectedCustomer.code}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-zinc-500 italic block">

@@ -13,7 +13,7 @@ import {
   XCircle,
   Calendar
 } from 'lucide-react';
-import { EMPLOYEE_ROLES, getEmployeeMe } from '../../services/employeesService';
+import { EMPLOYEE_ROLES, getEmployeeRoleInfo, getEmployeeMe } from '../../services/employeesService';
 
 export const EmployeeProfileModal = ({ isOpen, onClose }) => {
   const [employee, setEmployee] = useState(null);
@@ -40,7 +40,7 @@ export const EmployeeProfileModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const roleInfo = employee?.role ? EMPLOYEE_ROLES[employee.role] : null;
+  const roleInfo = getEmployeeRoleInfo(employee?.role);
 
   return (
     <AnimatePresence>

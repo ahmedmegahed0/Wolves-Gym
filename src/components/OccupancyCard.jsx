@@ -20,17 +20,11 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
   const gradientId = useId();
 
   const [occupancy, setOccupancy] = useState(0);
-  const [maxCapacity, setMaxCapacity] = useState(() => {
-    const saved = localStorage.getItem('gym_max_capacity');
-    return saved ? parseInt(saved, 10) : 100;
-  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefreshInterval, setAutoRefreshInterval] = useState(30); // seconds: 0 = off, 10, 30, 60
   const [secondsUntilNext, setSecondsUntilNext] = useState(30);
-  const [showCapacityModal, setShowCapacityModal] = useState(false);
-  const [tempCapacity, setTempCapacity] = useState(maxCapacity);
 
   // Store callbacks & toast handlers in refs to prevent dependency loops
   const onOccupancyUpdatedRef = useRef(onOccupancyUpdated);
@@ -120,45 +114,41 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
     return () => clearInterval(intervalTimer);
   }, [autoRefreshInterval, fetchOccupancy]);
 
-  // Calculate percentage and status
-  const percentage = Math.min(100, Math.round((occupancy / maxCapacity) * 100)) || 0;
-  const availableSlots = Math.max(0, maxCapacity - occupancy);
-
   const getStatusInfo = () => {
-    if (percentage >= 90) {
+    if (occupancy >= 50) {
       return {
-        label: 'الجيم زحمة جداً وعلى آخره',
-        sub: 'طاقة استيعابية شبه كاملة',
+        label: 'وقت الذروة والحماس',
+        sub: 'الجيم شغال بأعلى طاقة وحيوية',
         color: 'text-rose-400',
         bg: 'bg-rose-500/10 border-rose-500/30',
         glow: 'shadow-[0_0_20px_rgba(244,63,94,0.3)]',
         strokeGradient: ['#F43F5E', '#BE123C'],
         statusDot: 'bg-rose-500',
-        badgeText: 'أقصى ضغط',
+        badgeText: 'ذروة التمرين',
       };
     }
-    if (percentage >= 70) {
+    if (occupancy >= 20) {
       return {
-        label: 'الجيم شغال نار والوحوش كتير',
-        sub: 'وقت الذروة الحماسي',
+        label: 'حماس ونشاط في الصالة',
+        sub: 'أجواء رياضية ممتازة وتدفق متوازن',
         color: 'text-amber-400',
         bg: 'bg-amber-500/15 border-amber-500/35',
         glow: 'shadow-[0_0_25px_rgba(245,158,11,0.25)]',
         strokeGradient: ['#F59E0B', '#D97706'],
         statusDot: 'bg-amber-400',
-        badgeText: 'ذروة التمرين',
+        badgeText: 'نشاط وحيوية',
       };
     }
-    if (percentage >= 40) {
+    if (occupancy > 0) {
       return {
-        label: 'الزحمة متوسطة ومناسبة للتمرين',
-        sub: 'تدفق أجهزة ممتاز',
-        color: 'text-yellow-400',
-        bg: 'bg-yellow-500/10 border-yellow-500/30',
-        glow: 'shadow-[0_0_20px_rgba(234,179,8,0.2)]',
-        strokeGradient: ['#FBBF24', '#F59E0B'],
-        statusDot: 'bg-yellow-400',
-        badgeText: 'متوسط ومتوازن',
+        label: 'أجواء ممتازة ومناسبة للتمرين',
+        sub: 'تدفق مريح وكافة الأجهزة متاحة',
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-500/10 border-emerald-500/30',
+        glow: 'shadow-[0_0_20px_rgba(16,185,129,0.2)]',
+        strokeGradient: ['#10B981', '#059669'],
+        statusDot: 'bg-emerald-400',
+        badgeText: 'إشغال هادئ',
       };
     }
     return {
@@ -177,18 +167,9 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
 
   // Circular gauge calculations
   const size = 210;
-  const strokeWidth = 16;
+  const strokeWidth = 14;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  const handleSaveCapacity = () => {
-    const val = Math.max(10, Math.min(1000, Number(tempCapacity) || 100));
-    setMaxCapacity(val);
-    localStorage.setItem('gym_max_capacity', String(val));
-    setShowCapacityModal(false);
-    toastInfo('تم تعديل السعة', `تم تحديث سعة الجيم القصوى إلى ${val} وحش.`);
-  };
 
   return (
     <div className="wolf-glass rounded-3xl p-4 sm:p-6 lg:p-7 relative overflow-hidden border border-amber-500/20 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col justify-between">
@@ -247,7 +228,7 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
             onClick={() => fetchOccupancy(true)}
             disabled={refreshing}
             title="تحديث العدد الآن"
-            className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group"
+            className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group cursor-pointer"
           >
             <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:rotate-180 duration-500 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
           </button>
@@ -279,7 +260,7 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
               className="opacity-90"
             />
 
-            {/* Animated Progress Circle in Gold Gradient */}
+            {/* Animated Golden Live Ring */}
             <motion.circle
               cx={size / 2}
               cy={size / 2}
@@ -289,9 +270,13 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
               strokeLinecap="round"
               fill="transparent"
               strokeDasharray={circumference}
-              initial={{ strokeDashoffset: circumference }}
-              animate={{ strokeDashoffset }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ strokeDashoffset: circumference * 0.4 }}
+              animate={{ 
+                strokeDashoffset: occupancy > 0 
+                  ? [circumference * 0.25, circumference * 0.1, circumference * 0.25] 
+                  : [circumference * 0.6, circumference * 0.5, circumference * 0.6] 
+              }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
             />
           </svg>
 
@@ -309,26 +294,24 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
                 transition={{ duration: 0.4 }}
                 className="flex flex-col items-center"
               >
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-amber-200 tracking-tight font-mono">
+                <div className="flex items-baseline justify-center">
+                  <span className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-amber-200 tracking-tight font-mono">
                     {occupancy}
-                  </span>
-                  <span className="text-sm text-zinc-400 font-bold">
-                    /{maxCapacity}
                   </span>
                 </div>
                 <div className="text-xs font-bold text-amber-400 tracking-wide mt-1">
                   عدد الوحوش في الجيم دلوقتي
                 </div>
-                <div className={`text-xs font-bold font-mono mt-1.5 px-2.5 py-0.5 rounded-full border ${status.bg} ${status.color} shadow-sm`}>
-                  {percentage}% نسبة الإشغال
+                <div className={`text-xs font-bold font-mono mt-1.5 px-3 py-0.5 rounded-full border ${status.bg} ${status.color} shadow-sm flex items-center gap-1.5`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${status.statusDot} animate-ping`} />
+                  <span>{status.badgeText}</span>
                 </div>
               </motion.div>
             )}
           </div>
         </div>
 
-        {/* Dynamic Status Text Badge */}
+        {/* Dynamic Status Text Banner */}
         <div className="mt-3 sm:mt-5 flex items-center justify-center px-1">
           <motion.div
             key={status.label}
@@ -349,24 +332,16 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
       {/* Real-time stats footer bar */}
       <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-zinc-800/80 grid grid-cols-3 gap-1.5 sm:gap-2.5 text-center">
         <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">مكان فاضي</div>
-          <div className="text-base sm:text-lg font-black text-amber-400 font-mono mt-0.5">{availableSlots}</div>
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">حالة الصالة</div>
+          <div className="text-xs sm:text-sm font-black text-amber-400 font-cairo mt-1">
+            {occupancy > 0 ? 'نشاط مستمر' : 'صالة رايقة'}
+          </div>
         </div>
 
         <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">سعة الجيم</div>
-          <div className="text-base sm:text-lg font-black text-white font-mono mt-0.5 flex items-center justify-center gap-1">
-            {maxCapacity}
-            <button
-              onClick={() => {
-                setTempCapacity(maxCapacity);
-                setShowCapacityModal(true);
-              }}
-              className="text-zinc-500 hover:text-amber-400 transition-colors p-0.5"
-              title="تعديل السعة القصوى"
-            >
-              <Sliders className="w-3 h-3" />
-            </button>
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">الوحوش المتواجدة</div>
+          <div className="text-base sm:text-lg font-black text-white font-mono mt-0.5">
+            {occupancy}
           </div>
         </div>
 
@@ -377,85 +352,6 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
           </div>
         </div>
       </div>
-
-      {/* Capacity Settings Modal */}
-      <AnimatePresence>
-        {showCapacityModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="wolf-glass bg-zinc-950/95 border border-amber-500/30 rounded-3xl p-6 max-w-sm w-full shadow-2xl"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-amber-400" />
-                  تعديل سعة الجيم القصوى
-                </h3>
-              </div>
-              <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
-                حدد الحد الأقصى لاستيعاب الجيم لحساب نسبة الإشغال وحالة الزحمة بدقة.
-              </p>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-zinc-300 block mb-1.5">
-                    العدد الأقصى المستهدف (وحوش):
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="1000"
-                    value={tempCapacity}
-                    onChange={(e) => setTempCapacity(e.target.value)}
-                    className="w-full bg-black text-white rounded-xl px-4 py-3 border border-zinc-800 focus:outline-none focus:border-amber-400 font-mono font-bold text-lg text-center"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  {[50, 100, 150, 200].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setTempCapacity(preset)}
-                      className={`flex-1 py-1.5 text-xs rounded-xl font-mono font-bold border transition-colors ${
-                        tempCapacity == preset
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-400'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCapacityModal(false)}
-                    className="flex-1 px-4 py-2.5 text-xs font-bold rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                  >
-                    إلغاء
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveCapacity}
-                    className="flex-1 px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black shadow-gold-glow transition-all"
-                  >
-                    حفظ التغيير
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 });

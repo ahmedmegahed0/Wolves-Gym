@@ -190,22 +190,11 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
           return;
         }
 
-        // Use registered code if exists, otherwise sync code: `ID-${id}` to DB so checkIn recognizes it
-        if (matchedCustomer.code && String(matchedCustomer.code).trim()) {
+        // Use registered code if exists, otherwise use phone number or id without updating DB
+        if (matchedCustomer.code && String(matchedCustomer.code).trim() && !/^ID-\d+$/i.test(String(matchedCustomer.code).trim())) {
           finalCode = String(matchedCustomer.code).trim();
         } else {
-          const generatedCode = `ID-${matchedCustomer.id}`;
-          try {
-            console.log(`Customer #${matchedCustomer.id} has no code in DB. Assigning code: ${generatedCode}`);
-            await customerService.updateCustomer(matchedCustomer.id, {
-              ...matchedCustomer,
-              code: generatedCode,
-            });
-            finalCode = generatedCode;
-          } catch (assignErr) {
-            console.warn('Failed to assign code to customer in DB:', assignErr);
-            finalCode = generatedCode;
-          }
+          finalCode = String(matchedCustomer.phoneNumber || matchedCustomer.id);
         }
       }
 
@@ -387,9 +376,11 @@ export const CheckInForm = ({ onCheckInSuccess }) => {
                     <div>
                       <div className="font-bold text-white flex items-center gap-1.5">
                         <span>{matchedCustomerPreview.name}</span>
-                        <span className="text-[10px] text-zinc-400 font-mono">
-                          ({matchedCustomerPreview.code || `ID-${matchedCustomerPreview.id}`})
-                        </span>
+                        {matchedCustomerPreview.code && !/^ID-\d+$/i.test(String(matchedCustomerPreview.code).trim()) && (
+                          <span className="text-[10px] text-zinc-400 font-mono">
+                            ({matchedCustomerPreview.code})
+                          </span>
+                        )}
                       </div>
                       {matchedCustomerPreview.phoneNumber && (
                         <div className="text-[10px] text-zinc-400 font-mono" dir="ltr">

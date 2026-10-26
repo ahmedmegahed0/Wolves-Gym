@@ -201,7 +201,7 @@ export const subscriptionsService = {
         customerId: formatted.customerId,
         customerName: payload.customer?.name || `عضو #${formatted.customerId}`,
         customerPhone: payload.customer?.phoneNumber || '',
-        customerCode: payload.customer?.code || `ID-${formatted.customerId}`,
+        customerCode: (payload.customer?.code && !/^ID-\d+$/i.test(String(payload.customer.code).trim())) ? payload.customer.code : '',
         packageId: formatted.packageId,
         packageName: payload.packageItem?.name || `باقة #${formatted.packageId}`,
         packagePrice: Number(payload.packageItem?.price) || 0,

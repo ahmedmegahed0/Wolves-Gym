@@ -23,7 +23,8 @@ import {
 import { 
   getEmployees, 
   updateEmployee, 
-  EMPLOYEE_ROLES 
+  EMPLOYEE_ROLES,
+  getEmployeeRoleInfo 
 } from '../../services/employeesService';
 import { translateServerErrorMessage } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
@@ -312,7 +313,7 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
                 </tr>
               ) : (
                 employees.map((emp) => {
-                  const roleInfo = emp.role ? EMPLOYEE_ROLES[emp.role] : null;
+                  const roleInfo = getEmployeeRoleInfo(emp.role);
                   const isToggling = togglingId === emp.id;
                   const isSelf = user && (
                     (user.email && emp.email && user.email.toLowerCase() === emp.email.toLowerCase()) ||

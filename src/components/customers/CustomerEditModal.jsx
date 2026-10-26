@@ -55,7 +55,11 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
       setFormData({
         name: customer.name || customer.Name || '',
         phoneNumber: customer.phoneNumber || customer.PhoneNumber || '',
-        code: customer.code || customer.Code || '',
+        code: (customer.code && !/^ID-\d+$/i.test(String(customer.code).trim()))
+          ? customer.code
+          : (customer.Code && !/^ID-\d+$/i.test(String(customer.Code).trim()))
+          ? customer.Code
+          : '',
         isActive: customer.isActive ?? customer.IsActive ?? true,
         height: customer.height ?? customer.Height ?? '',
         weight: customer.weight ?? customer.Weight ?? '',

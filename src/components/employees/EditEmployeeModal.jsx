@@ -11,7 +11,7 @@ import {
   Briefcase,
   AlertCircle
 } from 'lucide-react';
-import { EMPLOYEE_ROLES, updateEmployee } from '../../services/employeesService';
+import { EMPLOYEE_ROLES, updateEmployee, parseRoleValue } from '../../services/employeesService';
 import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 
@@ -22,7 +22,7 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
     name: '',
     phoneNumber: '',
     salary: '',
-    role: 1,
+    role: 6,
     isActive: true,
   });
 
@@ -35,7 +35,7 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
         name: employee.name || '',
         phoneNumber: employee.phoneNumber || '',
         salary: employee.salary !== undefined ? employee.salary : '',
-        role: employee.role ? Number(employee.role) : 1,
+        role: parseRoleValue(employee.role),
         isActive: employee.isActive !== undefined ? Boolean(employee.isActive) : true,
       });
       setErrors({});

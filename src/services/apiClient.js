@@ -90,6 +90,7 @@ export const normalizeRole = (roleStr = '') => {
   const r = String(roleStr || '').toLowerCase().trim();
   if (r === 'superadmin' || r === 'super_admin' || r === 'admin') return 'SuperAdmin';
   if (
+    r === '2' ||
     r === 'operationmanager' || 
     r === 'operation_manager' || 
     r === 'operationsmanager' || 
@@ -97,8 +98,8 @@ export const normalizeRole = (roleStr = '') => {
     r === 'operations'
   ) return 'OperationManager';
   if (r === 'manager') return 'Manager';
-  if (r === 'receptionist' || r === 'reception') return 'Receptionist';
-  if (r === 'trainer' || r === 'coach') return 'Trainer';
+  if (r === '6' || r === 'receptionist' || r === 'reception') return 'Receptionist';
+  if (r === '1' || r === 'trainer' || r === 'coach') return 'Trainer';
   if (r === 'gator' || r === 'gate' || r === 'gatekeeper') return 'Gator';
   return 'Customer';
 };
@@ -1533,7 +1534,7 @@ export const subscriptionService = {
         customerId: payload.customerId,
         customerName: customer?.name || `عضو #${payload.customerId}`,
         customerPhone: customer?.phoneNumber || '',
-        customerCode: customer?.code || `ID-${payload.customerId}`,
+        customerCode: (customer?.code && !/^ID-\d+$/i.test(String(customer.code).trim())) ? customer.code : '',
         packageId: payload.packageId,
         packageName: packageItem?.name || `باقة #${payload.packageId}`,
         packagePrice: Number(packageItem?.price) || 0,

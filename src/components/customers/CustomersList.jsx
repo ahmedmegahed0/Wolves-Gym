@@ -135,14 +135,14 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
     try {
       await customerService.updateApprovalStatus(customer.id, 1);
       toastSuccess(
-        'تم قبول العضو بنجاح.. جاهز للتمرين! 🐺',
-        `تم تفعيل اشتراك الكابتن (${customer.name}) وأصبح عضواً نشطاً في الجيم.`
+        'تم تفعيل العضوية بنجاح.. جاهز للتمرين! 🐺',
+        `تم تفعيل حساب العضو (${customer.name}) وأصبح نشطاً في الجيم.`
       );
       fetchCustomers();
       fetchTabCounts();
     } catch (err) {
       console.error('Approve member error:', err);
-      toastError('فشل قبول العضو', err.friendlyMessage || 'تعذر تغيير حالة الاشتراك.');
+      toastError('فشل تفعيل العضوية', err.friendlyMessage || 'تعذر تغيير حالة العضوية.');
     } finally {
       setActionLoadingId(null);
     }
@@ -159,14 +159,14 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
     try {
       await customerService.updateApprovalStatus(customer.id, 2);
       toastInfo(
-        'تم رفض طلب الاشتراك',
-        `تم نقل طلب العضو (${customer.name}) إلى قائمة الاشتراكات المرفوضة.`
+        'تم رفض طلب العضوية',
+        `تم نقل طلب العضو (${customer.name}) إلى قائمة الطلبات المرفوضة.`
       );
       fetchCustomers();
       fetchTabCounts();
     } catch (err) {
       console.error('Reject member error:', err);
-      toastError('فشل رفض العضو', err.friendlyMessage || 'تعذر تحديث حالة الاشتراك.');
+      toastError('فشل رفض العضو', err.friendlyMessage || 'تعذر تحديث حالة العضوية.');
     } finally {
       setActionLoadingId(null);
     }
@@ -293,14 +293,14 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
             </div>
             <h3 className="text-base sm:text-lg font-black text-white">
               {activeTab === '0'
-                ? 'مفيش طلبات اشتراك معلقة دلوقتي! 🐺'
+                ? 'مفيش طلبات عضوية غير مفعلة دلوقتي! 🐺'
                 : activeTab === '2'
-                ? 'مفيش أي اشتراكات مرفوضة'
+                ? 'مفيش أي طلبات مرفوضة'
                 : 'لم يتم العثور على أي مشتركين'}
             </h3>
             <p className="text-xs sm:text-sm text-zinc-400 max-w-sm mx-auto mt-1 leading-relaxed">
               {activeTab === '0'
-                ? 'كل طلبات الاشتراك تم البت فيها وقبولها. جاهزون لاستقبال وحوش جدد في أي وقت!'
+                ? 'كل طلبات العضوية تم البت فيها وقبولها. جاهزون لاستقبال وحوش جدد في أي وقت!'
                 : searchQuery
                 ? 'جرب البحث بكلمات أخرى أو مسح شريط البحث لرؤية المشتركين.'
                 : 'ابدأ بقبول الأعضاء الجدد أو تسجيل مشتركين جدد في الجيم.'}
@@ -317,7 +317,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                     <th className="py-4 px-5">اسم العضو وبياناته</th>
                     <th className="py-4 px-5">القياسات البدنية</th>
                     <th className="py-4 px-5">عضل / دهون</th>
-                    <th className="py-4 px-5">حالة الاشتراك</th>
+                    <th className="py-4 px-5">حالة العضوية</th>
                     <th className="py-4 px-5 text-center">إجراءات سريعة</th>
                   </tr>
                 </thead>
@@ -337,10 +337,14 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                       >
                         {/* Member Code */}
                         <td className="py-4 px-5">
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/80 border border-amber-500/30 font-mono text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-                            <QrCode className="w-3.5 h-3.5" />
-                            <span>{c.code || `ID-${c.id}`}</span>
-                          </div>
+                          {c.code && !/^ID-\d+$/i.test(String(c.code).trim()) ? (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/80 border border-amber-500/30 font-mono text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>{c.code}</span>
+                            </div>
+                          ) : (
+                            <span className="text-zinc-600 font-mono text-sm">—</span>
+                          )}
                         </td>
 
                         {/* Name & Phone */}
@@ -409,7 +413,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                                 ) : (
                                   <Check className="w-3.5 h-3.5" />
                                 )}
-                                <span>تفعيل الاشتراك</span>
+                                <span>تفعيل العضوية</span>
                               </button>
                             )}
 
@@ -458,9 +462,11 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                     {/* Header Row */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="px-2.5 py-1 rounded-xl bg-black border border-amber-500/30 text-amber-400 font-mono text-xs font-bold">
-                          {c.code || `ID-${c.id}`}
-                        </div>
+                        {c.code && !/^ID-\d+$/i.test(String(c.code).trim()) && (
+                          <div className="px-2.5 py-1 rounded-xl bg-black border border-amber-500/30 text-amber-400 font-mono text-xs font-bold">
+                            {c.code}
+                          </div>
+                        )}
                         <h4 className="font-black text-white text-sm">{c.name}</h4>
                       </div>
                       <ApprovalBadge status={c.approvalStatus} size="sm" />
@@ -509,7 +515,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
                           ) : (
                             <Check className="w-3.5 h-3.5" />
                           )}
-                          <span>تفعيل</span>
+                          <span>تفعيل العضوية</span>
                         </button>
                       )}
 
