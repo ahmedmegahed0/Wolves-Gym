@@ -89,7 +89,8 @@ export const CustomerBehaviorNotesTab = ({ customerId, customerName = '', canAdd
 
   // Handle Add Note
   const handleAddNote = async (e) => {
-    e?.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     const clean = newNote.trim();
     if (!clean) {
       setFormError('يرجى كتابة نص الملاحظة السلوكية أولاً.');
@@ -191,12 +192,11 @@ export const CustomerBehaviorNotesTab = ({ customerId, customerName = '', canAdd
       {/* Add Note Collapsible Form */}
       <AnimatePresence>
         {showAddForm && (
-          <motion.form
+          <motion.div
             initial={{ opacity: 0, height: 0, y: -10 }}
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            onSubmit={handleAddNote}
             className="p-4 rounded-2xl bg-gradient-to-br from-[#16161d] to-[#0c0c10] border border-amber-500/30 shadow-lg space-y-3 overflow-hidden"
           >
             <div className="flex items-center justify-between">
@@ -215,6 +215,12 @@ export const CustomerBehaviorNotesTab = ({ customerId, customerName = '', canAdd
               onChange={(e) => {
                 setNewNote(e.target.value);
                 if (formError) setFormError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  handleAddNote(e);
+                }
               }}
               maxLength={500}
               placeholder="اكتب تفاصيل الملاحظة (مثال: عدم الالتزام بوضع الأوزان في أماكنها، مشادة كلامية مع أحد الأعضاء، الالتزام الممتاز بالتعليمات...)"
@@ -239,12 +245,13 @@ export const CustomerBehaviorNotesTab = ({ customerId, customerName = '', canAdd
                   setFormError('');
                 }}
                 disabled={submitting}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white bg-zinc-900 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white bg-zinc-900 transition-colors cursor-pointer"
               >
                 إلغاء
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleAddNote}
                 disabled={submitting || !newNote.trim()}
                 className="px-4 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black shadow-gold-glow flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
               >
@@ -261,7 +268,7 @@ export const CustomerBehaviorNotesTab = ({ customerId, customerName = '', canAdd
                 )}
               </button>
             </div>
-          </motion.form>
+          </motion.div>
         )}
       </AnimatePresence>
 

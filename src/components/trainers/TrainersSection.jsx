@@ -55,8 +55,8 @@ export const TrainersSection = ({
   const canManage = ['SuperAdmin', 'Manager', 'Receptionist', 'Reception'].includes(roleMeta.role);
 
   const [activeView, setActiveView] = useState(() => {
-    if (initialView === 'management' && canManage) return 'management';
-    return 'cards';
+    if (canManage) return 'management';
+    return initialView || 'cards';
   });
 
   const { error: toastError, success: toastSuccess } = useToast();
@@ -320,25 +320,8 @@ export const TrainersSection = ({
                   )}
                 </div>
 
-                {/* Sort & PageSize Controls */}
+                {/* PageSize Controls */}
                 <div className="flex items-center gap-2.5 self-end md:self-auto">
-                  {/* Sort Selector */}
-                  <div className="flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3 py-2 text-xs">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
-                    <select
-                      value={sortBy}
-                      onChange={(e) => {
-                        setSortBy(e.target.value);
-                        setPageNumber(1);
-                      }}
-                      className="bg-transparent text-zinc-300 outline-none cursor-pointer"
-                    >
-                      <option value="" className="bg-zinc-950">ترتيب افتراضي</option>
-                      <option value="name" className="bg-zinc-950">الاسم أبجدياً</option>
-                      <option value="yearsOfExperience" className="bg-zinc-950">الأكثر خبرة</option>
-                    </select>
-                  </div>
-
                   {/* PageSize Selector */}
                   <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3 py-2 text-xs">
                     <span className="text-zinc-500 hidden sm:inline">عرض:</span>

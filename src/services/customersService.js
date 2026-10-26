@@ -136,10 +136,10 @@ export const customersService = {
   async addBehaviorNote(id, descriptionOrData) {
     const cleanId = Number(id);
     const description = typeof descriptionOrData === 'object' && descriptionOrData !== null 
-      ? String(descriptionOrData.description || '').trim() 
+      ? String(descriptionOrData.description || descriptionOrData.Description || '').trim() 
       : String(descriptionOrData || '').trim();
 
-    const payload = { description };
+    const payload = { description, Description: description };
     const response = await apiClient.post(`/api/customers/${cleanId}/behavior-notes`, payload);
     return response.data;
   },

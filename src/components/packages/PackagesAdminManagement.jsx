@@ -341,22 +341,6 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
               </select>
             </div>
 
-            {/* SortBy Filter */}
-            <div className="flex items-center gap-1.5 bg-[#16161a] border border-white/10 rounded-xl px-2.5 py-1.5">
-              <ArrowUpDown className="w-3 h-3 text-zinc-400 shrink-0" />
-              <select
-                value={sortBy}
-                onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
-                className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
-              >
-                <option value="" className="bg-zinc-900 text-zinc-300">الترتيب الافتراضي</option>
-                <option value="price_desc" className="bg-zinc-900 text-white">السعر: الأعلى</option>
-                <option value="price_asc" className="bg-zinc-900 text-white">السعر: الأقل</option>
-                <option value="duration_desc" className="bg-zinc-900 text-white">المدة: الأطول</option>
-                <option value="duration_asc" className="bg-zinc-900 text-white">المدة: الأقصر</option>
-              </select>
-            </div>
-
             {/* Page Size & Refresh */}
             <select
               value={pageSize}

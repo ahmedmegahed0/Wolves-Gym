@@ -295,7 +295,7 @@ export const TrainerKpiReports = ({
               {kpiItems.map((item) => {
                 const avg = Number(item.averageScore || 0).toFixed(1);
                 const count = item.evaluationCount || 0;
-                const percentage = Math.min(100, Math.max(0, (Number(avg) / 10) * 100));
+                const percentage = Math.min(100, Math.max(0, (Number(avg) / 5) * 100));
 
                 return (
                   <div
@@ -312,7 +312,7 @@ export const TrainerKpiReports = ({
                       <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-zinc-900 border border-amber-500/20 text-amber-400 font-mono font-black text-xs">
                         <Star className="w-3 h-3 fill-amber-400" />
                         <span>{avg}</span>
-                        <span className="text-[9px] text-zinc-500">/ 10</span>
+                        <span className="text-[9px] text-zinc-500">/ 5</span>
                       </div>
                     </div>
 
@@ -366,7 +366,7 @@ export const TrainerKpiReports = ({
                     <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-xs font-bold">
                       <span>متوسط اليوم:</span>
                       <span className="text-sm font-black">{dayAvg}</span>
-                      <span className="text-[10px] text-zinc-500">/ 10</span>
+                      <span className="text-[10px] text-zinc-500">/ 5</span>
                     </div>
                   </div>
 
@@ -380,7 +380,7 @@ export const TrainerKpiReports = ({
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-zinc-300">{s.kpiName || `معيار #${s.kpiId}`}</span>
                           <span className="font-mono font-bold text-amber-400 bg-zinc-900 px-2 py-0.5 rounded-md">
-                            {s.score} / 10
+                            {s.score} / 5
                           </span>
                         </div>
                         {s.comment && (

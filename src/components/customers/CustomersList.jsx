@@ -255,8 +255,6 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
           onTabChange={handleTabChange}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
           counts={tabCounts}
         />
       </div>

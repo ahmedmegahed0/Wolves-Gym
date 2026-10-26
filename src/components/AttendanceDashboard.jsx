@@ -1222,6 +1222,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
               >
                 <TrainersSection
                   isEmbedded={true}
+                  initialView="management"
                   onSelectTrainer={(trainer) => handleOpenNewSubscription(null, null)}
                 />
               </motion.div>

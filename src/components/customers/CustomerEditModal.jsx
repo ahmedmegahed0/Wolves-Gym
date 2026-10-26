@@ -47,7 +47,6 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
   const [activeSection, setActiveSection] = useState('basic'); // 'basic', 'physical', 'health', 'notes', 'attendance'
   const [loading, setLoading] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -75,33 +74,9 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
   const targetId = customer.id ?? customer.customerId ?? customer.Id;
 
-  // Handle direct approval status update
-  const handleApprovalStatusChange = async (newStatus) => {
-    try {
-      setUpdatingStatus(true);
-      await customerService.changeApprovalStatus(targetId, { status: newStatus });
-      setFormData(prev => ({ ...prev, approvalStatus: newStatus }));
-      const statusLabels = {
-        0: 'قيد الانتظار (معلق)',
-        1: 'معتمد (نشط)',
-        2: 'مرفوض / موقوف'
-      };
-      toastSuccess(
-        'تم تحديث حالة الاعتماد',
-        `تم تغيير حالة العضو إلى: ${statusLabels[newStatus] || newStatus}`
-      );
-      if (onCustomerUpdated) {
-        onCustomerUpdated({ ...customer, ...formData, approvalStatus: newStatus, id: targetId });
-      }
-    } catch (err) {
-      console.error('Failed to change approval status:', err);
-      toastError(
-        'فشل تغيير حالة الاعتماد',
-        err.friendlyMessage || 'حدث خطأ أثناء تعديل حالة الاعتماد.'
-      );
-    } finally {
-      setUpdatingStatus(false);
-    }
+  // Handle local approval status selection (applied only when clicking Save)
+  const handleApprovalStatusChange = (newStatus) => {
+    setFormData(prev => ({ ...prev, approvalStatus: Number(newStatus) }));
   };
 
   // Calculate BMI on the fly
@@ -156,10 +131,19 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
     setLoading(true);
 
     try {
+      // 1. Update customer profile details
       await customerService.updateCustomer(targetId, formData);
+
+      // 2. If approval status was changed by the user in this form, sync approval status via API
+      const originalStatus = Number(customer.approvalStatus ?? customer.ApprovalStatus ?? 0);
+      const newStatus = Number(formData.approvalStatus);
+      if (newStatus !== originalStatus) {
+        await customerService.changeApprovalStatus(targetId, { status: newStatus });
+      }
+
       toastSuccess(
         'تم حفظ التعديلات بنجاح',
-        `تم تحديث بيانات العضو (${formData.name}) وملفه الرياضي بنجاح.`
+        `تم تحديث بيانات العضو (${formData.name}) وحالته بنجاح.`
       );
       if (onCustomerUpdated) {
         onCustomerUpdated({ ...customer, ...formData, id: targetId });
@@ -283,7 +267,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
           </div>
 
           {/* Form Body / Content with Smooth Transitions */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 px-1 py-1 gold-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-4 px-1 py-1 gold-scrollbar">
             {/* 1. BASIC INFO SECTION */}
             {activeSection === 'basic' && (
               <motion.div
@@ -380,18 +364,13 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
                       <ShieldCheck className="w-4 h-4 text-amber-400" />
                       <span className="text-xs font-black text-white">حالة اعتماد المشترك (Approval Status):</span>
                     </div>
-                    {updatingStatus && (
-                      <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono">
-                        <Loader2 className="w-3 h-3 animate-spin" /> جاري التحديث...
-                      </span>
-                    )}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
-                      disabled={updatingStatus}
+                      disabled={loading}
                       onClick={() => handleApprovalStatusChange(0)}
-                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         Number(formData.approvalStatus) === 0
                           ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-black shadow-gold-glow'
                           : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
@@ -403,9 +382,9 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
                     <button
                       type="button"
-                      disabled={updatingStatus}
+                      disabled={loading}
                       onClick={() => handleApprovalStatusChange(1)}
-                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         Number(formData.approvalStatus) === 1
                           ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
                           : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
@@ -417,9 +396,9 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
                     <button
                       type="button"
-                      disabled={updatingStatus}
+                      disabled={loading}
                       onClick={() => handleApprovalStatusChange(2)}
-                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         Number(formData.approvalStatus) === 2
                           ? 'bg-rose-500/20 border-rose-500 text-rose-400 font-black shadow-[0_0_15px_rgba(244,63,94,0.3)]'
                           : 'bg-black/40 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
@@ -711,9 +690,10 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
 
                 {(activeSection === 'basic' || activeSection === 'physical' || activeSection === 'health') && (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     disabled={loading}
-                    className="px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                    className="px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black shadow-gold-glow flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     {loading ? (
                       <>
@@ -730,7 +710,7 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
                 )}
               </div>
             </div>
-          </form>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>

@@ -384,21 +384,6 @@ export const KpisManagement = ({ isEmbedded = false }) => {
               ))}
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="relative shrink-0">
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-zinc-950/90 border border-zinc-800 text-zinc-300 text-xs font-bold focus:outline-none focus:border-amber-500 transition-all cursor-pointer pr-3"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id} className="bg-zinc-950 text-white">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Refresh Button */}
             <button
               type="button"

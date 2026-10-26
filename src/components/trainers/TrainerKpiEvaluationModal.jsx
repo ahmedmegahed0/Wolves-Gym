@@ -41,6 +41,7 @@ export const TrainerKpiEvaluationModal = ({
   
   // Evaluation entries keyed by kpiId: { score: number, comment: string }
   const [evaluations, setEvaluations] = useState({});
+  const [hoveredStars, setHoveredStars] = useState({});
   const [generalError, setGeneralError] = useState('');
 
   const trainerId = trainer?.trainerId || trainer?.id;
@@ -91,7 +92,7 @@ export const TrainerKpiEvaluationModal = ({
             foundToday = true;
             match.scores.forEach((s) => {
               existingScoresMap[s.kpiId] = {
-                score: Number(s.score) || 8,
+                score: Math.min(5, Math.max(1, Number(s.score) || 5)),
                 comment: s.comment || '',
               };
             });
@@ -102,14 +103,14 @@ export const TrainerKpiEvaluationModal = ({
           setKpis(list);
           setIsExistingToday(foundToday);
 
-          // Initialize scores with existing scores if today was evaluated, or default 8/10
+          // Initialize scores with existing scores if today was evaluated, or default 5/5
           const initialMap = {};
           list.forEach((kpi) => {
             if (existingScoresMap[kpi.id]) {
               initialMap[kpi.id] = existingScoresMap[kpi.id];
             } else {
               initialMap[kpi.id] = {
-                score: 8,
+                score: 5,
                 comment: '',
               };
             }
@@ -176,10 +177,10 @@ export const TrainerKpiEvaluationModal = ({
 
     try {
       const scoresPayload = kpis.map((kpi) => {
-        const item = evaluations[kpi.id] || { score: 8, comment: '' };
+        const item = evaluations[kpi.id] || { score: 5, comment: '' };
         return {
           kpiId: Number(kpi.id),
-          score: Number(item.score),
+          score: Math.min(5, Math.max(1, Number(item.score) || 5)),
           comment: item.comment && String(item.comment).trim() ? String(item.comment).trim() : null,
         };
       });
@@ -193,7 +194,7 @@ export const TrainerKpiEvaluationModal = ({
 
         toastSuccess(
           'تم تحديث تقييم الكابتن بنجاح',
-          `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+          `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/5`
         );
       } else {
         // Submit new evaluation via POST
@@ -204,14 +205,14 @@ export const TrainerKpiEvaluationModal = ({
 
           toastSuccess(
             'تم تسجيل تقييم الكابتن بنجاح',
-            `تم حفظ تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+            `تم حفظ تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/5`
           );
         } catch (postErr) {
           const resData = postErr.response?.data;
           const status = postErr.response?.status;
           const errDetail = JSON.stringify(resData || {}).toLowerCase() + ' ' + (postErr.message || '').toLowerCase();
 
-          // If server rejected with 400 or 409 because an evaluation already exists today, fallback to PUT
+          // If server rejected with 409 or duplicate error because an evaluation already exists today, fallback to PUT
           const isAlreadyExists = 
             status === 409 ||
             (status === 400 && (
@@ -222,12 +223,12 @@ export const TrainerKpiEvaluationModal = ({
               errDetail.includes('يوم') ||
               errDetail.includes('مسبق') ||
               errDetail.includes('بالفعل')
-            ));
+            ) && !errDetail.includes('inclusivebetweenvalidator'));
 
           console.info('POST evaluation result: status =', status, 'isAlreadyExists =', isAlreadyExists, 'errDetail =', errDetail);
 
-          // Always attempt PUT if 400 occurs on POST, in case today has already been evaluated
-          if (isAlreadyExists || status === 400) {
+          // Attempt PUT fallback only if today has already been evaluated
+          if (isAlreadyExists) {
             console.info('Attempting PUT update fallback for date:', todayStr);
             try {
               await trainersService.updateTrainerKpiEvaluations(trainerId, {
@@ -238,7 +239,7 @@ export const TrainerKpiEvaluationModal = ({
               setIsExistingToday(true);
               toastSuccess(
                 'تم تحديث تقييم الكابتن بنجاح',
-                `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+                `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/5`
               );
             } catch (putErr) {
               console.error('PUT fallback also failed:', putErr);
@@ -257,13 +258,22 @@ export const TrainerKpiEvaluationModal = ({
       onClose();
     } catch (err) {
       console.error('Submit KPI Evaluation error:', err);
-      console.error('Error response details:', err.response?.data);
+      // Extract exact server error descriptions
+      const serverData = err.response?.data;
+      let rawServerErrors = [];
+      if (Array.isArray(serverData?.errors)) {
+        rawServerErrors = serverData.errors.map(e => e.description || e.message || (typeof e === 'string' ? e : JSON.stringify(e)));
+      } else if (typeof serverData?.errors === 'object' && serverData?.errors) {
+        rawServerErrors = Object.values(serverData.errors).flat().map(e => (typeof e === 'string' ? e : e.description || e.message || JSON.stringify(e)));
+      }
 
       const msg = 
+        (rawServerErrors.length > 0 ? rawServerErrors.join(' • ') : null) ||
+        serverData?.detail ||
+        serverData?.message ||
         err.friendlyMessage || 
-        extractKpiErrorMessage(err, 'حدث خطأ أثناء إرسال التقييم للسيرفر.') ||
-        err.response?.data?.detail ||
-        err.response?.data?.title ||
+        extractKpiErrorMessage(err) ||
+        serverData?.title ||
         err.message || 
         'حدث خطأ أثناء إرسال التقييم للسيرفر.';
 
@@ -332,8 +342,9 @@ export const TrainerKpiEvaluationModal = ({
               </span>
             </div>
             <div className="flex items-center gap-1.5">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span className="text-lg font-black text-amber-400 font-mono">{currentAverage}</span>
-              <span className="text-xs text-zinc-500 font-mono">/ 10</span>
+              <span className="text-xs text-zinc-500 font-mono">/ 5 نجوم</span>
             </div>
           </div>
 
@@ -377,8 +388,8 @@ export const TrainerKpiEvaluationModal = ({
               </div>
             ) : (
               kpis.map((kpi, idx) => {
-                const evalData = evaluations[kpi.id] || { score: 8, comment: '' };
-                const scoreValue = Number(evalData.score);
+                const evalData = evaluations[kpi.id] || { score: 5, comment: '' };
+                const scoreValue = Math.min(5, Math.max(1, Number(evalData.score) || 5));
 
                 return (
                   <div
@@ -407,26 +418,46 @@ export const TrainerKpiEvaluationModal = ({
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-amber-500/30 text-amber-400 shrink-0 font-mono">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                         <span className="font-black text-sm">{scoreValue}</span>
-                        <span className="text-[10px] text-zinc-500">/ 10</span>
+                        <span className="text-[10px] text-zinc-400">من 5</span>
                       </div>
                     </div>
 
-                    {/* Interactive Score Slider */}
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                        <span>ضعيف (1)</span>
-                        <span>مقبول (5)</span>
-                        <span>ممتاز (10)</span>
+                    {/* Interactive 5-Stars Rating Component */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-1 px-3.5 py-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
+                      <div className="flex items-center gap-2" dir="ltr">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const isFilled = star <= (hoveredStars[kpi.id] || scoreValue);
+                          return (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => handleScoreChange(kpi.id, star)}
+                              onMouseEnter={() => setHoveredStars((prev) => ({ ...prev, [kpi.id]: star }))}
+                              onMouseLeave={() => setHoveredStars((prev) => ({ ...prev, [kpi.id]: 0 }))}
+                              className="p-1 rounded-lg transition-transform hover:scale-125 active:scale-95 cursor-pointer focus:outline-none"
+                              title={`${star} من 5 نجوم`}
+                            >
+                              <Star
+                                className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-150 ${
+                                  isFilled
+                                    ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+                                    : 'text-zinc-700 hover:text-zinc-500 fill-zinc-900/50'
+                                }`}
+                              />
+                            </button>
+                          );
+                        })}
                       </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        step="1"
-                        value={scoreValue}
-                        onChange={(e) => handleScoreChange(kpi.id, e.target.value)}
-                        className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none"
-                      />
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-amber-300 font-cairo">
+                          {((hoveredStars[kpi.id] || scoreValue) === 5) && '⭐⭐⭐⭐⭐ ممتاز (5 نجوم)'}
+                          {((hoveredStars[kpi.id] || scoreValue) === 4) && '⭐⭐⭐⭐ جيد جداً (4 نجوم)'}
+                          {((hoveredStars[kpi.id] || scoreValue) === 3) && '⭐⭐⭐ جيد (3 نجوم)'}
+                          {((hoveredStars[kpi.id] || scoreValue) === 2) && '⭐⭐ مقبول (نجمتان)'}
+                          {((hoveredStars[kpi.id] || scoreValue) === 1) && '⭐ ضعيف (نجمة واحدة)'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Optional Comment Input */}

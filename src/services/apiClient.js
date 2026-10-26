@@ -500,9 +500,6 @@ export const translateServerErrorMessage = (rawMsg) => {
   if (/already.*evaluat|evaluation.*already.*exist|already.*submitted/i.test(msg)) {
     return 'تم تسجيل تقييم لهذا الكابتن اليوم بالفعل. يمكنك تعديل تقييم اليوم بدلاً من إنشاء تقييم جديد.';
   }
-  if (/score.*between|score.*inclusivebetween|score.*must be/i.test(msg)) {
-    return 'درجة التقييم يجب أن تكون رقماً صحيحاً ضمن النطاق المسموح به (1 إلى 10).';
-  }
 
   // Lockers
   if (/locker.*already exists|LOCKER_NUMBER_ALREADY_EXISTS/i.test(msg)) {
@@ -1037,10 +1034,10 @@ export const customerService = {
   async addBehaviorNote(id, descriptionOrData) {
     const cleanId = Number(id);
     const description = typeof descriptionOrData === 'object' && descriptionOrData !== null 
-      ? String(descriptionOrData.description || '').trim() 
+      ? String(descriptionOrData.description || descriptionOrData.Description || '').trim() 
       : String(descriptionOrData || '').trim();
 
-    const payload = { description };
+    const payload = { description, Description: description };
     const response = await apiClient.post(`/api/customers/${cleanId}/behavior-notes`, payload);
     return response.data;
   },

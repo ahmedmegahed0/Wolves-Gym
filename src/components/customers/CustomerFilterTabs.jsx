@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, X, SlidersHorizontal, Users, Clock, ShieldCheck, XCircle } from 'lucide-react';
+import { Search, X, Users, Clock, ShieldCheck, XCircle } from 'lucide-react';
 
 export const CustomerFilterTabs = ({
   activeTab,
   onTabChange,
   searchQuery,
   onSearchChange,
-  sortBy,
-  onSortChange,
   counts = { all: 0, pending: 0, approved: 0, rejected: 0 },
 }) => {
   const [localSearch, setLocalSearch] = useState(searchQuery || '');
@@ -104,32 +102,6 @@ export const CustomerFilterTabs = ({
               <X className="w-4 h-4" />
             </button>
           )}
-        </div>
-
-        {/* Sort Selector */}
-        <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-            </div>
-            <select
-              value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
-              aria-label="ترتيب حسب"
-              className="w-full sm:w-auto bg-[#121215] text-zinc-300 text-xs rounded-xl pr-9 pl-7 py-2.5 border border-white/10 hover:border-white/20 focus:border-amber-500/40 focus:outline-none cursor-pointer appearance-none font-cairo"
-            >
-              <option value="">الترتيب الافتراضي (الأحدث)</option>
-              <option value="name">ترتيب بالاسم (أ-ي)</option>
-              <option value="code">ترتيب بكود العضو</option>
-              <option value="weight">الأثقل وزناً</option>
-              <option value="createdAt">تاريخ التسجيل</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-500">
-              <svg className="fill-current h-3 w-3" viewBox="0 0 20 20">
-                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-              </svg>
-            </div>
-          </div>
         </div>
       </div>
 
