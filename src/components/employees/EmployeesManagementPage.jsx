@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import CreateEmployeeModal from './CreateEmployeeModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import { useToast } from '../../context/ToastContext';
+import useDebounce from '../../hooks/useDebounce';
 
 export const EmployeesManagementPage = ({ isEmbedded = false }) => {
   const { user } = useAuth();
@@ -41,9 +42,15 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
 
   // Filters & Pagination
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 450);
   const [activeFilter, setActiveFilter] = useState(''); // '' | 'true' | 'false'
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
+
+  // Reset to first page when search or filter changes
+  useEffect(() => {
+    setPageNumber(1);
+  }, [debouncedSearch, activeFilter]);
 
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -58,8 +65,8 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
         PageSize: pageSize,
       };
 
-      if (search.trim()) {
-        params.Search = search.trim();
+      if (debouncedSearch.trim()) {
+        params.Search = debouncedSearch.trim();
       }
 
       if (activeFilter === 'true') {
@@ -91,7 +98,7 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
     } finally {
       setLoading(false);
     }
-  }, [pageNumber, pageSize, search, activeFilter, toastError]);
+  }, [pageNumber, pageSize, debouncedSearch, activeFilter, toastError]);
 
   useEffect(() => {
     fetchEmployeesList();

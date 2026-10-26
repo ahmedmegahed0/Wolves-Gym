@@ -35,7 +35,7 @@ export const CustomersList = ({ onOpenNewSubscription = null }) => {
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
   // Filters & Pagination State
-  const [activeTab, setActiveTab] = useState('0'); // '0' = Pending by default
+  const [activeTab, setActiveTab] = useState('1'); // '1' = Approved/Active members by default
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('');
   const [pageNumber, setPageNumber] = useState(1);

@@ -207,34 +207,44 @@ export const TrainerKpiEvaluationModal = ({
             `تم حفظ تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
           );
         } catch (postErr) {
+          const resData = postErr.response?.data;
+          const status = postErr.response?.status;
+          const errDetail = JSON.stringify(resData || {}).toLowerCase() + ' ' + (postErr.message || '').toLowerCase();
+
           // If server rejected with 400 or 409 because an evaluation already exists today, fallback to PUT
-          const errDetail = (
-            postErr.friendlyMessage || 
-            postErr.response?.data?.detail || 
-            postErr.response?.data?.title || 
-            postErr.message || 
-            ''
-          ).toLowerCase();
-
           const isAlreadyExists = 
-            postErr.response?.status === 409 ||
-            errDetail.includes('already exist') ||
-            errDetail.includes('already submit') ||
-            errDetail.includes('بالفعل') ||
-            errDetail.includes('مسجل مسبقاً');
+            status === 409 ||
+            (status === 400 && (
+              errDetail.includes('already') ||
+              errDetail.includes('exist') ||
+              errDetail.includes('today') ||
+              errDetail.includes('duplicate') ||
+              errDetail.includes('يوم') ||
+              errDetail.includes('مسبق') ||
+              errDetail.includes('بالفعل')
+            ));
 
-          if (isAlreadyExists) {
-            console.info('Evaluation already exists for today. Attempting PUT update...');
-            await trainersService.updateTrainerKpiEvaluations(trainerId, {
-              date: todayStr,
-              scores: scoresPayload,
-            });
+          console.info('POST evaluation result: status =', status, 'isAlreadyExists =', isAlreadyExists, 'errDetail =', errDetail);
 
-            setIsExistingToday(true);
-            toastSuccess(
-              'تم تحديث تقييم الكابتن بنجاح',
-              `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
-            );
+          // Always attempt PUT if 400 occurs on POST, in case today has already been evaluated
+          if (isAlreadyExists || status === 400) {
+            console.info('Attempting PUT update fallback for date:', todayStr);
+            try {
+              await trainersService.updateTrainerKpiEvaluations(trainerId, {
+                date: todayStr,
+                scores: scoresPayload,
+              });
+
+              setIsExistingToday(true);
+              toastSuccess(
+                'تم تحديث تقييم الكابتن بنجاح',
+                `تم تعديل وتحديث تقييم مؤشرات الأداء للكابتن (${trainer.name}) بمتوسط ${currentAverage}/10`
+              );
+            } catch (putErr) {
+              console.error('PUT fallback also failed:', putErr);
+              // If PUT fails too, throw original or PUT error
+              throw putErr;
+            }
           } else {
             throw postErr;
           }

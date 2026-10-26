@@ -474,11 +474,11 @@ export const translateServerErrorMessage = (rawMsg) => {
   }
 
   // Identity & Auth
-  if (/email.*already exists|email.*taken|email.*registered/i.test(msg)) {
-    return 'البريد الإلكتروني مسجل بالفعل لمشترك آخر في الجيم.';
+  if (/email.*already exists|email.*taken|email.*registered|USERS_EMAIL_ALREADY_EXISTS/i.test(msg)) {
+    return 'البريد الإلكتروني مسجل بالفعل لمستخدم أو موظف آخر في الجيم.';
   }
-  if (/phone.*already exists|phone.*taken|phone.*registered/i.test(msg)) {
-    return 'رقم الهاتف مسجل بالفعل لحساب آخر في الجيم.';
+  if (/phone.*already exists|phone.*taken|phone.*registered|USERS_PHONE_ALREADY_EXISTS/i.test(msg)) {
+    return 'رقم الهاتف مسجل بالفعل لحساب موظف أو مستخدم آخر في الجيم.';
   }
   if (/code.*already exists|code.*taken/i.test(msg)) {
     return 'كود العضوية مسجل بالفعل، يرجى توليد أو إدخال كود آخر.';

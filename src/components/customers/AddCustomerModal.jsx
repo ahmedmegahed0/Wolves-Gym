@@ -258,8 +258,8 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
     // Password
     if (!formData.password) {
       newErrors.password = 'كلمة المرور مطلوبة';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'كلمة المرور يجب أن لا تقل عن 6 أحرف';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'كلمة المرور يجب أن لا تقل عن 8 أحرف';
     }
 
     // Confirm Password
@@ -361,24 +361,62 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
 
       // Conflict handling (409)
       if (status === 409) {
-        const errorDesc = typeof data === 'string' ? data : (data?.detail || data?.message || data?.title || '');
-        const isEmailConflict = errorDesc.toLowerCase().includes('email') || errorDesc.includes('البريد');
-        const isCodeConflict = errorDesc.toLowerCase().includes('code') || errorDesc.includes('الكود');
+        // Collect all text from data to inspect code, description, detail, etc.
+        let backendErrMessages = [];
+        if (Array.isArray(data?.errors)) {
+          backendErrMessages = data.errors.map(e => (typeof e === 'string' ? e : (e.description || e.message || e.code || '')));
+        } else if (typeof data?.errors === 'object' && data?.errors) {
+          backendErrMessages = Object.values(data.errors).flat().map(e => (typeof e === 'string' ? e : (e.description || e.message || e.code || '')));
+        }
+        
+        const fullErrStr = (
+          backendErrMessages.join(' ') + ' ' + 
+          (typeof data === 'string' ? data : JSON.stringify(data || ''))
+        ).toLowerCase();
 
-        if (isEmailConflict) {
+        const isPhoneConflict = 
+          fullErrStr.includes('phone') || 
+          fullErrStr.includes('users_phone_already_exists') ||
+          fullErrStr.includes('هاتف') ||
+          fullErrStr.includes('تليفون');
+
+        const isEmailConflict = 
+          fullErrStr.includes('email') || 
+          fullErrStr.includes('users_email_already_exists') ||
+          fullErrStr.includes('البريد');
+
+        const isCodeConflict = 
+          fullErrStr.includes('code') || 
+          fullErrStr.includes('customer_code_already_exists') ||
+          fullErrStr.includes('الكود');
+
+        if (isPhoneConflict) {
+          setErrors(prev => ({ ...prev, phoneNumber: 'رقم الهاتف مسجل بالفعل لمستخدم أو مشترك آخر' }));
+          setActiveTab('account');
+          toastError(
+            'رقم الهاتف مسجل مسبقاً',
+            'رقم الهاتف المدخل مسجل بالفعل لمشترك أو مستخدم آخر بالسيستم.'
+          );
+        } else if (isEmailConflict) {
           setErrors(prev => ({ ...prev, email: 'البريد الإلكتروني مسجل بالفعل لمشترك آخر' }));
           setActiveTab('account');
-          toastError('البريد الإلكتروني مسجل مسبقاً', 'يرجى كتابة بريد إلكتروني آخر للاعب.');
+          toastError(
+            'البريد الإلكتروني مسجل مسبقاً',
+            'يرجى كتابة بريد إلكتروني آخر للاعب.'
+          );
         } else if (isCodeConflict) {
           setErrors(prev => ({ ...prev, code: 'كود العضوية مسجل بالفعل، يرجى توليد كود جديد' }));
           setActiveTab('account');
-          toastError('كود العضوية مكرر', 'هذا الكود مستخدم بالفعل، اضغط على زر توليد كود لاختيار كود جديد.');
+          toastError(
+            'كود العضوية مكرر',
+            'هذا الكود مستخدم بالفعل، اضغط على زر توليد كود لاختيار كود جديد.'
+          );
         } else {
           setActiveTab('account');
-          toastError(
-            'بيانات مكررة (409 Conflict)',
-            'البريد الإلكتروني أو كود العضوية مسجل مسبقاً لمشترك آخر في النظام.'
-          );
+          const customMsg = backendErrMessages.length > 0 
+            ? backendErrMessages.map(translateServerErrorMessage).join(' • ')
+            : 'رقم الهاتف، البريد الإلكتروني أو كود العضوية مسجل مسبقاً لمشترك آخر في النظام.';
+          toastError('بيانات مكررة (409 Conflict)', customMsg);
         }
         return;
       }

@@ -59,8 +59,8 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
     if (!formData.phoneNumber.trim()) {
       errs.phoneNumber = 'رقم الهاتف مطلوب';
     }
-    if (formData.password && formData.password.length < 6) {
-      errs.password = 'كلمة المرور يجب أن لا تقل عن 6 أحرف';
+    if (formData.password && formData.password.length < 8) {
+      errs.password = 'كلمة المرور يجب أن لا تقل عن 8 أحرف';
     }
     if (formData.password && formData.password !== formData.confirmPassword) {
       errs.confirmPassword = 'كلمتا المرور غير متطابقتين';

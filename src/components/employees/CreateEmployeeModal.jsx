@@ -80,8 +80,8 @@ export const CreateEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!formData.password) {
       errs.password = 'يرجى إدخال كلمة المرور';
-    } else if (formData.password.length < 6) {
-      errs.password = 'كلمة المرور يجب أن لا تقل عن 6 أحرف/أرقام';
+    } else if (formData.password.length < 8) {
+      errs.password = 'كلمة المرور يجب أن لا تقل عن 8 أحرف/أرقام';
     }
 
     if (!formData.confirmPassword) {
@@ -123,19 +123,55 @@ export const CreateEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
       const data = err.response?.data;
       const status = err.response?.status;
 
+      // Extract error details to accurately differentiate between Phone and Email conflict
+      const errString = JSON.stringify(data || {}).toLowerCase();
+      const isPhoneConflict = 
+        errString.includes('phone') || 
+        errString.includes('users_phone_already_exists') || 
+        errString.includes('هاتف') ||
+        errString.includes('تليفون');
+
+      const isEmailConflict = 
+        errString.includes('email') || 
+        errString.includes('users_email_already_exists') ||
+        errString.includes('بريد');
+
       if (status === 409) {
+        if (isPhoneConflict && !isEmailConflict) {
+          toastError(
+            'رقم الهاتف مسجل مسبقاً',
+            'رقم الهاتف المدخل مسجل بالفعل لموظف أو مستخدم آخر بالسيستم.'
+          );
+          setErrors((prev) => ({ ...prev, phoneNumber: 'رقم الهاتف مسجل بالفعل' }));
+          return;
+        }
+
+        if (isEmailConflict) {
+          toastError(
+            'البريد مسجل مسبقاً',
+            'البريد الإلكتروني المدخل مسجل بالفعل لموظف أو مستخدم آخر بالسيستم.'
+          );
+          setErrors((prev) => ({ ...prev, email: 'البريد مسجل بالفعل' }));
+          return;
+        }
+
+        // Generic 409 if neither explicitly detected
         toastError(
-          'البريد مسجل مسبقاً',
-          'البريد الإلكتروني المدخل مسجل بالفعل لموظف أو مستخدم آخر بالسيستم.'
+          'البيانات مسجلة مسبقاً',
+          'رقم الهاتف أو البريد الإلكتروني مسجل بالفعل لمستخدم آخر بالسيستم.'
         );
-        setErrors((prev) => ({ ...prev, email: 'البريد مسجل بالفعل' }));
+        setErrors((prev) => ({ 
+          ...prev, 
+          phoneNumber: 'رقم الهاتف مسجل بالفعل',
+          email: 'البريد مسجل بالفعل'
+        }));
         return;
       }
 
       let errorMsg = 'تعذر إضافة الموظف. يرجى مراجعة البيانات المدخلة.';
       if (data?.errors) {
         if (Array.isArray(data.errors)) {
-          errorMsg = data.errors.map(e => translateServerErrorMessage(e.description || e)).join(' • ');
+          errorMsg = data.errors.map(e => translateServerErrorMessage(e.description || e.message || e)).join(' • ');
         } else if (typeof data.errors === 'object') {
           const list = Object.values(data.errors).flat().map(translateServerErrorMessage);
           errorMsg = list.join(' • ');
