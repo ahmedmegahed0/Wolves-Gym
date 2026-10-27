@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -31,31 +31,34 @@ import {
   Home,
   Dumbbell,
   Target,
-  Briefcase
+  Briefcase,
+  Loader2
 } from 'lucide-react';
 import wolfLogo from '../assets/logo.png';
 import OccupancyCard from './OccupancyCard';
 import CheckInForm from './CheckInForm';
 import CheckOutForm from './CheckOutForm';
 import RecentActivityFeed from './RecentActivityFeed';
-import ChangePasswordModal from './auth/ChangePasswordModal';
-import CustomersList from './customers/CustomersList';
 import CustomerProfileCard from './customers/CustomerProfileCard';
-import CustomerDashboard from './customers/CustomerDashboard';
-import LockersDashboard from './lockers/LockersDashboard';
-import PackagesDashboard from './packages/PackagesDashboard';
-import TrainersAdminManagement from './trainers/TrainersAdminManagement';
-import KpisManagement from './kpis/KpisManagement';
-import EmployeesManagementPage from './employees/EmployeesManagementPage';
 import { canManageEmployees } from '../services/employeesService';
-import CreateSubscriptionModal from './subscriptions/CreateSubscriptionModal';
-import UserProfileSettingsModal from './profile/UserProfileSettingsModal';
-import CurrentlyInGymPage from './dashboard/CurrentlyInGymPage';
-import TodayAttendancesPage from './dashboard/TodayAttendancesPage';
-import OccupiedLockersPage from './dashboard/OccupiedLockersPage';
-import PendingSubscriptionsPage from './dashboard/PendingSubscriptionsPage';
 import { STORAGE_KEYS, customerService, getRoleMeta } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+
+// Lazy-loaded secondary pages & modals to prevent downloading 100+ files on initial load
+const CustomersList = lazy(() => import('./customers/CustomersList'));
+const CustomerDashboard = lazy(() => import('./customers/CustomerDashboard'));
+const LockersDashboard = lazy(() => import('./lockers/LockersDashboard'));
+const PackagesDashboard = lazy(() => import('./packages/PackagesDashboard'));
+const TrainersAdminManagement = lazy(() => import('./trainers/TrainersAdminManagement'));
+const KpisManagement = lazy(() => import('./kpis/KpisManagement'));
+const EmployeesManagementPage = lazy(() => import('./employees/EmployeesManagementPage'));
+const CurrentlyInGymPage = lazy(() => import('./dashboard/CurrentlyInGymPage'));
+const TodayAttendancesPage = lazy(() => import('./dashboard/TodayAttendancesPage'));
+const OccupiedLockersPage = lazy(() => import('./dashboard/OccupiedLockersPage'));
+const PendingSubscriptionsPage = lazy(() => import('./dashboard/PendingSubscriptionsPage'));
+const CreateSubscriptionModal = lazy(() => import('./subscriptions/CreateSubscriptionModal'));
+const UserProfileSettingsModal = lazy(() => import('./profile/UserProfileSettingsModal'));
+const ChangePasswordModal = lazy(() => import('./auth/ChangePasswordModal'));
 
 const LiveClockBadge = React.memo(() => {
   const [time, setTime] = useState(() => new Date());
@@ -107,6 +110,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
   const isCustomer = roleMeta.role === 'Customer';
   const isTrainer = roleMeta.role === 'Trainer';
   const isGator = roleMeta.role === 'Gator';
+
+  // Portal title badge according to role
+  const portalSubtitle = isSuperAdmin
+    ? 'SUPER ADMIN'
+    : isManager
+      ? 'GYM MANAGEMENT'
+      : isOperationManager
+        ? 'OPERATIONS'
+        : 'GYM RECEPTION';
 
   // Can manage KPIs: Strictly Operation Manager, Manager, or SuperAdmin (NEVER Reception)
   const canAccessKpis = (isOperationManager || isManager || isSuperAdmin) && !isReception;
@@ -170,11 +182,16 @@ export const AttendanceDashboard = ({ initialSection }) => {
     }
   }, [initialSection]);
 
-  // Periodic check for pending subscription requests
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [currentOccupancy, setCurrentOccupancy] = useState(0);
+  const handleOccupancyUpdated = useCallback((count) => {
+    setCurrentOccupancy(count);
+  }, []);
+
+  // Check pending subscription/member requests on initial mount or when user actions trigger refresh
   useEffect(() => {
     let isMounted = true;
     const fetchPending = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await customerService.getCustomers({ approvalStatus: 0, pageSize: 1 });
         if (isMounted) {
@@ -184,19 +201,13 @@ export const AttendanceDashboard = ({ initialSection }) => {
         console.warn('Pending badge fetch error:', e);
       }
     };
+
     fetchPending();
-    const timer = setInterval(fetchPending, 30000);
+
     return () => {
       isMounted = false;
-      clearInterval(timer);
     };
-  }, []);
-
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [currentOccupancy, setCurrentOccupancy] = useState(0);
-  const handleOccupancyUpdated = useCallback((count) => {
-    setCurrentOccupancy(count);
-  }, []);
+  }, [refreshTrigger]);
 
   // On mobile, always use 'tabs' view mode
   const [activeTab, setActiveTab] = useState('check-in');
@@ -416,7 +427,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     WOLVES
                   </h1>
                   <p className="text-[10px] text-zinc-400 font-semibold truncate font-mono">
-                    GYM RECEPTION
+                    {portalSubtitle}
                   </p>
                 </div>
               )}
@@ -611,7 +622,10 @@ export const AttendanceDashboard = ({ initialSection }) => {
                     className="flex items-center gap-2.5 select-none"
                   >
                     <img src={wolfLogo} alt="WOLVES" className="w-8 h-8 object-contain" />
-                    <span className="text-sm font-black text-amber-400">WOLVES</span>
+                    <div>
+                      <span className="text-sm font-black text-amber-400 block leading-tight">WOLVES</span>
+                      <span className="text-[9px] text-zinc-400 font-mono font-semibold block">{portalSubtitle}</span>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -761,7 +775,15 @@ export const AttendanceDashboard = ({ initialSection }) => {
 
         {/* Main Body */}
         <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
-          <AnimatePresence mode="wait">
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-400 mb-2" />
+                <span className="text-xs text-zinc-500 font-semibold">جاري تحميل القسم...</span>
+              </div>
+            }
+          >
+            <AnimatePresence mode="wait">
 
             {/* ======================================================== */}
             {/* VIEW 1: CARDS & OVERVIEW (كروت النظرة العامة - الأولى)    */}
@@ -1315,6 +1337,7 @@ export const AttendanceDashboard = ({ initialSection }) => {
             )}
 
           </AnimatePresence>
+          </Suspense>
         </main>
       </div>
 
@@ -1342,31 +1365,43 @@ export const AttendanceDashboard = ({ initialSection }) => {
       </AnimatePresence>
 
       {/* Change Password Modal */}
-      <ChangePasswordModal
-        isOpen={isChangePasswordModalOpen}
-        onClose={() => setIsChangePasswordModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        {isChangePasswordModalOpen && (
+          <ChangePasswordModal
+            isOpen={isChangePasswordModalOpen}
+            onClose={() => setIsChangePasswordModalOpen(false)}
+          />
+        )}
+      </Suspense>
 
       {/* User Profile Settings & Personal Data Modal */}
-      <UserProfileSettingsModal
-        isOpen={isProfileSettingsModalOpen}
-        onClose={() => setIsProfileSettingsModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        {isProfileSettingsModalOpen && (
+          <UserProfileSettingsModal
+            isOpen={isProfileSettingsModalOpen}
+            onClose={() => setIsProfileSettingsModalOpen(false)}
+          />
+        )}
+      </Suspense>
 
       {/* New Member Subscription Modal for Reception & Admin */}
-      <CreateSubscriptionModal
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => {
-          setIsSubscriptionModalOpen(false);
-          setSubscriptionModalCustomer(null);
-          setSubscriptionModalPackage(null);
-        }}
-        preselectedCustomer={subscriptionModalCustomer}
-        preselectedPackage={subscriptionModalPackage}
-        onSuccess={() => {
-          setRefreshTrigger((p) => p + 1);
-        }}
-      />
+      <Suspense fallback={null}>
+        {isSubscriptionModalOpen && (
+          <CreateSubscriptionModal
+            isOpen={isSubscriptionModalOpen}
+            onClose={() => {
+              setIsSubscriptionModalOpen(false);
+              setSubscriptionModalCustomer(null);
+              setSubscriptionModalPackage(null);
+            }}
+            preselectedCustomer={subscriptionModalCustomer}
+            preselectedPackage={subscriptionModalPackage}
+            onSuccess={() => {
+              setRefreshTrigger((p) => p + 1);
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

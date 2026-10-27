@@ -233,9 +233,6 @@ export const CustomerDashboard = () => {
 
   useEffect(() => {
     loadMemberData();
-    // Auto refresh every 30s to keep locker status in real-time sync
-    const interval = setInterval(loadMemberData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleManualRefresh = () => {

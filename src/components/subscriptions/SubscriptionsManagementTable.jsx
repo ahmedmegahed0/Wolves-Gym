@@ -523,27 +523,86 @@ export const SubscriptionsManagementTable = ({
           )}
         </div>
 
-        {/* Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-white/10 bg-[#0c0c0e]/60 flex items-center justify-between text-xs text-zinc-400">
-            <div>
-              صفحة <span className="font-mono text-white font-bold">{pageNumber}</span> من{' '}
-              <span className="font-mono text-white font-bold">{totalPages}</span>
+        {/* Dynamic Pagination Footer */}
+        {totalCount > 0 && (
+          <div className="p-4 border-t border-white/10 bg-[#0c0c0e]/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="text-zinc-400">
+              إظهار{' '}
+              <span className="text-amber-400 font-bold font-mono">
+                {Math.min(totalCount, (pageNumber - 1) * pageSize + 1)}
+              </span>{' '}
+              إلى{' '}
+              <span className="text-amber-400 font-bold font-mono">
+                {Math.min(totalCount, pageNumber * pageSize)}
+              </span>{' '}
+              من إجمالي{' '}
+              <span className="text-white font-bold font-mono">{totalCount}</span> اشتراك
             </div>
+
+            {/* Pagination Controls */}
             <div className="flex items-center gap-2">
+              {/* Page size selector */}
+              <div className="flex items-center gap-1.5 ml-2">
+                <span className="text-zinc-500 text-[11px]">في الصفحة:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageNumber(1);
+                  }}
+                  className="bg-[#141417] text-zinc-300 rounded-lg px-2.5 py-1 border border-white/10 text-xs focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Prev Button */}
               <button
                 type="button"
                 onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-                disabled={pageNumber === 1}
-                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+                disabled={pageNumber === 1 || loading}
+                className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/5 transition-colors"
+                title="الصفحة السابقة"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
+
+              {/* Page Number Buttons */}
+              <div className="flex items-center gap-1 font-mono">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+                  let pNum = idx + 1;
+                  if (totalPages > 5 && pageNumber > 3) {
+                    pNum = pageNumber - 2 + idx;
+                    if (pNum > totalPages) pNum = totalPages - (4 - idx);
+                  }
+                  return (
+                    <button
+                      key={pNum}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setPageNumber(pNum)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                        pageNumber === pNum
+                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20'
+                          : 'bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
               <button
                 type="button"
                 onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
-                disabled={pageNumber >= totalPages}
-                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+                disabled={pageNumber >= totalPages || loading}
+                className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/5 transition-colors"
+                title="الصفحة التالية"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>

@@ -75,11 +75,9 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
   // Reset form when modal opens or closes
   useEffect(() => {
     if (isOpen) {
-      // Auto-generate initial membership code on open
-      const randomCode = `WOLF-${Math.floor(100 + Math.random() * 900)}`;
       setFormData({
         ...INITIAL_FORM_DATA,
-        code: randomCode
+        code: ''
       });
       setActiveTab('account');
       setErrors({});
@@ -173,18 +171,6 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
     return () => clearTimeout(timerId);
   }, []);
 
-  // Quick Auto-Generate Membership Code (e.g. WOLF-105)
-  const handleGenerateCode = () => {
-    const generated = `WOLF-${Math.floor(100 + Math.random() * 900)}`;
-    setFormData(prev => ({ ...prev, code: generated }));
-    if (errors.code) {
-      setErrors(prev => {
-        const copy = { ...prev };
-        delete copy.code;
-        return copy;
-      });
-    }
-  };
 
   // Quick Auto-Generate Password
   const handleGeneratePassword = () => {
@@ -252,7 +238,7 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
 
     // Code
     if (!formData.code.trim()) {
-      newErrors.code = 'كود العضوية مطلوب (يمكنك التوليد التلقائي)';
+      newErrors.code = 'كود العضوية مطلوب، يرجى إدخال كود المشترك';
     }
 
     // Password
@@ -405,11 +391,11 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
             'يرجى كتابة بريد إلكتروني آخر للاعب.'
           );
         } else if (isCodeConflict) {
-          setErrors(prev => ({ ...prev, code: 'كود العضوية مسجل بالفعل، يرجى توليد كود جديد' }));
+          setErrors(prev => ({ ...prev, code: 'كود العضوية مسجل بالفعل، يرجى كتابة كود آخر' }));
           setActiveTab('account');
           toastError(
             'كود العضوية مكرر',
-            'هذا الكود مستخدم بالفعل، اضغط على زر توليد كود لاختيار كود جديد.'
+            'هذا الكود مستخدم بالفعل، يرجى إدخال كود عضوية آخر للمشترك.'
           );
         } else {
           setActiveTab('account');
@@ -573,7 +559,7 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-[#141417] border border-white/5">
                   <div className="flex items-center gap-2 text-xs text-zinc-300">
                     <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>يتم إنشاء حساب اللاعب وتوليد كود الحضور فوراً بمجرد الحفظ.</span>
+                    <span>يتم إنشاء وتفعيل حساب المشترك وتثبيت كود عضويته فوراً بمجرد الحفظ.</span>
                   </div>
                   <button
                     type="button"
@@ -647,15 +633,6 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
                         <span>كود العضوية (ID)</span>
                         <span className="text-rose-400">*</span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleGenerateCode}
-                        className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors cursor-pointer"
-                        title="توليد كود عشوائي جديد"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>توليد تلقائي</span>
-                      </button>
                     </div>
                     <div className="relative">
                       <input
@@ -667,7 +644,7 @@ export const AddCustomerModal = ({ isOpen, onClose, onCustomerAdded }) => {
                           e.target.value = e.target.value.toUpperCase();
                           handleChange(e);
                         }}
-                        placeholder="WOLF-105"
+                        placeholder="أدخل كود العضوية للمشترك"
                         className={`w-full px-3.5 py-2.5 rounded-xl bg-[#141417] border text-xs sm:text-sm font-mono font-bold text-amber-300 placeholder-zinc-500 focus:outline-none transition-all text-left uppercase ${
                           errors.code ? 'border-rose-500/60 focus:border-rose-500 bg-rose-500/5' : 'border-white/10 focus:border-amber-500/60'
                         }`}

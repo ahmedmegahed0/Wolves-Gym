@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  User, 
-  Phone, 
-  DollarSign, 
-  ShieldCheck, 
-  Check, 
-  Loader2, 
+import {
+  X,
+  User,
+  Phone,
+  DollarSign,
+  ShieldCheck,
+  Check,
+  Loader2,
   Briefcase,
   AlertCircle
 } from 'lucide-react';
 import { EMPLOYEE_ROLES, updateEmployee, parseRoleValue } from '../../services/employeesService';
 import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -126,8 +127,8 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
 
   return (
     <AnimatePresence>
-      <div 
-        dir="rtl" 
+      <div
+        dir="rtl"
         className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md font-cairo"
       >
         <motion.div
@@ -180,9 +181,8 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="الاسم الكامل"
-                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all ${
-                  errors.name ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
-                }`}
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all ${errors.name ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
+                  }`}
               />
               {errors.name && (
                 <p className="text-[11px] text-red-400 flex items-center gap-1">
@@ -204,9 +204,8 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 placeholder="01012345678"
-                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all text-left ${
-                  errors.phoneNumber ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
-                }`}
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all text-left ${errors.phoneNumber ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
+                  }`}
               />
               {errors.phoneNumber && (
                 <p className="text-[11px] text-red-400 flex items-center gap-1">
@@ -249,9 +248,8 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
                 value={formData.salary}
                 onChange={handleChange}
                 placeholder="5000"
-                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all ${
-                  errors.salary ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
-                }`}
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#141417] border text-sm text-white placeholder-zinc-500 focus:outline-none transition-all ${errors.salary ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-amber-400/50'
+                  }`}
               />
               {errors.salary && (
                 <p className="text-[11px] text-red-400 flex items-center gap-1">
@@ -268,16 +266,12 @@ export const EditEmployeeModal = ({ isOpen, employee, onClose, onSuccess }) => {
                   {formData.isActive ? 'الحساب مفعّل ويمكنه العمل' : 'الحساب معطّل ولا يمكنه تسجيل الدخول'}
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-              </label>
+              <ToggleSwitch
+                checked={Boolean(formData.isActive)}
+                onChange={(val) => setFormData((prev) => ({ ...prev, isActive: val }))}
+                activeColor="emerald"
+                size="md"
+              />
             </div>
 
             {/* Actions */}

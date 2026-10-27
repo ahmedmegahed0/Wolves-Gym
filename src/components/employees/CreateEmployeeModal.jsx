@@ -18,6 +18,7 @@ import {
 import { EMPLOYEE_ROLES, createEmployee } from '../../services/employeesService';
 import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 export const CreateEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -422,16 +423,12 @@ export const CreateEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
                   عند التفعيل، يمكن للموظف تسجيل الدخول وممارسة صلاحياته مباشرة
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-              </label>
+              <ToggleSwitch
+                checked={Boolean(formData.isActive)}
+                onChange={(val) => setFormData((prev) => ({ ...prev, isActive: val }))}
+                activeColor="emerald"
+                size="md"
+              />
             </div>
 
             {/* Actions / Buttons */}

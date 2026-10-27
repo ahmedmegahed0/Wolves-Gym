@@ -32,6 +32,7 @@ import CreateEmployeeModal from './CreateEmployeeModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import { useToast } from '../../context/ToastContext';
 import useDebounce from '../../hooks/useDebounce';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 export const EmployeesManagementPage = ({ isEmbedded = false }) => {
   const { user } = useAuth();
@@ -46,12 +47,12 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
   const debouncedSearch = useDebounce(search, 450);
   const [activeFilter, setActiveFilter] = useState(''); // '' | 'true' | 'false'
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
-  // Reset to first page when search or filter changes
+  // Reset to first page when search, filter or pageSize changes
   useEffect(() => {
     setPageNumber(1);
-  }, [debouncedSearch, activeFilter]);
+  }, [debouncedSearch, activeFilter, pageSize]);
 
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -108,9 +109,11 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
   // Handle Quick Toggle Active Status
   const handleToggleStatus = async (emp) => {
     // Prevent self-deactivation if current user is this employee/user
-    const isSelf = user && (
-      (user.email && emp.email && user.email.toLowerCase() === emp.email.toLowerCase()) ||
-      (user.id && (user.id === emp.userId || user.id === emp.id))
+    const isSelf = Boolean(
+      user && (
+        (user.email && emp.email && user.email.trim().toLowerCase() === emp.email.trim().toLowerCase()) ||
+        (user.id && emp.userId && String(user.id) === String(emp.userId))
+      )
     );
 
     if (isSelf && emp.isActive) {
@@ -315,9 +318,11 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
                 employees.map((emp) => {
                   const roleInfo = getEmployeeRoleInfo(emp.role);
                   const isToggling = togglingId === emp.id;
-                  const isSelf = user && (
-                    (user.email && emp.email && user.email.toLowerCase() === emp.email.toLowerCase()) ||
-                    (user.id && (user.id === emp.userId || user.id === emp.id))
+                  const isSelf = Boolean(
+                    user && (
+                      (user.email && emp.email && user.email.trim().toLowerCase() === emp.email.trim().toLowerCase()) ||
+                      (user.id && emp.userId && String(user.id) === String(emp.userId))
+                    )
                   );
 
                   return (
@@ -370,25 +375,26 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
                         </span>
                       </td>
 
-                      {/* Status */}
-                      <td className="py-4 px-5 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                          emp.isActive 
-                            ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
-                            : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                        }`}>
-                          {emp.isActive ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>مفعّل</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span>معطّل</span>
-                            </>
-                          )}
-                        </span>
+                      {/* Status Toggle Switch */}
+                      <td className="py-4 px-5 whitespace-nowrap text-center">
+                        <ToggleSwitch
+                          checked={Boolean(emp.isActive)}
+                          onChange={() => handleToggleStatus(emp)}
+                          disabled={isToggling || (isSelf && emp.isActive)}
+                          loading={isToggling}
+                          activeColor="emerald"
+                          showLabel={true}
+                          activeLabel="مفعّل"
+                          inactiveLabel="معطّل"
+                          size="md"
+                          title={
+                            isSelf && emp.isActive
+                              ? 'لا يمكنك تعطيل حسابك الشخصي المسجل به دخول حالياً'
+                              : emp.isActive
+                              ? 'تعطيل الحساب'
+                              : 'تفعيل الحساب'
+                          }
+                        />
                       </td>
 
                       {/* Actions */}
@@ -402,32 +408,6 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
                           >
                             <Edit3 className="w-4 h-4 text-amber-400" />
                           </button>
-
-                          {/* Quick Toggle Active Status */}
-                          <button
-                            onClick={() => handleToggleStatus(emp)}
-                            disabled={isToggling || (isSelf && emp.isActive)}
-                            className={`p-2 rounded-xl border transition-colors ${
-                              isSelf && emp.isActive
-                                ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border-zinc-700'
-                                : emp.isActive
-                                  ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20'
-                                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
-                            }`}
-                            title={
-                              isSelf && emp.isActive
-                                ? 'لا يمكنك تعطيل حسابك الشخصي المسجل به دخول حالياً'
-                                : emp.isActive
-                                  ? 'تعطيل الحساب'
-                                  : 'تفعيل الحساب'
-                            }
-                          >
-                            {isToggling ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Power className="w-4 h-4" />
-                            )}
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -438,26 +418,86 @@ export const EmployeesManagementPage = ({ isEmbedded = false }) => {
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-white/10 flex items-center justify-between bg-[#141417]/50">
-            <span className="text-xs text-zinc-400">
-              الصفحة <strong className="text-white font-mono">{pageNumber}</strong> من <strong className="text-white font-mono">{totalPages}</strong> (إجمالي {totalCount} موظف)
-            </span>
+        {/* Dynamic Pagination Footer */}
+        {totalCount > 0 && (
+          <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#141417]/80 text-xs">
+            <div className="text-zinc-400">
+              إظهار{' '}
+              <span className="text-amber-400 font-bold font-mono">
+                {Math.min(totalCount, (pageNumber - 1) * pageSize + 1)}
+              </span>{' '}
+              إلى{' '}
+              <span className="text-amber-400 font-bold font-mono">
+                {Math.min(totalCount, pageNumber * pageSize)}
+              </span>{' '}
+              من إجمالي{' '}
+              <span className="text-white font-bold font-mono">{totalCount}</span> موظف
+            </div>
 
+            {/* Pagination Controls */}
             <div className="flex items-center gap-2">
+              {/* Page size selector */}
+              <div className="flex items-center gap-1.5 ml-2">
+                <span className="text-zinc-500 text-[11px]">في الصفحة:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageNumber(1);
+                  }}
+                  className="bg-[#0c0c0e] text-zinc-300 rounded-lg px-2.5 py-1 border border-white/10 text-xs focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Prev Button */}
               <button
+                type="button"
                 onClick={() => setPageNumber((p) => Math.max(p - 1, 1))}
                 disabled={pageNumber === 1 || loading}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/10 transition-colors"
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/10 transition-colors"
+                title="الصفحة السابقة"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
 
+              {/* Page Number Buttons */}
+              <div className="flex items-center gap-1 font-mono">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+                  let pNum = idx + 1;
+                  if (totalPages > 5 && pageNumber > 3) {
+                    pNum = pageNumber - 2 + idx;
+                    if (pNum > totalPages) pNum = totalPages - (4 - idx);
+                  }
+                  return (
+                    <button
+                      key={pNum}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setPageNumber(pNum)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                        pageNumber === pNum
+                          ? 'bg-amber-400 text-black shadow-md shadow-amber-500/20'
+                          : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
               <button
+                type="button"
                 onClick={() => setPageNumber((p) => Math.min(p + 1, totalPages))}
                 disabled={pageNumber === totalPages || loading}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/10 transition-colors"
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/10 transition-colors"
+                title="الصفحة التالية"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>

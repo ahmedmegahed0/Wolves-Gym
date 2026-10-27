@@ -16,7 +16,8 @@ import {
   Key,
   User,
   Home,
-  Target
+  Target,
+  ChevronLeft
 } from 'lucide-react';
 import wolfLogo from '../../assets/logo.png';
 import gymBg from '../../assets/gym-bg.jpg';

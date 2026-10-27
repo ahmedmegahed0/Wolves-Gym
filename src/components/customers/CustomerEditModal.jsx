@@ -26,6 +26,7 @@ import { customerService } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 import CustomerBehaviorNotesTab from './CustomerBehaviorNotesTab';
 import CustomerAttendanceCalendar from './CustomerAttendanceCalendar';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated }) => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -461,17 +462,12 @@ export const CustomerEditModal = ({ isOpen, onClose, customer, onCustomerUpdated
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setFormData((p) => ({ ...p, isActive: !p.isActive }))}
-                    className="text-amber-400 hover:text-amber-300 transition-colors p-1"
-                  >
-                    {formData.isActive ? (
-                      <ToggleRight className="w-8 h-8 text-emerald-400" />
-                    ) : (
-                      <ToggleLeft className="w-8 h-8 text-zinc-600" />
-                    )}
-                  </button>
+                  <ToggleSwitch
+                    checked={Boolean(formData.isActive)}
+                    onChange={(val) => setFormData((p) => ({ ...p, isActive: val }))}
+                    activeColor="emerald"
+                    size="md"
+                  />
                 </div>
               </motion.div>
             )}

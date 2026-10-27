@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { getPackageTypeMeta } from '../../services/apiClient';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 /**
  * PackageCard Component
@@ -159,19 +160,21 @@ export const PackageCard = ({
               <span>تعديل الباقة</span>
             </button>
 
-            <button
-              type="button"
-              disabled={actionLoading}
-              onClick={() => onToggleStatus && onToggleStatus(packageItem)}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              }`}
-            >
-              <Power className="w-3.5 h-3.5" />
-              <span>{isActive ? 'إيقاف الباقة' : 'تفعيل الباقة'}</span>
-            </button>
+            <div className="w-full py-1.5 px-3 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-zinc-300">حالة الباقة</span>
+              <ToggleSwitch
+                checked={Boolean(isActive)}
+                onChange={() => onToggleStatus && onToggleStatus(packageItem)}
+                disabled={actionLoading}
+                loading={actionLoading}
+                activeColor="purple"
+                showLabel={true}
+                activeLabel="نشطة"
+                inactiveLabel="معطلة"
+                labelPosition="side"
+                size="sm"
+              />
+            </div>
           </div>
         ) : (
           <button

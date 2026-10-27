@@ -77,15 +77,26 @@ export const customersService = {
    */
   async updateCustomer(id, data = {}) {
     const cleanId = Number(id);
+    const cleanPositiveNum = (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return !isNaN(num) && num > 0 ? num : null;
+    };
+    const cleanPercentage = (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return !isNaN(num) && num >= 0 && num <= 100 ? num : null;
+    };
+
     const payload = {
       name: String(data.name || '').trim(),
       phoneNumber: String(data.phoneNumber || '').trim(),
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
-      height: data.height !== '' && data.height !== null && data.height !== undefined ? Number(data.height) : null,
-      weight: data.weight !== '' && data.weight !== null && data.weight !== undefined ? Number(data.weight) : null,
-      age: data.age !== '' && data.age !== null && data.age !== undefined ? Number(data.age) : null,
-      musclePercentage: data.musclePercentage !== '' && data.musclePercentage !== null && data.musclePercentage !== undefined ? Number(data.musclePercentage) : null,
-      fatPercentage: data.fatPercentage !== '' && data.fatPercentage !== null && data.fatPercentage !== undefined ? Number(data.fatPercentage) : null,
+      height: cleanPositiveNum(data.height),
+      weight: cleanPositiveNum(data.weight),
+      age: cleanPositiveNum(data.age),
+      musclePercentage: cleanPercentage(data.musclePercentage),
+      fatPercentage: cleanPercentage(data.fatPercentage),
       injuries: String(data.injuries || '').trim(),
       chronicDiseases: String(data.chronicDiseases || '').trim(),
       notes: String(data.notes || '').trim(),

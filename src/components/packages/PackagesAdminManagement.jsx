@@ -33,6 +33,7 @@ import {
   getPackageTypeMeta 
 } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import ToggleSwitch from '../common/ToggleSwitch';
 import PackageFormModal from './PackageFormModal';
 import useDebounce from '../../hooks/useDebounce';
 
@@ -516,32 +517,18 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
 
                       {/* Active Status Toggle Switch (Status Toggle) */}
                       <td className="px-5 py-4 text-center">
-                        <div className="inline-flex flex-col items-center justify-center gap-1">
-                          <button
-                            type="button"
-                            dir="ltr"
-                            disabled={isToggling}
-                            onClick={() => handleToggleStatus(pkg)}
-                            aria-label={`تغيير حالة باقة ${pkg.name}`}
-                            className={`relative inline-flex h-6 w-11 shrink-0 p-0.5 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500/40 disabled:opacity-50 ${
-                              pkg.isActive !== false ? 'bg-purple-600 hover:bg-purple-500' : 'bg-zinc-700 hover:bg-zinc-600'
-                            }`}
-                            title={pkg.isActive !== false ? 'الباقة نشطة (اضغط لإيقافها)' : 'الباقة معطلة (اضغط لتنشيطها)'}
-                          >
-                            <span
-                              className={`pointer-events-none inline-flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                                pkg.isActive !== false ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            >
-                              {isToggling && (
-                                <Loader2 className="w-3 h-3 text-purple-600 animate-spin" />
-                              )}
-                            </span>
-                          </button>
-                          <span className={`text-[10px] font-bold ${pkg.isActive !== false ? 'text-purple-400' : 'text-zinc-500'}`}>
-                            {pkg.isActive !== false ? 'نشطة' : 'معطلة'}
-                          </span>
-                        </div>
+                        <ToggleSwitch
+                          checked={pkg.isActive !== false}
+                          onChange={() => handleToggleStatus(pkg)}
+                          disabled={isToggling}
+                          loading={isToggling}
+                          activeColor="purple"
+                          showLabel={true}
+                          activeLabel="نشطة"
+                          inactiveLabel="معطلة"
+                          size="md"
+                          title={pkg.isActive !== false ? 'الباقة نشطة (اضغط لإيقافها)' : 'الباقة معطلة (اضغط لتنشيطها)'}
+                        />
                       </td>
 
                       {/* Quick Actions */}
@@ -659,20 +646,21 @@ export const PackagesAdminManagement = ({ onBackToPublicGrid, isEmbedded = false
                     </p>
                   )}
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      disabled={isToggling}
-                      onClick={() => handleToggleStatus(pkg)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
-                        pkg.isActive !== false
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                          : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
-                      }`}
-                    >
-                      <Power className={`w-3.5 h-3.5 ${isToggling ? 'animate-spin' : ''}`} />
-                      <span>{pkg.isActive !== false ? 'نشطة (إيقاف)' : 'معطلة (تنشيط)'}</span>
-                    </button>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-2 p-1.5 px-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
+                      <ToggleSwitch
+                        checked={pkg.isActive !== false}
+                        onChange={() => handleToggleStatus(pkg)}
+                        disabled={isToggling}
+                        loading={isToggling}
+                        activeColor="purple"
+                        showLabel={true}
+                        activeLabel="نشطة"
+                        inactiveLabel="معطلة"
+                        labelPosition="side"
+                        size="sm"
+                      />
+                    </div>
 
                     <button
                       type="button"

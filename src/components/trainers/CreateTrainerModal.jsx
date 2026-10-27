@@ -20,6 +20,7 @@ import {
 import { trainersService } from '../../services/trainersService';
 import { translateServerErrorMessage } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
+import ToggleSwitch from '../common/ToggleSwitch';
 
 /**
  * CreateTrainerModal Component
@@ -318,15 +319,12 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
+                <ToggleSwitch
+                  checked={Boolean(formData.isActive)}
+                  onChange={(val) => setFormData({ ...formData, isActive: val })}
+                  activeColor="emerald"
+                  size="md"
+                />
               </div>
 
               {/* 2. Trainer Booking Availability */}
@@ -345,15 +343,12 @@ export const CreateTrainerModal = ({ isOpen, onClose, onSuccess }) => {
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isAvailable}
-                    onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                </label>
+                <ToggleSwitch
+                  checked={Boolean(formData.isAvailable)}
+                  onChange={(val) => setFormData({ ...formData, isAvailable: val })}
+                  activeColor="amber"
+                  size="md"
+                />
               </div>
             </div>
 

@@ -33,6 +33,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import useDebounce from '../../hooks/useDebounce';
 import CreateTrainerModal from './CreateTrainerModal';
+import ToggleSwitch from '../common/ToggleSwitch';
 import TrainerKpiEvaluationModal from './TrainerKpiEvaluationModal';
 import TrainerCustomersList from './TrainerCustomersList';
 import TrainerKpiReports from './TrainerKpiReports';
@@ -269,15 +270,12 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
+                <ToggleSwitch
+                  checked={Boolean(formData.isActive)}
+                  onChange={(val) => setFormData({ ...formData, isActive: val })}
+                  activeColor="emerald"
+                  size="md"
+                />
               </div>
 
               {/* 2. Trainer Booking Availability */}
@@ -298,15 +296,12 @@ export const EditTrainerModal = ({ isOpen, onClose, trainer, onSuccess }) => {
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isAvailable}
-                    onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                </label>
+                <ToggleSwitch
+                  checked={Boolean(formData.isAvailable)}
+                  onChange={(val) => setFormData({ ...formData, isAvailable: val })}
+                  activeColor="amber"
+                  size="md"
+                />
               </div>
             </div>
 
@@ -761,32 +756,48 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                         {Number(t.salary || 0).toLocaleString('ar-EG')} <span className="text-[10px] text-zinc-400 font-normal">ج.م</span>
                       </td>
 
-                      {/* 1. Account Active Status Badge (DomainUser) */}
+                      {/* 1. Account Active Status Toggle (DomainUser) */}
                       <td className="px-5 py-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors ${
-                            isActive
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
-                              : 'bg-rose-500/10 text-rose-400 border-rose-500/25'
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-                          <span>{isActive ? 'حساب مفعل' : 'حساب معطل'}</span>
-                        </span>
+                        <ToggleSwitch
+                          checked={Boolean(isActive)}
+                          onChange={() => isOperationManagerOrAdmin && handleToggleActive(t)}
+                          disabled={!isOperationManagerOrAdmin || isTogglingActive}
+                          loading={isTogglingActive}
+                          activeColor="emerald"
+                          showLabel={true}
+                          activeLabel="مفعّل"
+                          inactiveLabel="معطّل"
+                          size="md"
+                          title={
+                            !isOperationManagerOrAdmin
+                              ? 'تعديل حالة الحساب متاح لمدير العمليات فقط'
+                              : isActive
+                              ? 'اضغط لتعطيل الحساب'
+                              : 'اضغط لتفعيل الحساب'
+                          }
+                        />
                       </td>
 
-                      {/* 2. Trainer Booking Availability Badge */}
+                      {/* 2. Trainer Booking Availability Toggle */}
                       <td className="px-5 py-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-colors ${
-                            isAvailable
-                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/25'
-                              : 'bg-zinc-800/80 text-zinc-400 border-white/5'
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-amber-400' : 'bg-zinc-500'}`} />
-                          <span>{isAvailable ? 'متاح للحجز' : 'غير متاح حالياً'}</span>
-                        </span>
+                        <ToggleSwitch
+                          checked={Boolean(isAvailable)}
+                          onChange={() => isOperationManagerOrAdmin && handleToggleAvailability(t)}
+                          disabled={!isOperationManagerOrAdmin || isTogglingAvailability}
+                          loading={isTogglingAvailability}
+                          activeColor="amber"
+                          showLabel={true}
+                          activeLabel="متاح للحجز"
+                          inactiveLabel="غير متاح"
+                          size="md"
+                          title={
+                            !isOperationManagerOrAdmin
+                              ? 'تعديل إتاحة الحجز متاح لمدير العمليات فقط'
+                              : isAvailable
+                              ? 'اضغط لجعل الكابتن غير متاح'
+                              : 'اضغط لجعل الكابتن متاحاً للحجز'
+                          }
+                        />
                       </td>
 
                       {/* Actions */}
@@ -831,40 +842,6 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                             >
                               <Target className="w-3.5 h-3.5" />
                               <span className="hidden xl:inline">تقييم KPIs</span>
-                            </button>
-                          )}
-
-                          {/* Toggle Booking Availability (Manager / OperationManager only) */}
-                          {isOperationManagerOrAdmin && (
-                            <button
-                              type="button"
-                              disabled={isTogglingAvailability}
-                              onClick={() => handleToggleAvailability(t)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer ${
-                                isAvailable
-                                  ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/25'
-                                  : 'bg-zinc-900 text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-zinc-800'
-                              }`}
-                              title={isAvailable ? 'إتاحة الحجز: جعل الكابتن غير متاح' : 'إتاحة الحجز: جعل الكابتن متاحاً للحجز'}
-                            >
-                              <CalendarCheck className={`w-3.5 h-3.5 ${isTogglingAvailability ? 'animate-spin' : ''}`} />
-                            </button>
-                          )}
-
-                          {/* Toggle Account Status (Manager / OperationManager only) */}
-                          {isOperationManagerOrAdmin && (
-                            <button
-                              type="button"
-                              disabled={isTogglingActive}
-                              onClick={() => handleToggleActive(t)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer ${
-                                isActive
-                                  ? 'bg-zinc-900 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800'
-                                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
-                              }`}
-                              title={isActive ? 'تعطيل حساب الكابتن' : 'تفعيل حساب الكابتن'}
-                            >
-                              <Power className={`w-3.5 h-3.5 ${isTogglingActive ? 'animate-spin' : ''}`} />
                             </button>
                           )}
 
@@ -987,30 +964,38 @@ export const TrainersAdminManagement = ({ onSwitchToCards = null }) => {
                         </button>
 
                         {/* Availability Toggle */}
-                        <button
-                          type="button"
-                          disabled={isTogglingAvailability}
-                          onClick={() => handleToggleAvailability(t)}
-                          className="col-span-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-amber-300"
-                          title="تبديل الإتاحة للحجز"
-                        >
-                          <CalendarCheck className={`w-3.5 h-3.5 ${isTogglingAvailability ? 'animate-spin text-amber-400' : isAvailable ? 'text-amber-400' : 'text-zinc-500'}`} />
-                          <span>{isAvailable ? 'متاح للحجز' : 'غير متاح'}</span>
-                        </button>
+                        <div className="col-span-3 flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+                          <span className="text-xs text-zinc-300 font-bold">إتاحة الحجز</span>
+                          <ToggleSwitch
+                            checked={Boolean(isAvailable)}
+                            onChange={() => handleToggleAvailability(t)}
+                            disabled={isTogglingAvailability}
+                            loading={isTogglingAvailability}
+                            activeColor="amber"
+                            showLabel={true}
+                            activeLabel="متاح للحجز"
+                            inactiveLabel="غير متاح"
+                            labelPosition="side"
+                            size="sm"
+                          />
+                        </div>
 
                         {/* Account Status Toggle */}
-                        <button
-                          type="button"
-                          disabled={isTogglingActive}
-                          onClick={() => handleToggleActive(t)}
-                          className={`col-span-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                            isActive ? 'bg-zinc-900 border border-zinc-800 text-zinc-300' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                          }`}
-                          title="تفعيل / تعطيل الحساب"
-                        >
-                          <Power className={`w-3.5 h-3.5 ${isTogglingActive ? 'animate-spin' : ''}`} />
-                          <span>{isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'}</span>
-                        </button>
+                        <div className="col-span-3 flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+                          <span className="text-xs text-zinc-300 font-bold">حالة الحساب</span>
+                          <ToggleSwitch
+                            checked={Boolean(isActive)}
+                            onChange={() => handleToggleActive(t)}
+                            disabled={isTogglingActive}
+                            loading={isTogglingActive}
+                            activeColor="emerald"
+                            showLabel={true}
+                            activeLabel="مفعّل"
+                            inactiveLabel="معطّل"
+                            labelPosition="side"
+                            size="sm"
+                          />
+                        </div>
                       </>
                     )}
                   </div>

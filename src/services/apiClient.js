@@ -438,6 +438,61 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// =========================================================================
+// In-Flight Request Deduplication & Short-Lived Caching for GET Requests
+// Eliminates React StrictMode duplicate calls and excessive background bursts
+// =========================================================================
+const inFlightRequests = new Map();
+const getResponseCache = new Map();
+const CACHE_TTL_MS = 2500; // 2.5 seconds TTL for rapid duplicate calls
+
+export const clearApiCache = () => {
+  getResponseCache.clear();
+};
+
+const rawGet = apiClient.get.bind(apiClient);
+apiClient.get = function (url, config = {}) {
+  // If skipCache or abort signal provided, bypass cache & deduplication
+  if (config.skipCache || config.signal) {
+    return rawGet(url, config);
+  }
+
+  const paramsKey = config.params ? JSON.stringify(config.params) : '';
+  const cacheKey = `${url}?${paramsKey}`;
+
+  // 1. Check TTL cache
+  const cached = getResponseCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return Promise.resolve({ ...cached.response });
+  }
+
+  // 2. Share in-flight promise if duplicate request is currently executing
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  // 3. Fire real request
+  const requestPromise = rawGet(url, config)
+    .then((response) => {
+      getResponseCache.set(cacheKey, {
+        response: {
+          data: response.data,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        },
+        timestamp: Date.now(),
+      });
+      return response;
+    })
+    .finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
+};
+
 /**
  * Central translator from server/FluentValidation errors to clear, friendly Arabic
  * @param {string} rawMsg
@@ -529,7 +584,13 @@ export const translateServerErrorMessage = (rawMsg) => {
 
 // Response Interceptor: Format errors and handle Silent Token Refresh
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config?.method?.toLowerCase();
+    if (['post', 'put', 'patch', 'delete'].includes(method)) {
+      clearApiCache();
+    }
+    return response;
+  },
   async (error) => {
     // If request was canceled by AbortController, reject immediately and do NOT treat as server error
     if (axios.isCancel(error) || error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
@@ -947,22 +1008,37 @@ export const customerService = {
    * Body: UpdateCustomerRequest model
    */
   async updateCustomer(id, data) {
+    const cleanPositiveNum = (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return !isNaN(num) && num > 0 ? num : null;
+    };
+    const cleanPercentage = (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      const num = Number(val);
+      return !isNaN(num) && num >= 0 && num <= 100 ? num : null;
+    };
+
     const payload = {
       name: String(data.name || '').trim(),
       phoneNumber: String(data.phoneNumber || '').trim(),
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
-      height: Number(data.height) || 0,
-      weight: Number(data.weight) || 0,
-      age: Number(data.age) || 0,
-      musclePercentage: Number(data.musclePercentage) || 0,
-      fatPercentage: Number(data.fatPercentage) || 0,
-      injuries: String(data.injuries || '').trim(),
-      chronicDiseases: String(data.chronicDiseases || '').trim(),
-      notes: String(data.notes || '').trim(),
+      height: cleanPositiveNum(data.height),
+      weight: cleanPositiveNum(data.weight),
+      age: cleanPositiveNum(data.age),
+      musclePercentage: cleanPercentage(data.musclePercentage),
+      fatPercentage: cleanPercentage(data.fatPercentage),
+      injuries: data.injuries ? String(data.injuries).trim() : '',
+      chronicDiseases: data.chronicDiseases ? String(data.chronicDiseases).trim() : '',
+      notes: data.notes ? String(data.notes).trim() : '',
     };
 
     if (data.code && String(data.code).trim()) {
       payload.code = String(data.code).trim().toUpperCase();
+    }
+
+    if (data.approvalStatus !== undefined && data.approvalStatus !== null && data.approvalStatus !== '') {
+      payload.approvalStatus = Number(data.approvalStatus);
     }
 
     // Backend uses PATCH /api/customers/{id} with PUT fallback

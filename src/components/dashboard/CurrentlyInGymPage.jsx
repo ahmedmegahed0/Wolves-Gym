@@ -105,11 +105,6 @@ export const CurrentlyInGymPage = ({
 
   useEffect(() => {
     fetchCurrentAttendees();
-    // Auto-refresh every 20 seconds to keep durations accurate
-    const interval = setInterval(() => {
-      fetchCurrentAttendees(true);
-    }, 20000);
-    return () => clearInterval(interval);
   }, [fetchCurrentAttendees]);
 
   // Handle Copy Member Code

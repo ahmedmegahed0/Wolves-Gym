@@ -23,8 +23,6 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState(30); // seconds: 0 = off, 10, 30, 60
-  const [secondsUntilNext, setSecondsUntilNext] = useState(30);
 
   // Store callbacks & toast handlers in refs to prevent dependency loops
   const onOccupancyUpdatedRef = useRef(onOccupancyUpdated);
@@ -37,12 +35,6 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
     toastErrorRef.current = toastError;
   }, [toastError]);
 
-  const autoRefreshIntervalRef = useRef(autoRefreshInterval);
-  useEffect(() => {
-    autoRefreshIntervalRef.current = autoRefreshInterval;
-  }, [autoRefreshInterval]);
-
-  const secondsLeftRef = useRef(autoRefreshInterval);
   const isFetchingRef = useRef(false);
 
   // Fetch current occupancy from GET /api/Attendances/current-occupancy
@@ -61,11 +53,6 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
       setOccupancy(count);
       setLastUpdated(new Date());
 
-      // Reset countdown timer
-      const intervalSec = autoRefreshIntervalRef.current;
-      secondsLeftRef.current = intervalSec;
-      setSecondsUntilNext(intervalSec);
-
       if (onOccupancyUpdatedRef.current) {
         onOccupancyUpdatedRef.current(count);
       }
@@ -82,37 +69,10 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
     }
   }, []); // Completely stable with zero changing dependencies
 
-  // Initial fetch and manual refresh triggers (e.g. check-in / check-out events)
+  // Initial fetch on mount, and re-fetch only when check-in/out occurs or user clicks refresh
   useEffect(() => {
     fetchOccupancy(false);
   }, [refreshTrigger, fetchOccupancy]);
-
-  // Auto-refresh countdown & timer (pauses when document is in background)
-  useEffect(() => {
-    if (autoRefreshInterval === 0) {
-      setSecondsUntilNext(0);
-      return;
-    }
-
-    secondsLeftRef.current = autoRefreshInterval;
-    setSecondsUntilNext(autoRefreshInterval);
-
-    const intervalTimer = setInterval(() => {
-      // Pause polling if user is on another tab to save bandwidth
-      if (typeof document !== 'undefined' && document.hidden) return;
-
-      secondsLeftRef.current -= 1;
-      if (secondsLeftRef.current <= 0) {
-        secondsLeftRef.current = autoRefreshInterval;
-        setSecondsUntilNext(autoRefreshInterval);
-        fetchOccupancy(false);
-      } else {
-        setSecondsUntilNext(secondsLeftRef.current);
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalTimer);
-  }, [autoRefreshInterval, fetchOccupancy]);
 
   const getStatusInfo = () => {
     if (occupancy >= 50) {
@@ -201,38 +161,15 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
           </div>
         </div>
 
-        {/* Action button: Auto-refresh & Manual trigger */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Refresh interval dropdown pill */}
-          <div className="relative">
-            <select
-              value={autoRefreshInterval}
-              onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
-              aria-label="مدة التحديث التلقائي"
-              className="bg-zinc-950 text-zinc-300 text-[11px] sm:text-xs rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 border border-zinc-800 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer pr-2.5 sm:pr-3 pl-6 sm:pl-7 hover:border-amber-500/40 transition-colors font-medium"
-            >
-              <option value={10}>كل 10 ثوانٍ</option>
-              <option value={30}>كل 30 ثانية</option>
-              <option value={60}>كل دقيقة</option>
-              <option value={0}>تحديث يدوي</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-1.5 sm:pl-2 text-zinc-400">
-              <svg className="fill-current h-3 w-3" viewBox="0 0 20 20">
-                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Quick Manual Refresh Icon */}
-          <button
-            onClick={() => fetchOccupancy(true)}
-            disabled={refreshing}
-            title="تحديث العدد الآن"
-            className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group cursor-pointer"
-          >
-            <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:rotate-180 duration-500 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
-          </button>
-        </div>
+        {/* Quick Manual Refresh Icon */}
+        <button
+          onClick={() => fetchOccupancy(true)}
+          disabled={refreshing}
+          title="تحديث عدد الحضور يدوياً"
+          className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 border border-amber-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_12px_rgba(245,158,11,0.1)] group cursor-pointer"
+        >
+          <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:rotate-180 duration-500 ${refreshing ? 'animate-spin text-yellow-400' : ''}`} />
+        </button>
       </div>
 
       {/* Main Hero Radial Gauge in Metallic Amber/Gold */}
@@ -346,9 +283,9 @@ export const OccupancyCard = React.memo(({ onOccupancyUpdated, refreshTrigger })
         </div>
 
         <div className="bg-zinc-950/80 rounded-2xl p-2 sm:p-3 border border-zinc-800/80 hover:border-amber-500/30 transition-colors">
-          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">تحديث بعد</div>
-          <div className="text-base sm:text-lg font-black text-yellow-500 font-mono mt-0.5">
-            {autoRefreshInterval > 0 ? `${secondsUntilNext} ث` : 'يدوي'}
+          <div className="text-[10px] sm:text-[11px] font-bold text-zinc-400">آخر تحديث</div>
+          <div className="text-xs sm:text-sm font-black text-amber-400 font-mono mt-1">
+            {lastUpdated ? lastUpdated.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن'}
           </div>
         </div>
       </div>
